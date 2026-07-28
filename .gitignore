@@ -1,0 +1,29 @@
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Frontend
+node_modules/
+dist/
+build/
+coverage/
+
+# Backend
+target/
+*.class
+*.jar
+*.war
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# Logs
+*.log
+logs/
+
+# Operating system files
+.DS_Store
+Thumbs.db
