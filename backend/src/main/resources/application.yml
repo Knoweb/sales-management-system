@@ -25,3 +25,12 @@ logging:
   level:
     org.springframework.web: INFO
     com.knoweb.salesmanagement: DEBUG
+
+jwt:
+  secret: ${JWT_SECRET:this_is_a_very_long_default_secret_key_for_local_dev_only_1234567890}
+  access-token-minutes: ${JWT_ACCESS_TOKEN_MINUTES:15}
+  refresh-token-days: ${JWT_REFRESH_TOKEN_DAYS:7}
+
+auth:
+  cookie:
+    secure: ${AUTH_COOKIE_SECURE:false}

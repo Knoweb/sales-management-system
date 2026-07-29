@@ -1,29 +1,44 @@
-import HealthCheck from './components/HealthCheck';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { LoginPage } from './pages/LoginPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { UserManagement } from './pages/UserManagement';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { UnauthorizedPage } from './pages/UnauthorizedPage';
+import { NotFoundPage } from './pages/NotFoundPage';
+
 import './index.css';
+import './styles/auth.css';
+import './styles/dashboard.css';
 
 function App() {
   return (
-    <div className="app-container">
-      <header className="app-header">
-        <h1>Sales Management System</h1>
-        <p className="subtitle">Internal Workflow and Sales Platform</p>
-      </header>
-      
-      <main className="app-main">
-        <section className="dashboard-grid">
-          <HealthCheck />
-          {/* Future components will go here */}
-          <div className="placeholder-card">
-            <h3>Ready for Business Modules</h3>
-            <p>Phase 1 Foundation is complete. Business logic, authentication, and routing will be implemented in subsequent phases.</p>
-          </div>
-        </section>
-      </main>
-      
-      <footer className="app-footer">
-        <p>&copy; {new Date().getFullYear()} Knoweb. All rights reserved.</p>
-      </footer>
-    </div>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/users" 
+            element={
+              <ProtectedRoute requiredRole="SYSTEM_ADMIN">
+                <UserManagement />
+              </ProtectedRoute>
+            } 
+          />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

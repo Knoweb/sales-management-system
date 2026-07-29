@@ -6,9 +6,17 @@ Internal Workflow and Sales Management System. This project will eventually mana
 
 Currently, this repository is configured for local development and contains the foundational project structure.
 
+### Current Capabilities
+- **Backend:** Spring Boot 3 + Java 21 REST API
+- **Frontend:** React 19 + TypeScript + Vite SPA
+- **Database:** Local PostgreSQL with automatic database creation and Flyway migrations
+- **Authentication:** JWT-based stateless Auth with HttpOnly refresh cookies
+- **Security:** Role-Based Access Control (RBAC) and permissions
+- **User Management:** Admin UI for managing users, statuses, and roles
+
 ### Project Structure
-- `backend/`: Spring Boot 3 + Java 21 REST API
-- `frontend/`: React 19 + TypeScript + Vite single-page application
+- `backend/`: Spring Boot REST API
+- `frontend/`: React single-page application
 
 ## Local Setup Instructions
 
