@@ -121,7 +121,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const initializeAuth = async () => {
       try {
-        const { data } = await apiClient.post<AuthResponse>('/auth/refresh');
+        // Use a short timeout (e.g. 5000ms) for the initial refresh so the app doesn't hang if backend is down
+        const { data } = await apiClient.post<AuthResponse>('/auth/refresh', null, { timeout: 5000 });
         inMemoryToken = data.accessToken;
         setUser(data.user);
       } catch {
