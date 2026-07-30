@@ -23,6 +23,7 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
+    ignore-missing-migrations: true
     
 logging:
   level:

@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ClientRepository extends JpaRepository<Client, UUID> {
@@ -18,16 +19,15 @@ public interface ClientRepository extends JpaRepository<Client, UUID> {
            "AND (:active IS NULL OR c.active = :active)")
     Page<Client> searchClients(@Param("search") String search, @Param("active") Boolean active, Pageable pageable);
     
-    boolean existsByEmailIgnoreCase(String email);
-    boolean existsByEmailIgnoreCaseAndIdNot(String email, UUID id);
+    Optional<Client> findFirstByEmailIgnoreCase(String email);
+    Optional<Client> findFirstByEmailIgnoreCaseAndIdNot(String email, UUID id);
     
-    boolean existsByRegistrationNumberIgnoreCase(String registrationNumber);
-    
-    boolean existsByRegistrationNumberIgnoreCaseAndIdNot(String registrationNumber, UUID id);
+    Optional<Client> findFirstByRegistrationNumberIgnoreCase(String registrationNumber);
+    Optional<Client> findFirstByRegistrationNumberIgnoreCaseAndIdNot(String registrationNumber, UUID id);
     
     boolean existsByNameIgnoreCase(String name);
     boolean existsByNameIgnoreCaseAndIdNot(String name, UUID id);
     
-    boolean existsByPhone(String phone);
-    boolean existsByPhoneAndIdNot(String phone, UUID id);
+    Optional<Client> findFirstByPhone(String phone);
+    Optional<Client> findFirstByPhoneAndIdNot(String phone, UUID id);
 }

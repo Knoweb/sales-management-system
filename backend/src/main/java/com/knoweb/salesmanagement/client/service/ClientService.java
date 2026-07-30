@@ -248,30 +248,44 @@ public class ClientService {
     @PreAuthorize("hasAuthority('CLIENT_READ') or hasAuthority('CLIENT_CREATE')")
     @Transactional(readOnly = true)
     public DuplicateClientCheckResponse checkDuplicates(ClientRequest request, UUID excludeClientId) {
+        String inactiveMessage = "A matching client already exists but is inactive and should be reactivated instead of creating a duplicate record.";
+
         if (StringUtils.hasText(request.getRegistrationNumber())) {
-            boolean exists = excludeClientId != null 
-                ? clientRepository.existsByRegistrationNumberIgnoreCaseAndIdNot(request.getRegistrationNumber(), excludeClientId)
-                : clientRepository.existsByRegistrationNumberIgnoreCase(request.getRegistrationNumber());
-            if (exists) {
+            java.util.Optional<Client> existing = excludeClientId != null 
+                ? clientRepository.findFirstByRegistrationNumberIgnoreCaseAndIdNot(request.getRegistrationNumber(), excludeClientId)
+                : clientRepository.findFirstByRegistrationNumberIgnoreCase(request.getRegistrationNumber());
+            if (existing.isPresent()) {
+                if (!existing.get().isActive()) {
+                    return new DuplicateClientCheckResponse(true, false, inactiveMessage, "REGISTRATION_NUMBER");
+                }
                 return new DuplicateClientCheckResponse(true, false, "A client with this registration number already exists.", "REGISTRATION_NUMBER");
             }
         }
+        
         if (StringUtils.hasText(request.getEmail())) {
-            boolean exists = excludeClientId != null
-                ? clientRepository.existsByEmailIgnoreCaseAndIdNot(request.getEmail(), excludeClientId)
-                : clientRepository.existsByEmailIgnoreCase(request.getEmail());
-            if (exists) {
+            java.util.Optional<Client> existing = excludeClientId != null
+                ? clientRepository.findFirstByEmailIgnoreCaseAndIdNot(request.getEmail(), excludeClientId)
+                : clientRepository.findFirstByEmailIgnoreCase(request.getEmail());
+            if (existing.isPresent()) {
+                if (!existing.get().isActive()) {
+                    return new DuplicateClientCheckResponse(true, false, inactiveMessage, "EMAIL");
+                }
                 return new DuplicateClientCheckResponse(true, false, "A client with this email already exists.", "EMAIL");
             }
         }
+        
         if (StringUtils.hasText(request.getPhone())) {
-            boolean exists = excludeClientId != null
-                ? clientRepository.existsByPhoneAndIdNot(request.getPhone(), excludeClientId)
-                : clientRepository.existsByPhone(request.getPhone());
-            if (exists) {
-                return new DuplicateClientCheckResponse(false, true, "A client with this phone number already exists.", "PHONE");
+            java.util.Optional<Client> existing = excludeClientId != null
+                ? clientRepository.findFirstByPhoneAndIdNot(request.getPhone(), excludeClientId)
+                : clientRepository.findFirstByPhone(request.getPhone());
+            if (existing.isPresent()) {
+                if (!existing.get().isActive()) {
+                    return new DuplicateClientCheckResponse(true, false, inactiveMessage, "PHONE");
+                }
+                return new DuplicateClientCheckResponse(true, false, "A client with this phone number already exists.", "PHONE");
             }
         }
+        
         if (StringUtils.hasText(request.getName())) {
             boolean exists = excludeClientId != null
                 ? clientRepository.existsByNameIgnoreCaseAndIdNot(request.getName(), excludeClientId)
@@ -280,6 +294,7 @@ public class ClientService {
                 return new DuplicateClientCheckResponse(false, true, "A client with this name might already exist.", "NAME");
             }
         }
+        
         return new DuplicateClientCheckResponse(false, false, "No duplicates found.", null);
     }
 }
