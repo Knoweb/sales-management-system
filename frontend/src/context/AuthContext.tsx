@@ -2,7 +2,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { apiClient } from '../services/Api';
-import axios from 'axios';
 
 export interface User {
   id: string;

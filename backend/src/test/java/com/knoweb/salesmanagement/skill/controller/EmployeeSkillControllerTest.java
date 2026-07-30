@@ -11,9 +11,12 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import com.knoweb.salesmanagement.security.jwt.JwtTokenProvider;
+import com.knoweb.salesmanagement.security.principal.CustomUserDetailsService;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.context.annotation.Import;
@@ -35,6 +38,10 @@ class EmployeeSkillControllerTest {
     @TestConfiguration
     @EnableMethodSecurity
     static class TestSecurityConfig {
+        @Bean
+        public com.fasterxml.jackson.databind.ObjectMapper objectMapper() {
+            return new com.fasterxml.jackson.databind.ObjectMapper();
+        }
     }
 
     @Autowired
@@ -42,6 +49,12 @@ class EmployeeSkillControllerTest {
 
     @MockitoBean
     private EmployeeSkillService employeeSkillService;
+
+    @MockitoBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    private CustomUserDetailsService customUserDetailsService;
 
     @Autowired
     private ObjectMapper objectMapper;

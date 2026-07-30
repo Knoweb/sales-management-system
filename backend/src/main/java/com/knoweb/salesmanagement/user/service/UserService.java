@@ -38,10 +38,10 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public com.knoweb.salesmanagement.common.dto.PaginatedResponse<SafeUserDto> searchUsers(String search, Boolean active, String roleCode, Pageable pageable) {
+    public Page<SafeUserDto> searchUsers(String search, Boolean active, String roleCode, Pageable pageable) {
         Page<SafeUserDto> page = userRepository.searchUsers(search, active, roleCode, pageable)
                 .map(SafeUserDto::fromEntity);
-        return new com.knoweb.salesmanagement.common.dto.PaginatedResponse<>(page);
+        return page;
     }
 
     @Transactional(readOnly = true)

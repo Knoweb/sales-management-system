@@ -60,17 +60,23 @@ export const EmployeeDetailsPage: React.FC = () => {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadData();
-  }, [id]);
+  }, [loadData]);
 
   const handleSkillSubmit = async (data: any) => {
-    if (editSkillData) {
-      await EmployeeApi.updateSkill(id!, editSkillData.skill.id, data);
-    } else {
-      await EmployeeApi.assignSkill(id!, data);
+    try {
+      if (editSkillData) {
+        await EmployeeApi.updateSkill(id!, editSkillData.skill.id, data);
+      } else {
+        await EmployeeApi.assignSkill(id!, data);
+      }
+      await loadData();
+      setShowSkillForm(false);
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } } };
+      alert(error?.response?.data?.message || 'Failed to save skill');
     }
-    const skillsData = await EmployeeApi.getSkills(id!);
-    setSkills(skillsData);
   };
 
   const handleRemoveSkill = async (skillId: string) => {
@@ -80,14 +86,19 @@ export const EmployeeDetailsPage: React.FC = () => {
     }
   };
 
-  const handleQualSubmit = async (data: any) => {
-    if (editQualData) {
-      await EmployeeApi.updateQualification(id!, editQualData.id, data);
-    } else {
-      await EmployeeApi.addQualification(id!, data);
+  const handleQualificationSubmit = async (data: any) => {
+    try {
+      if (editQualData) {
+        await EmployeeApi.updateQualification(id!, editQualData.id, data);
+      } else {
+        await EmployeeApi.addQualification(id!, data);
+      }
+      await loadData();
+      setShowQualForm(false);
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } } };
+      alert(error?.response?.data?.message || 'Failed to save qualification');
     }
-    const qualData = await EmployeeApi.getQualifications(id!);
-    setQualifications(qualData);
   };
 
   const handleRemoveQual = async (qualId: string) => {
@@ -98,9 +109,14 @@ export const EmployeeDetailsPage: React.FC = () => {
   };
 
   const handleLeaveSubmit = async (data: any) => {
-    await EmployeeApi.requestLeave(id!, data);
-    const leaveData = await EmployeeApi.getLeaves(id!);
-    setLeaves(leaveData);
+    try {
+      await EmployeeApi.requestLeave(id!, data);
+      await loadData();
+      setShowLeaveForm(false);
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } } };
+      alert(error?.response?.data?.message || 'Failed to record leave');
+    }
   };
 
   const handleLeaveStatusUpdate = async (leaveId: string, status: LeaveStatus) => {
@@ -362,7 +378,7 @@ export const EmployeeDetailsPage: React.FC = () => {
         <EmployeeQualificationForm 
           initialData={editQualData}
           onClose={() => setShowQualForm(false)} 
-          onSubmit={handleQualSubmit} 
+          onSubmit={handleQualificationSubmit} 
         />
       )}
       

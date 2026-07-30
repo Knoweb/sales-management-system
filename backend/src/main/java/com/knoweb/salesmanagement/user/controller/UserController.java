@@ -39,7 +39,7 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('USER_READ')")
-    public com.knoweb.salesmanagement.common.dto.PaginatedResponse<SafeUserDto> searchUsers(
+    public Page<SafeUserDto> searchUsers(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Boolean active,
             @RequestParam(required = false) String roleCode,

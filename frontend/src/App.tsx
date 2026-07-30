@@ -15,6 +15,9 @@ import { SkillFormPage } from './pages/SkillFormPage';
 import { EmployeesPage } from './pages/EmployeesPage';
 import { EmployeeDetailsPage } from './pages/EmployeeDetailsPage';
 import { EmployeeFormPage } from './pages/EmployeeFormPage';
+import { ClientsPage } from './pages/ClientsPage';
+import { ClientFormPage } from './pages/ClientFormPage';
+import { ClientDetailsPage } from './pages/ClientDetailsPage';
 
 import './index.css';
 import './styles/auth.css';
@@ -72,6 +75,27 @@ function App() {
             <Route path="/skills/new" element={
               <ProtectedRoute requiredPermission="SKILL_CATALOG_MANAGE">
                 <SkillFormPage />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/clients" element={
+              <ProtectedRoute requiredPermission="CLIENT_READ">
+                <ClientsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/clients/new" element={
+              <ProtectedRoute requiredPermission="CLIENT_CREATE">
+                <ClientFormPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/clients/:id" element={
+              <ProtectedRoute requiredPermission="CLIENT_READ">
+                <ClientDetailsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/clients/:id/edit" element={
+              <ProtectedRoute requiredPermission="CLIENT_UPDATE">
+                <ClientFormPage />
               </ProtectedRoute>
             } />
           </Route>
