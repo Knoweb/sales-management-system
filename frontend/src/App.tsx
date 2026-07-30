@@ -18,6 +18,9 @@ import { EmployeeFormPage } from './pages/EmployeeFormPage';
 import { ClientsPage } from './pages/ClientsPage';
 import { ClientFormPage } from './pages/ClientFormPage';
 import { ClientDetailsPage } from './pages/ClientDetailsPage';
+import { LeadsPage } from './pages/LeadsPage';
+import { LeadFormPage } from './pages/LeadFormPage';
+import { LeadDetailsPage } from './pages/LeadDetailsPage';
 
 import './index.css';
 import './styles/auth.css';
@@ -96,6 +99,27 @@ function App() {
             <Route path="/clients/:id/edit" element={
               <ProtectedRoute requiredPermission="CLIENT_UPDATE">
                 <ClientFormPage />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/leads" element={
+              <ProtectedRoute requiredPermission="LEAD_READ">
+                <LeadsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/leads/new" element={
+              <ProtectedRoute requiredPermission="LEAD_CREATE">
+                <LeadFormPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/leads/:id" element={
+              <ProtectedRoute requiredPermission="LEAD_READ">
+                <LeadDetailsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/leads/:id/edit" element={
+              <ProtectedRoute requiredPermission="LEAD_UPDATE">
+                <LeadFormPage />
               </ProtectedRoute>
             } />
           </Route>

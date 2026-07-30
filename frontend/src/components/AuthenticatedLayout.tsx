@@ -27,6 +27,7 @@ export const AuthenticatedLayout: React.FC = () => {
     { name: 'Employees', path: '/employees', icon: <Users size={20} />, allowed: user?.permissions.includes('EMPLOYEE_READ') },
     { name: 'Skills', path: '/skills', icon: <CheckCircle size={20} />, allowed: user?.permissions.includes('SKILL_CATALOG_READ') },
     { name: 'Clients', path: '/clients', icon: <Briefcase size={20} />, allowed: user?.permissions.includes('CLIENT_READ') },
+    { name: 'Leads', path: '/leads', icon: <Briefcase size={20} />, allowed: user?.permissions.includes('LEAD_READ') },
   ];
 
   return (

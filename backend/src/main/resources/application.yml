@@ -24,6 +24,10 @@ spring:
     enabled: true
     baseline-on-migrate: true
     ignore-missing-migrations: true
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
     
 logging:
   level:

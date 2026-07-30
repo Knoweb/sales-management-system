@@ -106,6 +106,21 @@ public class AttachmentService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
+    public void deleteAttachment(UUID attachmentId) {
+        Attachment attachment = attachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Attachment not found"));
+
+        try {
+            Path filePath = this.fileStorageLocation.resolve(attachment.getStoragePath()).normalize();
+            Files.deleteIfExists(filePath);
+        } catch (IOException ex) {
+            // Log warning but continue with DB deletion
+        }
+
+        attachmentRepository.delete(attachment);
+    }
+
     private String sanitizeFileName(String fileName) {
         return fileName.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
     }

@@ -9,6 +9,9 @@ import com.knoweb.salesmanagement.lead.dto.*;
 import com.knoweb.salesmanagement.lead.entity.FollowUp;
 import com.knoweb.salesmanagement.lead.entity.Lead;
 import com.knoweb.salesmanagement.lead.entity.LeadActivity;
+import com.knoweb.salesmanagement.lead.enums.ActivityType;
+import com.knoweb.salesmanagement.lead.enums.FollowUpStatus;
+import com.knoweb.salesmanagement.lead.enums.LeadStatus;
 import com.knoweb.salesmanagement.lead.repository.FollowUpRepository;
 import com.knoweb.salesmanagement.lead.repository.LeadActivityRepository;
 import com.knoweb.salesmanagement.lead.repository.LeadRepository;
@@ -16,6 +19,7 @@ import com.knoweb.salesmanagement.user.entity.User;
 import com.knoweb.salesmanagement.user.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -23,6 +27,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.criteria.Predicate;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -92,8 +99,17 @@ public class LeadService {
         }
     }
 
+    private void logSystemActivity(Lead lead, String description) {
+        LeadActivity activity = new LeadActivity();
+        activity.setLead(lead);
+        activity.setActivityType(ActivityType.SYSTEM_EVENT);
+        activity.setDescription(description);
+        activity.setActivityDate(OffsetDateTime.now());
+        leadActivityRepository.save(activity);
+    }
+
     @Transactional(readOnly = true)
-    public Page<LeadDTO> searchLeads(String search, String status, Boolean active, Pageable pageable) {
+    public Page<LeadDTO> searchLeads(String search, LeadStatus status, Boolean active, Pageable pageable) {
         UUID assignedToFilter = null;
         if (!hasAuthority("LEAD_READ_ALL") && !hasAuthority("ROLE_SYSTEM_ADMIN")) {
             Employee emp = getCurrentEmployee();
@@ -104,8 +120,32 @@ public class LeadService {
                 assignedToFilter = UUID.randomUUID(); // hack to return nothing
             }
         }
-        return leadRepository.searchLeads(search, status, assignedToFilter, active, pageable)
-                .map(leadMapper::toDto);
+        
+        final UUID finalAssignedToFilter = assignedToFilter;
+
+        Specification<Lead> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (search != null && !search.trim().isEmpty()) {
+                predicates.add(cb.like(cb.lower(root.get("title")), "%" + search.trim().toLowerCase() + "%"));
+            }
+
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+
+            if (finalAssignedToFilter != null) {
+                predicates.add(cb.equal(root.join("assignedTo").get("id"), finalAssignedToFilter));
+            }
+
+            if (active != null) {
+                predicates.add(cb.equal(root.get("active"), active));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return leadRepository.findAll(spec, pageable).map(leadMapper::toDto);
     }
 
     @Transactional(readOnly = true)
@@ -160,8 +200,50 @@ public class LeadService {
         Employee assignee = employeeRepository.findById(request.getAssignedTo())
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
         
-        lead.setAssignedTo(assignee);
-        lead = leadRepository.save(lead);
+        String oldName = lead.getAssignedTo() != null ? lead.getAssignedTo().getFirstName() + " " + lead.getAssignedTo().getLastName() : "Unassigned";
+        String newName = assignee.getFirstName() + " " + assignee.getLastName();
+
+        if (!oldName.equals(newName)) {
+            lead.setAssignedTo(assignee);
+            lead = leadRepository.save(lead);
+            logSystemActivity(lead, "Sales Officer reassigned from " + oldName + " to " + newName);
+        }
+
+        return leadMapper.toDto(lead);
+    }
+
+    @Transactional
+    public LeadDTO updateLeadStatus(UUID id, LeadStatusRequest request) {
+        Lead lead = leadRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Lead not found"));
+        validateLeadUpdateAccess(lead);
+
+        boolean updated = false;
+
+        if (request.getStatus() != null) {
+            LeadStatus oldStatus = lead.getStatus();
+            if (oldStatus != request.getStatus()) {
+                lead.setStatus(request.getStatus());
+                if (request.getNotes() != null && !request.getNotes().isEmpty()) {
+                    lead.setNotes(request.getNotes());
+                }
+                logSystemActivity(lead, "Status changed from " + oldStatus + " to " + request.getStatus());
+                updated = true;
+            }
+        }
+
+        if (request.getActive() != null) {
+            boolean oldActive = lead.isActive();
+            if (oldActive != request.getActive()) {
+                lead.setActive(request.getActive());
+                logSystemActivity(lead, request.getActive() ? "Lead reactivated" : "Lead deactivated");
+                updated = true;
+            }
+        }
+
+        if (updated) {
+            lead = leadRepository.save(lead);
+        }
+
         return leadMapper.toDto(lead);
     }
 
@@ -231,5 +313,56 @@ public class LeadService {
         return followUpRepository.findByLeadIdOrderByFollowUpDateAsc(leadId).stream()
                 .map(leadMapper::toFollowUpDto)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public FollowUpDTO updateFollowUp(UUID leadId, UUID followUpId, FollowUpRequest request) {
+        Lead lead = leadRepository.findById(leadId).orElseThrow(() -> new ResourceNotFoundException("Lead not found"));
+        validateLeadUpdateAccess(lead);
+
+        FollowUp followUp = followUpRepository.findById(followUpId)
+                .orElseThrow(() -> new ResourceNotFoundException("Follow-up not found"));
+
+        if (!followUp.getLead().getId().equals(leadId)) {
+            throw new ResourceNotFoundException("Follow-up does not belong to this lead");
+        }
+
+        followUp.setFollowUpDate(request.getFollowUpDate());
+        followUp.setStatus(request.getStatus());
+        followUp.setNotes(request.getNotes());
+
+        if (request.getAssignedTo() != null) {
+            Employee assignee = employeeRepository.findById(request.getAssignedTo())
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
+            followUp.setAssignedTo(assignee);
+        } else {
+            followUp.setAssignedTo(getCurrentEmployee());
+        }
+
+        followUp = followUpRepository.save(followUp);
+        return leadMapper.toFollowUpDto(followUp);
+    }
+
+    @Transactional
+    public FollowUpDTO completeFollowUp(UUID leadId, UUID followUpId, FollowUpCompleteRequest request) {
+        Lead lead = leadRepository.findById(leadId).orElseThrow(() -> new ResourceNotFoundException("Lead not found"));
+        validateLeadUpdateAccess(lead);
+
+        FollowUp followUp = followUpRepository.findById(followUpId)
+                .orElseThrow(() -> new ResourceNotFoundException("Follow-up not found"));
+
+        if (!followUp.getLead().getId().equals(leadId)) {
+            throw new ResourceNotFoundException("Follow-up does not belong to this lead");
+        }
+
+        followUp.setStatus(FollowUpStatus.COMPLETED);
+        if (request != null && request.getNotes() != null && !request.getNotes().isEmpty()) {
+            followUp.setNotes(request.getNotes());
+        }
+
+        followUp = followUpRepository.save(followUp);
+        logSystemActivity(lead, "Follow-up marked as completed");
+
+        return leadMapper.toFollowUpDto(followUp);
     }
 }

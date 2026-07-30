@@ -1,12 +1,12 @@
 import { apiClient as api } from './Api';
-import type { Lead, LeadRequest, LeadActivity, LeadActivityRequest, FollowUp, FollowUpRequest } from '../types/lead';
+import type { Lead, LeadRequest, LeadActivity, LeadActivityRequest, FollowUp, FollowUpRequest, LeadStatus } from '../types/lead';
 import type { PaginatedResponse } from './ClientApi';
 
 export const LeadApi = {
   searchLeads: async (search?: string, status?: string, active?: boolean, page = 0, size = 20) => {
     const params = new URLSearchParams();
     if (search) params.append('search', search);
-    if (status) params.append('status', status);
+    if (status && status !== 'all') params.append('status', status);
     if (active !== undefined) params.append('active', String(active));
     params.append('page', String(page));
     params.append('size', String(size));
@@ -35,7 +35,17 @@ export const LeadApi = {
   },
 
   assignLead: async (id: string, assignedTo: string) => {
-    const response = await api.patch<Lead>(`/leads/${id}/assign`, { assignedTo });
+    const response = await api.patch<Lead>(`/leads/${id}/assignee`, { assignedTo });
+    return response.data;
+  },
+
+  updateStatus: async (id: string, status?: LeadStatus, notes?: string, active?: boolean) => {
+    const payload: Record<string, unknown> = {};
+    if (status !== undefined) payload.status = status;
+    if (notes !== undefined) payload.notes = notes;
+    if (active !== undefined) payload.active = active;
+    
+    const response = await api.patch<Lead>(`/leads/${id}/status`, payload);
     return response.data;
   },
 
@@ -56,6 +66,16 @@ export const LeadApi = {
 
   getFollowUps: async (leadId: string) => {
     const response = await api.get<FollowUp[]>(`/leads/${leadId}/follow-ups`);
+    return response.data;
+  },
+
+  updateFollowUp: async (leadId: string, followUpId: string, data: FollowUpRequest) => {
+    const response = await api.put<FollowUp>(`/leads/${leadId}/follow-ups/${followUpId}`, data);
+    return response.data;
+  },
+
+  completeFollowUp: async (leadId: string, followUpId: string, notes?: string) => {
+    const response = await api.patch<FollowUp>(`/leads/${leadId}/follow-ups/${followUpId}/complete`, { notes });
     return response.data;
   }
 };

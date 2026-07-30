@@ -25,5 +25,9 @@ export const AttachmentApi = {
     // Generate URL for a-tag href
     // Need to include base URL if not using axios for direct href
     return `${API_BASE_URL}/attachments/${attachmentId}/download`;
+  },
+
+  deleteAttachment: async (attachmentId: string) => {
+    await api.delete(`/attachments/${attachmentId}`);
   }
 };

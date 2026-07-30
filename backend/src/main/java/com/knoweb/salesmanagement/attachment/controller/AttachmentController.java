@@ -53,4 +53,11 @@ public class AttachmentController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + attachment.getFileName() + "\"")
                 .body(resource);
     }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ATTACHMENT_MANAGE')")
+    public ResponseEntity<Void> deleteAttachment(@PathVariable UUID id) {
+        attachmentService.deleteAttachment(id);
+        return ResponseEntity.noContent().build();
+    }
 }
