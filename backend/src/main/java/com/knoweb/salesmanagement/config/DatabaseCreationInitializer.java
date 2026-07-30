@@ -36,8 +36,9 @@ public class DatabaseCreationInitializer implements ApplicationContextInitialize
         String adminDb = env.getProperty("DB_ADMIN_DATABASE", "postgres");
 
         if (password == null || password.trim().isEmpty()) {
-            logger.error("DB_PASSWORD environment variable is required but not set.");
-            throw new IllegalStateException("Database password must be provided via DB_PASSWORD.");
+            String msg = "DB_PASSWORD is missing. Copy backend/.env.example to backend/.env and configure your local PostgreSQL password.";
+            logger.error(msg);
+            throw new IllegalStateException(msg);
         }
 
         validateDatabaseName(dbName);

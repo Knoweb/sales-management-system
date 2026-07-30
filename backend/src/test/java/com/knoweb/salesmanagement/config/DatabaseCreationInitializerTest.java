@@ -13,6 +13,52 @@ class DatabaseCreationInitializerTest {
     private final DatabaseCreationInitializer initializer = new DatabaseCreationInitializer();
 
     @Test
+    void testInitialize_MissingPassword_ThrowsException() {
+        org.springframework.context.ConfigurableApplicationContext context = org.mockito.Mockito.mock(org.springframework.context.ConfigurableApplicationContext.class);
+        org.springframework.core.env.ConfigurableEnvironment env = org.mockito.Mockito.mock(org.springframework.core.env.ConfigurableEnvironment.class);
+        org.mockito.Mockito.when(context.getEnvironment()).thenReturn(env);
+        
+        org.mockito.Mockito.when(env.getProperty("knoweb.database.init.enabled", Boolean.class, true)).thenReturn(true);
+        org.mockito.Mockito.when(env.getProperty("DB_HOST", "localhost")).thenReturn("localhost");
+        org.mockito.Mockito.when(env.getProperty("DB_PORT", "5432")).thenReturn("5432");
+        org.mockito.Mockito.when(env.getProperty("DB_NAME", "sales_management")).thenReturn("sales_management");
+        org.mockito.Mockito.when(env.getProperty("DB_USERNAME", "postgres")).thenReturn("postgres");
+        org.mockito.Mockito.when(env.getProperty("DB_PASSWORD")).thenReturn(null);
+        org.mockito.Mockito.when(env.getProperty("DB_ADMIN_DATABASE", "postgres")).thenReturn("postgres");
+
+        IllegalStateException exception = assertThrows(
+            IllegalStateException.class, 
+            () -> initializer.initialize(context)
+        );
+
+        assertTrue(exception.getMessage().contains("DB_PASSWORD is missing. Copy backend/.env.example to backend/.env"));
+        org.mockito.Mockito.verify(env).getProperty("DB_PASSWORD");
+    }
+
+    @Test
+    void testInitialize_WithPassword_FailsAtConnection() {
+        org.springframework.context.ConfigurableApplicationContext context = org.mockito.Mockito.mock(org.springframework.context.ConfigurableApplicationContext.class);
+        org.springframework.core.env.ConfigurableEnvironment env = org.mockito.Mockito.mock(org.springframework.core.env.ConfigurableEnvironment.class);
+        org.mockito.Mockito.when(context.getEnvironment()).thenReturn(env);
+        
+        org.mockito.Mockito.when(env.getProperty("knoweb.database.init.enabled", Boolean.class, true)).thenReturn(true);
+        org.mockito.Mockito.when(env.getProperty("DB_HOST", "localhost")).thenReturn("localhost");
+        org.mockito.Mockito.when(env.getProperty("DB_PORT", "5432")).thenReturn("12345"); // Invalid port
+        org.mockito.Mockito.when(env.getProperty("DB_NAME", "sales_management")).thenReturn("sales_management");
+        org.mockito.Mockito.when(env.getProperty("DB_USERNAME", "postgres")).thenReturn("postgres");
+        org.mockito.Mockito.when(env.getProperty("DB_PASSWORD")).thenReturn("somepassword");
+        org.mockito.Mockito.when(env.getProperty("DB_ADMIN_DATABASE", "postgres")).thenReturn("postgres");
+
+        IllegalStateException exception = assertThrows(
+            IllegalStateException.class, 
+            () -> initializer.initialize(context)
+        );
+
+        assertTrue(exception.getMessage().contains("Failed to initialize database: sales_management"));
+        org.mockito.Mockito.verify(env).getProperty("DB_PASSWORD");
+    }
+
+    @Test
     void testValidDatabaseNames() {
         assertDoesNotThrow(() -> initializer.validateDatabaseName("sales_management"));
         assertDoesNotThrow(() -> initializer.validateDatabaseName("mydb123"));
