@@ -4,12 +4,15 @@ import com.knoweb.salesmanagement.lead.enums.ActivityType;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "lead_activities")
+@EntityListeners(AuditingEntityListener.class)
 public class LeadActivity {
 
     @Id
@@ -38,6 +41,7 @@ public class LeadActivity {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
+    @CreatedBy
     @Column(name = "created_by")
     private UUID createdBy;
 

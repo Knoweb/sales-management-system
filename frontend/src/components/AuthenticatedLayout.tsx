@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link, useLocation, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Users, LogOut, CheckCircle, Briefcase, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, CheckCircle, Briefcase, Menu, X, Calendar } from 'lucide-react';
 
 export const AuthenticatedLayout: React.FC = () => {
   const { user, logout } = useAuth();
@@ -28,6 +28,7 @@ export const AuthenticatedLayout: React.FC = () => {
     { name: 'Skills', path: '/skills', icon: <CheckCircle size={20} />, allowed: user?.permissions.includes('SKILL_CATALOG_READ') },
     { name: 'Clients', path: '/clients', icon: <Briefcase size={20} />, allowed: user?.permissions.includes('CLIENT_READ') },
     { name: 'Leads', path: '/leads', icon: <Briefcase size={20} />, allowed: user?.permissions.includes('LEAD_READ') },
+    { name: 'Follow-ups', path: '/follow-ups', icon: <Calendar size={20} />, allowed: user?.permissions.includes('LEAD_READ') },
   ];
 
   return (

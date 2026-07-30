@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { LeadApi } from '../../services/LeadApi';
+import { ClientApi } from '../../services/ClientApi';
 import type { Lead } from '../../types/lead';
+import type { Client } from '../../types/client';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Eye, Edit, ShieldAlert } from 'lucide-react';
 import { Button } from '../Button';
@@ -14,6 +16,8 @@ export const LeadList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<string>('active');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [clientFilter, setClientFilter] = useState<string>('all');
+  const [clients, setClients] = useState<Client[]>([]);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
@@ -24,7 +28,8 @@ export const LeadList: React.FC = () => {
       setLoading(true);
       setError(null);
       const activeParam = activeFilter === 'all' ? undefined : activeFilter === 'active';
-      const data = await LeadApi.searchLeads(searchTerm || undefined, statusFilter, activeParam, page, 10);
+      const clientParam = clientFilter === 'all' ? undefined : clientFilter;
+      const data = await LeadApi.searchLeads(searchTerm || undefined, statusFilter, activeParam, clientParam, page, 10);
       setLeads(data.content || []);
       setTotalPages(data.page.totalPages);
     } catch (err) {
@@ -33,7 +38,13 @@ export const LeadList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, statusFilter, activeFilter, page]);
+  }, [searchTerm, statusFilter, activeFilter, clientFilter, page]);
+
+  useEffect(() => {
+    ClientApi.searchClients(undefined, undefined, 0, 100)
+      .then(res => setClients(res.content || []))
+      .catch(console.error);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -85,6 +96,16 @@ export const LeadList: React.FC = () => {
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Filter size={16} style={{ color: 'var(--text-light)' }} />
+            <select 
+              value={clientFilter} 
+              onChange={e => { setClientFilter(e.target.value); setPage(0); }}
+              style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '0.25rem' }}
+            >
+              <option value="all">All Clients</option>
+              {clients.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
             <select 
               value={statusFilter} 
               onChange={e => { setStatusFilter(e.target.value); setPage(0); }}

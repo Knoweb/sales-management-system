@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.context.ApplicationEventPublisher;
+import com.knoweb.salesmanagement.attachment.event.AttachmentEvent;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -24,10 +26,13 @@ public class AttachmentService {
 
     private final AttachmentRepository attachmentRepository;
     private final Path fileStorageLocation;
+    private final ApplicationEventPublisher eventPublisher;
 
     public AttachmentService(AttachmentRepository attachmentRepository,
+                             ApplicationEventPublisher eventPublisher,
                              @Value("${file.upload-dir:./uploads}") String uploadDir) {
         this.attachmentRepository = attachmentRepository;
+        this.eventPublisher = eventPublisher;
         this.fileStorageLocation = Paths.get(uploadDir).toAbsolutePath().normalize();
 
         try {
@@ -65,6 +70,8 @@ public class AttachmentService {
             attachment.setStoragePath(uniqueFileName);
 
             attachment = attachmentRepository.save(attachment);
+
+            eventPublisher.publishEvent(new AttachmentEvent(this, entityId, entityType, "UPLOADED", fileName));
 
             return mapToDto(attachment);
         } catch (IOException ex) {
@@ -119,6 +126,7 @@ public class AttachmentService {
         }
 
         attachmentRepository.delete(attachment);
+        eventPublisher.publishEvent(new AttachmentEvent(this, attachment.getEntityId(), attachment.getEntityType(), "REMOVED", attachment.getFileName()));
     }
 
     private String sanitizeFileName(String fileName) {

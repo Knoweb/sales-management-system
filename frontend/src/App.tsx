@@ -21,6 +21,7 @@ import { ClientDetailsPage } from './pages/ClientDetailsPage';
 import { LeadsPage } from './pages/LeadsPage';
 import { LeadFormPage } from './pages/LeadFormPage';
 import { LeadDetailsPage } from './pages/LeadDetailsPage';
+import { FollowUpDashboard } from './pages/FollowUpDashboard';
 
 import './index.css';
 import './styles/auth.css';
@@ -120,6 +121,12 @@ function App() {
             <Route path="/leads/:id/edit" element={
               <ProtectedRoute requiredPermission="LEAD_UPDATE">
                 <LeadFormPage />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/follow-ups" element={
+              <ProtectedRoute requiredPermission="LEAD_READ">
+                <FollowUpDashboard />
               </ProtectedRoute>
             } />
           </Route>

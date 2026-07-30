@@ -202,7 +202,7 @@ class LeadControllerTest {
     @WithMockUser(authorities = {"LEAD_READ"})
     void searchLeads_withNullSearch_shouldReturn200() throws Exception {
         Page<LeadDTO> page = new PageImpl<>(Collections.emptyList());
-        when(leadService.searchLeads(eq(null), eq(null), eq(null), any(Pageable.class))).thenReturn(page);
+        when(leadService.searchLeads(eq(null), eq(null), eq(null), eq(null), any(Pageable.class))).thenReturn(page);
 
         mockMvc.perform(get("/api/v1/leads?page=0&size=10"))
                 .andExpect(status().isOk())
@@ -213,7 +213,7 @@ class LeadControllerTest {
     @WithMockUser(authorities = {"LEAD_READ"})
     void searchLeads_withBlankSearch_shouldReturn200() throws Exception {
         Page<LeadDTO> page = new PageImpl<>(Collections.emptyList());
-        when(leadService.searchLeads(eq("   "), eq(null), eq(null), any(Pageable.class))).thenReturn(page);
+        when(leadService.searchLeads(eq("   "), eq(null), eq(null), eq(null), any(Pageable.class))).thenReturn(page);
 
         mockMvc.perform(get("/api/v1/leads?search=   &page=0&size=10"))
                 .andExpect(status().isOk())
@@ -224,7 +224,7 @@ class LeadControllerTest {
     @WithMockUser(authorities = {"LEAD_READ"})
     void searchLeads_withTextSearch_shouldReturn200() throws Exception {
         Page<LeadDTO> page = new PageImpl<>(Collections.emptyList());
-        when(leadService.searchLeads(eq("test"), eq(null), eq(null), any(Pageable.class))).thenReturn(page);
+        when(leadService.searchLeads(eq("test"), eq(null), eq(null), eq(null), any(Pageable.class))).thenReturn(page);
 
         mockMvc.perform(get("/api/v1/leads?search=test&page=0&size=10"))
                 .andExpect(status().isOk())
@@ -235,7 +235,7 @@ class LeadControllerTest {
     @WithMockUser(authorities = {"LEAD_READ"})
     void searchLeads_withValidStatusFilter_shouldReturn200() throws Exception {
         Page<LeadDTO> page = new PageImpl<>(Collections.emptyList());
-        when(leadService.searchLeads(eq(null), eq(LeadStatus.NEW), eq(null), any(Pageable.class))).thenReturn(page);
+        when(leadService.searchLeads(eq(null), eq(LeadStatus.NEW), eq(null), eq(null), any(Pageable.class))).thenReturn(page);
 
         mockMvc.perform(get("/api/v1/leads?status=NEW&page=0&size=10"))
                 .andExpect(status().isOk())
@@ -246,7 +246,7 @@ class LeadControllerTest {
     @WithMockUser(authorities = {"LEAD_READ"})
     void searchLeads_withEmptyResult_shouldReturnEmptyPage() throws Exception {
         Page<LeadDTO> page = new PageImpl<>(Collections.emptyList());
-        when(leadService.searchLeads(any(), any(), any(), any(Pageable.class))).thenReturn(page);
+        when(leadService.searchLeads(any(), any(), any(), any(), any(Pageable.class))).thenReturn(page);
 
         mockMvc.perform(get("/api/v1/leads?page=0&size=10"))
                 .andExpect(status().isOk())

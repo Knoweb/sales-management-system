@@ -3,11 +3,12 @@ import type { Lead, LeadRequest, LeadActivity, LeadActivityRequest, FollowUp, Fo
 import type { PaginatedResponse } from './ClientApi';
 
 export const LeadApi = {
-  searchLeads: async (search?: string, status?: string, active?: boolean, page = 0, size = 20) => {
+  searchLeads: async (search?: string, status?: string, active?: boolean, clientId?: string, page = 0, size = 20) => {
     const params = new URLSearchParams();
     if (search) params.append('search', search);
     if (status && status !== 'all') params.append('status', status);
     if (active !== undefined) params.append('active', String(active));
+    if (clientId && clientId !== 'all') params.append('clientId', clientId);
     params.append('page', String(page));
     params.append('size', String(size));
     
@@ -76,6 +77,15 @@ export const LeadApi = {
 
   completeFollowUp: async (leadId: string, followUpId: string, notes?: string) => {
     const response = await api.patch<FollowUp>(`/leads/${leadId}/follow-ups/${followUpId}/complete`, { notes });
+    return response.data;
+  },
+
+  getGlobalFollowUps: async (type?: string, page = 0, size = 20) => {
+    const params = new URLSearchParams();
+    if (type) params.append('type', type);
+    params.append('page', String(page));
+    params.append('size', String(size));
+    const response = await api.get<PaginatedResponse<FollowUp>>(`/follow-ups?${params.toString()}`);
     return response.data;
   }
 };

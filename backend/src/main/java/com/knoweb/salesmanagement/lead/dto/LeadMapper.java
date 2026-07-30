@@ -25,6 +25,11 @@ public class LeadMapper {
         dto.setCreatedAt(lead.getCreatedAt());
         dto.setUpdatedAt(lead.getUpdatedAt());
         
+        if (lead.getContact() != null) {
+            dto.setContactId(lead.getContact().getId());
+            dto.setContactName(lead.getContact().getFirstName() + " " + lead.getContact().getLastName());
+        }
+        
         if (lead.getAssignedTo() != null) {
             dto.setAssignedTo(lead.getAssignedTo().getId());
             dto.setAssignedToName(lead.getAssignedTo().getFirstName() + " " + lead.getAssignedTo().getLastName());

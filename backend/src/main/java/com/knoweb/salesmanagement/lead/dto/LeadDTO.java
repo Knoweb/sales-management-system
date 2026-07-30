@@ -9,6 +9,8 @@ public class LeadDTO {
     private UUID id;
     private UUID clientId;
     private String clientName;
+    private UUID contactId;
+    private String contactName;
     private String title;
     private InquirySource inquirySource;
     private String interestedProduct;
@@ -28,6 +30,10 @@ public class LeadDTO {
     public void setClientId(UUID clientId) { this.clientId = clientId; }
     public String getClientName() { return clientName; }
     public void setClientName(String clientName) { this.clientName = clientName; }
+    public UUID getContactId() { return contactId; }
+    public void setContactId(UUID contactId) { this.contactId = contactId; }
+    public String getContactName() { return contactName; }
+    public void setContactName(String contactName) { this.contactName = contactName; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
     public InquirySource getInquirySource() { return inquirySource; }

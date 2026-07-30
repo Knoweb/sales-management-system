@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { LeadApi } from '../../services/LeadApi';
 import { ClientApi } from '../../services/ClientApi';
 import type { LeadRequest } from '../../types/lead';
-import type { Client } from '../../types/client';
+import type { Client, ClientContact } from '../../types/client';
 import { Button } from '../Button';
 
 export const LeadForm: React.FC = () => {
@@ -15,9 +15,11 @@ export const LeadForm: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
+  const [contacts, setContacts] = useState<ClientContact[]>([]);
 
   const [formData, setFormData] = useState<LeadRequest>({
     clientId: '',
+    contactId: '',
     title: '',
     inquirySource: 'WEBSITE',
     status: 'NEW',
@@ -44,6 +46,7 @@ export const LeadForm: React.FC = () => {
           const lead = await LeadApi.getLead(id);
           setFormData({
             clientId: lead.clientId,
+            contactId: lead.contactId || '',
             title: lead.title,
             inquirySource: lead.inquirySource,
             status: lead.status,
@@ -61,6 +64,21 @@ export const LeadForm: React.FC = () => {
       void fetchLead();
     }
   }, [id, isEditing]);
+
+  useEffect(() => {
+    let mounted = true;
+    if (formData.clientId) {
+      ClientApi.getClientContacts(formData.clientId)
+        .then(data => {
+          if (mounted) setContacts(data);
+        })
+        .catch(err => console.error('Failed to load contacts', err));
+    } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setContacts([]);
+    }
+    return () => { mounted = false; };
+  }, [formData.clientId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -133,6 +151,24 @@ export const LeadForm: React.FC = () => {
               {clients.map(client => (
                 <option key={client.id} value={client.id}>
                   {client.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="contactId" className="form-label">Client Contact</label>
+            <select
+              id="contactId"
+              name="contactId"
+              className="form-control"
+              value={formData.contactId || ''}
+              onChange={handleChange}
+            >
+              <option value="">No Contact Selected</option>
+              {contacts.map(contact => (
+                <option key={contact.id} value={contact.id}>
+                  {contact.firstName} {contact.lastName} {contact.primary ? '(Primary)' : ''}
                 </option>
               ))}
             </select>

@@ -41,6 +41,7 @@ public class LeadService {
     private final LeadActivityRepository leadActivityRepository;
     private final FollowUpRepository followUpRepository;
     private final ClientRepository clientRepository;
+    private final com.knoweb.salesmanagement.client.repository.ClientContactRepository clientContactRepository;
     private final EmployeeRepository employeeRepository;
     private final UserRepository userRepository;
     private final LeadMapper leadMapper;
@@ -49,6 +50,7 @@ public class LeadService {
                        LeadActivityRepository leadActivityRepository,
                        FollowUpRepository followUpRepository,
                        ClientRepository clientRepository,
+                       com.knoweb.salesmanagement.client.repository.ClientContactRepository clientContactRepository,
                        EmployeeRepository employeeRepository,
                        UserRepository userRepository,
                        LeadMapper leadMapper) {
@@ -56,6 +58,7 @@ public class LeadService {
         this.leadActivityRepository = leadActivityRepository;
         this.followUpRepository = followUpRepository;
         this.clientRepository = clientRepository;
+        this.clientContactRepository = clientContactRepository;
         this.employeeRepository = employeeRepository;
         this.userRepository = userRepository;
         this.leadMapper = leadMapper;
@@ -82,7 +85,7 @@ public class LeadService {
     }
 
     private void validateLeadReadAccess(Lead lead) {
-        if (hasAuthority("LEAD_READ_ALL") || hasAuthority("ROLE_SYSTEM_ADMIN")) return;
+        if (hasAuthority("LEAD_READ_ALL")) return;
         
         Employee currentEmployee = getCurrentEmployee();
         if (currentEmployee == null || lead.getAssignedTo() == null || !lead.getAssignedTo().getId().equals(currentEmployee.getId())) {
@@ -91,7 +94,7 @@ public class LeadService {
     }
 
     private void validateLeadUpdateAccess(Lead lead) {
-        if (hasAuthority("LEAD_UPDATE_ALL") || hasAuthority("ROLE_SYSTEM_ADMIN")) return;
+        if (hasAuthority("LEAD_UPDATE_ALL")) return;
         
         Employee currentEmployee = getCurrentEmployee();
         if (currentEmployee == null || lead.getAssignedTo() == null || !lead.getAssignedTo().getId().equals(currentEmployee.getId())) {
@@ -109,9 +112,9 @@ public class LeadService {
     }
 
     @Transactional(readOnly = true)
-    public Page<LeadDTO> searchLeads(String search, LeadStatus status, Boolean active, Pageable pageable) {
+    public Page<LeadDTO> searchLeads(String search, LeadStatus status, Boolean active, UUID clientId, Pageable pageable) {
         UUID assignedToFilter = null;
-        if (!hasAuthority("LEAD_READ_ALL") && !hasAuthority("ROLE_SYSTEM_ADMIN")) {
+        if (!hasAuthority("LEAD_READ_ALL")) {
             Employee emp = getCurrentEmployee();
             if (emp != null) {
                 assignedToFilter = emp.getId();
@@ -142,6 +145,10 @@ public class LeadService {
                 predicates.add(cb.equal(root.get("active"), active));
             }
 
+            if (clientId != null) {
+                predicates.add(cb.equal(root.join("client").get("id"), clientId));
+            }
+
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
@@ -162,6 +169,16 @@ public class LeadService {
 
         Lead lead = new Lead();
         lead.setClient(client);
+
+        if (request.getContactId() != null) {
+            com.knoweb.salesmanagement.client.entity.ClientContact contact = clientContactRepository.findById(request.getContactId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Contact not found"));
+            if (!contact.getClient().getId().equals(client.getId())) {
+                throw new IllegalArgumentException("Selected contact does not belong to the selected client");
+            }
+            lead.setContact(contact);
+        }
+
         lead.setTitle(request.getTitle());
         lead.setInquirySource(request.getInquirySource());
         lead.setInterestedProduct(request.getInterestedProduct());
@@ -174,6 +191,7 @@ public class LeadService {
         lead.setAssignedTo(currentEmployee);
 
         lead = leadRepository.save(lead);
+        logSystemActivity(lead, "Lead created");
         return leadMapper.toDto(lead);
     }
 
@@ -181,6 +199,17 @@ public class LeadService {
     public LeadDTO updateLead(UUID id, LeadRequest request) {
         Lead lead = leadRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Lead not found"));
         validateLeadUpdateAccess(lead);
+
+        if (request.getContactId() != null) {
+            com.knoweb.salesmanagement.client.entity.ClientContact contact = clientContactRepository.findById(request.getContactId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Contact not found"));
+            if (!contact.getClient().getId().equals(lead.getClient().getId())) {
+                throw new IllegalArgumentException("Selected contact does not belong to the lead's client");
+            }
+            lead.setContact(contact);
+        } else {
+            lead.setContact(null);
+        }
 
         lead.setTitle(request.getTitle());
         lead.setInquirySource(request.getInquirySource());
@@ -190,6 +219,7 @@ public class LeadService {
         lead.setNotes(request.getNotes());
 
         lead = leadRepository.save(lead);
+        logSystemActivity(lead, "Lead details updated");
         return leadMapper.toDto(lead);
     }
 
@@ -250,7 +280,7 @@ public class LeadService {
     @Transactional
     public void deleteLead(UUID id) {
         Lead lead = leadRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Lead not found"));
-        if (!hasAuthority("LEAD_DELETE") && !hasAuthority("ROLE_SYSTEM_ADMIN")) {
+        if (!hasAuthority("LEAD_DELETE")) {
             throw new AccessDeniedException("You do not have permission to delete leads");
         }
         lead.setActive(false);
@@ -302,6 +332,7 @@ public class LeadService {
         }
 
         followUp = followUpRepository.save(followUp);
+        logSystemActivity(lead, "Follow-up created");
         return leadMapper.toFollowUpDto(followUp);
     }
 

@@ -10,6 +10,8 @@ export interface Lead {
   id: string;
   clientId: string;
   clientName: string;
+  contactId?: string;
+  contactName?: string;
   title: string;
   inquirySource: InquirySource;
   interestedProduct: string | null;
@@ -25,6 +27,7 @@ export interface Lead {
 
 export interface LeadRequest {
   clientId: string;
+  contactId?: string;
   title: string;
   inquirySource: InquirySource;
   interestedProduct?: string;

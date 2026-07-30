@@ -23,6 +23,10 @@ public class Lead {
     @JoinColumn(name = "client_id", nullable = false)
     private Client client;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "contact_id")
+    private com.knoweb.salesmanagement.client.entity.ClientContact contact;
+
     @Column(nullable = false, length = 255)
     private String title;
 
@@ -72,6 +76,9 @@ public class Lead {
     
     public Client getClient() { return client; }
     public void setClient(Client client) { this.client = client; }
+    
+    public com.knoweb.salesmanagement.client.entity.ClientContact getContact() { return contact; }
+    public void setContact(com.knoweb.salesmanagement.client.entity.ClientContact contact) { this.contact = contact; }
     
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }

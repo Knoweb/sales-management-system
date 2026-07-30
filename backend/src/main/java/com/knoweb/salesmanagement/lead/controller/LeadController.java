@@ -31,8 +31,9 @@ public class LeadController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) LeadStatus status,
             @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) UUID clientId,
             Pageable pageable) {
-        Page<LeadDTO> page = leadService.searchLeads(search, status, active, pageable);
+        Page<LeadDTO> page = leadService.searchLeads(search, status, active, clientId, pageable);
         return ResponseEntity.ok(page);
     }
 

@@ -12,6 +12,8 @@ public class LeadRequest {
     
     @NotNull(message = "Client ID is required")
     private UUID clientId;
+    
+    private UUID contactId;
 
     @NotBlank(message = "Title is required")
     @Size(max = 255, message = "Title cannot exceed 255 characters")
@@ -33,6 +35,8 @@ public class LeadRequest {
     // Getters and setters
     public UUID getClientId() { return clientId; }
     public void setClientId(UUID clientId) { this.clientId = clientId; }
+    public UUID getContactId() { return contactId; }
+    public void setContactId(UUID contactId) { this.contactId = contactId; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
     public InquirySource getInquirySource() { return inquirySource; }

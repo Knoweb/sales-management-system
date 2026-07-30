@@ -66,6 +66,19 @@ export const LeadFollowUps: React.FC<LeadFollowUpsProps> = ({ leadId }) => {
     }
   };
 
+  const getStatusDisplay = (fu: FollowUp) => {
+    if (fu.status === 'COMPLETED') return { label: 'Completed', bg: 'var(--success-bg)', color: 'var(--success)', border: 'var(--success)' };
+    if (fu.status === 'CANCELLED') return { label: 'Cancelled', bg: 'var(--bg-secondary)', color: 'var(--text-light)', border: 'var(--text-light)' };
+    
+    // PENDING logic
+    // eslint-disable-next-line react-hooks/purity
+    const isOverdue = new Date(fu.followUpDate).getTime() < Date.now();
+    if (isOverdue) {
+      return { label: 'Overdue', bg: 'var(--error-bg)', color: 'var(--error)', border: 'var(--error)' };
+    }
+    return { label: 'Pending', bg: 'var(--warning-bg)', color: 'var(--warning)', border: 'var(--warning)' };
+  };
+
   return (
     <div className="card">
       <div className="card-header flex-between">
@@ -126,8 +139,10 @@ export const LeadFollowUps: React.FC<LeadFollowUpsProps> = ({ leadId }) => {
           <p>No follow-ups scheduled.</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {followUps.map(fu => (
-              <div key={fu.id} className="card" style={{ padding: '1rem', borderLeft: fu.status === 'COMPLETED' ? '4px solid var(--success)' : fu.status === 'PENDING' ? '4px solid var(--warning)' : '4px solid var(--text-light)' }}>
+            {followUps.map(fu => {
+              const display = getStatusDisplay(fu);
+              return (
+              <div key={fu.id} className="card" style={{ padding: '1rem', borderLeft: `4px solid ${display.border}` }}>
                 <div className="flex-between" style={{ marginBottom: '0.5rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <h4 style={{ margin: 0, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -138,10 +153,10 @@ export const LeadFollowUps: React.FC<LeadFollowUpsProps> = ({ leadId }) => {
                       padding: '0.125rem 0.5rem', 
                       borderRadius: '1rem', 
                       fontSize: '0.75rem',
-                      backgroundColor: fu.status === 'COMPLETED' ? 'var(--success-bg)' : fu.status === 'PENDING' ? 'var(--warning-bg)' : 'var(--bg-secondary)',
-                      color: fu.status === 'COMPLETED' ? 'var(--success)' : fu.status === 'PENDING' ? 'var(--warning)' : 'var(--text-light)'
+                      backgroundColor: display.bg,
+                      color: display.color
                     }}>
-                      {fu.status}
+                      {display.label}
                     </span>
                   </div>
                   {fu.status === 'PENDING' && (
@@ -161,7 +176,7 @@ export const LeadFollowUps: React.FC<LeadFollowUpsProps> = ({ leadId }) => {
                   </p>
                 )}
               </div>
-            ))}
+            )})}
           </div>
         )}
       </div>

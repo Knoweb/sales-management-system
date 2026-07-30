@@ -4,7 +4,8 @@ import type { Lead } from '../../types/lead';
 import { LeadTimeline } from './LeadTimeline';
 import { LeadFollowUps } from './LeadFollowUps';
 import { LeadAttachments } from './LeadAttachments';
-import { Briefcase, Building, Tag, User } from 'lucide-react';
+import { Briefcase, Building, Tag, User, Contact, Calendar } from 'lucide-react';
+import type { FollowUp } from '../../types/lead';
 
 interface LeadDetailsProps {
   leadId: string;
@@ -12,6 +13,7 @@ interface LeadDetailsProps {
 
 export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
   const [lead, setLead] = useState<Lead | null>(null);
+  const [nextFollowUp, setNextFollowUp] = useState<FollowUp | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -23,6 +25,12 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
         setLoading(true);
         const data = await LeadApi.getLead(leadId);
         setLead(data);
+        
+        const followUps = await LeadApi.getFollowUps(leadId);
+        const pending = followUps
+          .filter(f => f.status === 'PENDING')
+          .sort((a, b) => new Date(a.followUpDate).getTime() - new Date(b.followUpDate).getTime());
+        setNextFollowUp(pending[0] || null);
       } catch {
         setError('Failed to load lead details');
       } finally {
@@ -92,10 +100,16 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
                     <Tag size={16} /> <span><strong>Source:</strong> {lead.inquirySource.replace('_', ' ')}</span>
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem', color: 'var(--text-light)' }}>
+                    <Contact size={16} /> <span><strong>Contact:</strong> {lead.contactName || 'N/A'}</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', color: 'var(--text-light)' }}>
                     <Briefcase size={16} /> <span><strong>Product:</strong> {lead.interestedProduct || 'N/A'}</span>
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem', color: 'var(--text-light)' }}>
                     <User size={16} /> <span><strong>Assigned To:</strong> {lead.assignedToName || 'Unassigned'}</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', color: 'var(--text-light)' }}>
+                    <Calendar size={16} /> <span><strong>Next Follow-up:</strong> {nextFollowUp ? new Date(nextFollowUp.followUpDate).toLocaleString() : 'None Scheduled'}</span>
                   </div>
                 </div>
               </div>
