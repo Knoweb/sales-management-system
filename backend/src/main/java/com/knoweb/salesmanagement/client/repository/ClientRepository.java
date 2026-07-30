@@ -12,7 +12,7 @@ import java.util.UUID;
 public interface ClientRepository extends JpaRepository<Client, UUID> {
     
     @Query("SELECT c FROM Client c WHERE " +
-           "(:search IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "(LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
            "OR LOWER(c.email) LIKE LOWER(CONCAT('%', :search, '%')) " +
            "OR LOWER(c.registrationNumber) LIKE LOWER(CONCAT('%', :search, '%'))) " +
            "AND (:active IS NULL OR c.active = :active)")

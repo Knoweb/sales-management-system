@@ -25,11 +25,11 @@ public class ClientController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('CLIENT_READ')")
-    public ResponseEntity<Page<ClientDTO>> searchClients(
+    public ResponseEntity<Page<ClientSummaryDTO>> searchClients(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Boolean active,
             Pageable pageable) {
-        Page<ClientDTO> page = clientService.searchClients(search, active, pageable);
+        Page<ClientSummaryDTO> page = clientService.searchClients(search, active, pageable);
         return ResponseEntity.ok(page);
     }
 

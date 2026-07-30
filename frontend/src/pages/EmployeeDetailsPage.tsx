@@ -37,33 +37,134 @@ export const EmployeeDetailsPage: React.FC = () => {
   const [availData, setAvailData] = useState<AvailabilityResponse | null>(null);
   const [availLoading, setAvailLoading] = useState(false);
 
-  const loadData = async () => {
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const loadedTabsRef = React.useRef(new Set<string>());
+
+  useEffect(() => {
+    if (!id) return;
+
+    const controller = new AbortController();
+
+    const loadEmployee = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await EmployeeApi.getById(id, controller.signal);
+        setEmployee(data);
+        loadedTabsRef.current.clear();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
+        if (!controller.signal.aborted) {
+          const status = err?.response?.status;
+          if (status === 403) {
+            setError("Unauthorized to view this employee.");
+          } else if (status !== 404) {
+            setError('Failed to load employee details.');
+          }
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void loadEmployee();
+
+    return () => {
+      controller.abort();
+    };
+  }, [id, retryCount]);
+
+  const loadSkills = async () => {
     if (!id) return;
     try {
-      setLoading(true);
-      const [empData, skillsData, qualData, leaveData] = await Promise.all([
-        EmployeeApi.getById(id),
-        EmployeeApi.getSkills(id).catch(() => []),
-        EmployeeApi.getQualifications(id).catch(() => []),
-        EmployeeApi.getLeaves(id).catch(() => [])
-      ]);
-      
-      setEmployee(empData);
-      setSkills(skillsData);
-      setQualifications(qualData);
-      setLeaves(leaveData);
-    } catch (error) {
-      console.error('Failed to load employee details', error);
-    } finally {
-      setLoading(false);
+      const data = await EmployeeApi.getSkills(id);
+      setSkills(data);
+      loadedTabsRef.current.add('skills');
+    } catch (err) {
+      console.error(err);
     }
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadData();
-  }, [loadData]);
+    if (!id || activeTab !== 'skills' || loadedTabsRef.current.has('skills') || loading) return;
+    const controller = new AbortController();
+    
+    const loadTab = async () => {
+      try {
+        const data = await EmployeeApi.getSkills(id, controller.signal);
+        setSkills(data);
+        loadedTabsRef.current.add('skills');
+      } catch (err) {
+        if (!controller.signal.aborted) console.error(err);
+      }
+    };
+    
+    void loadTab();
+    return () => controller.abort();
+  }, [id, activeTab, loading]);
 
+  const loadQualifications = async () => {
+    if (!id) return;
+    try {
+      const data = await EmployeeApi.getQualifications(id);
+      setQualifications(data);
+      loadedTabsRef.current.add('qualifications');
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (!id || activeTab !== 'qualifications' || loadedTabsRef.current.has('qualifications') || loading) return;
+    const controller = new AbortController();
+    
+    const loadTab = async () => {
+      try {
+        const data = await EmployeeApi.getQualifications(id, controller.signal);
+        setQualifications(data);
+        loadedTabsRef.current.add('qualifications');
+      } catch (err) {
+        if (!controller.signal.aborted) console.error(err);
+      }
+    };
+    
+    void loadTab();
+    return () => controller.abort();
+  }, [id, activeTab, loading]);
+
+  const loadLeaves = async () => {
+    if (!id) return;
+    try {
+      const data = await EmployeeApi.getLeaves(id);
+      setLeaves(data);
+      loadedTabsRef.current.add('leave');
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (!id || activeTab !== 'leave' || loadedTabsRef.current.has('leave') || loading) return;
+    const controller = new AbortController();
+    
+    const loadTab = async () => {
+      try {
+        const data = await EmployeeApi.getLeaves(id, controller.signal);
+        setLeaves(data);
+        loadedTabsRef.current.add('leave');
+      } catch (err) {
+        if (!controller.signal.aborted) console.error(err);
+      }
+    };
+    
+    void loadTab();
+    return () => controller.abort();
+  }, [id, activeTab, loading]);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSkillSubmit = async (data: any) => {
     try {
       if (editSkillData) {
@@ -71,7 +172,7 @@ export const EmployeeDetailsPage: React.FC = () => {
       } else {
         await EmployeeApi.assignSkill(id!, data);
       }
-      await loadData();
+      await loadSkills();
       setShowSkillForm(false);
     } catch (err) {
       const error = err as { response?: { data?: { message?: string } } };
@@ -86,6 +187,7 @@ export const EmployeeDetailsPage: React.FC = () => {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleQualificationSubmit = async (data: any) => {
     try {
       if (editQualData) {
@@ -93,7 +195,7 @@ export const EmployeeDetailsPage: React.FC = () => {
       } else {
         await EmployeeApi.addQualification(id!, data);
       }
-      await loadData();
+      await loadQualifications();
       setShowQualForm(false);
     } catch (err) {
       const error = err as { response?: { data?: { message?: string } } };
@@ -108,10 +210,11 @@ export const EmployeeDetailsPage: React.FC = () => {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleLeaveSubmit = async (data: any) => {
     try {
       await EmployeeApi.requestLeave(id!, data);
-      await loadData();
+      await loadLeaves();
       setShowLeaveForm(false);
     } catch (err) {
       const error = err as { response?: { data?: { message?: string } } };
@@ -121,8 +224,7 @@ export const EmployeeDetailsPage: React.FC = () => {
 
   const handleLeaveStatusUpdate = async (leaveId: string, status: LeaveStatus) => {
     await EmployeeApi.updateLeaveStatus(id!, leaveId, status);
-    const leaveData = await EmployeeApi.getLeaves(id!);
-    setLeaves(leaveData);
+    await loadLeaves();
   };
 
   const checkAvailability = async () => {
@@ -141,7 +243,20 @@ export const EmployeeDetailsPage: React.FC = () => {
   if (loading) {
     return (
       <div className="page-container">
-        <p>Loading employee details...</p>
+        <div className="card p-8" style={{ textAlign: 'center', margin: '2rem 0' }}>
+          <p>Loading employee details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="page-container">
+        <div className="card p-8" style={{ textAlign: 'center', margin: '2rem 0', border: '1px solid var(--error)' }}>
+          <h2 style={{ color: 'var(--error)', marginBottom: '1rem' }}>{error}</h2>
+          <button className="btn btn-primary" onClick={() => setRetryCount(c => c + 1)}>Retry</button>
+        </div>
       </div>
     );
   }
@@ -149,8 +264,11 @@ export const EmployeeDetailsPage: React.FC = () => {
   if (!employee) {
     return (
       <div className="page-container">
-        <p>Employee not found.</p>
-        <Link to="/employees" className="btn btn-secondary mt-4">Back to Employees</Link>
+        <div className="card p-8" style={{ textAlign: 'center', margin: '2rem 0' }}>
+          <h2 style={{ marginBottom: '1rem' }}>Employee Not Found</h2>
+          <p style={{ marginBottom: '1.5rem', color: 'var(--text-light)' }}>The employee you are looking for does not exist.</p>
+          <Link to="/employees" className="btn btn-secondary">Back to Employees</Link>
+        </div>
       </div>
     );
   }

@@ -30,8 +30,9 @@ public class ClientService {
 
     @PreAuthorize("hasAuthority('CLIENT_READ')")
     @Transactional(readOnly = true)
-    public Page<ClientDTO> searchClients(String search, Boolean active, Pageable pageable) {
-        return clientRepository.searchClients(search, active, pageable).map(clientMapper::toDto);
+    public Page<ClientSummaryDTO> searchClients(String search, Boolean active, Pageable pageable) {
+        String safeSearch = search != null ? search : "";
+        return clientRepository.searchClients(safeSearch, active, pageable).map(clientMapper::toSummaryDto);
     }
 
     @PreAuthorize("hasAuthority('CLIENT_READ')")

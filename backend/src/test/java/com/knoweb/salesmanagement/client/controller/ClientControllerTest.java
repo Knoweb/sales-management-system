@@ -98,4 +98,52 @@ class ClientControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    @WithMockUser(authorities = "CLIENT_READ")
+    void searchClients_EmptyList_Returns200() throws Exception {
+        PageImpl<ClientSummaryDTO> emptyPage = new PageImpl<>(List.of());
+        Mockito.when(clientService.searchClients(any(), any(), any())).thenReturn(emptyPage);
+
+        mockMvc.perform(get("/api/v1/clients?page=0&size=10")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
+    @WithMockUser(authorities = "CLIENT_READ")
+    void searchClients_Paginated_Returns200() throws Exception {
+        ClientSummaryDTO summary = new ClientSummaryDTO();
+        summary.setId(clientId);
+        summary.setName("Test Client");
+        PageImpl<ClientSummaryDTO> page = new PageImpl<>(List.of(summary));
+        Mockito.when(clientService.searchClients(any(), any(), any())).thenReturn(page);
+
+        mockMvc.perform(get("/api/v1/clients?page=0&size=10")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(clientId.toString()))
+                .andExpect(jsonPath("$.content[0].name").value("Test Client"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "CLIENT_READ")
+    void searchClients_WithSearchQuery_Returns200() throws Exception {
+        PageImpl<ClientSummaryDTO> page = new PageImpl<>(List.of());
+        Mockito.when(clientService.searchClients(eq("test"), any(), any())).thenReturn(page);
+
+        mockMvc.perform(get("/api/v1/clients?search=test&page=0&size=10")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(authorities = "OTHER_ROLE")
+    void searchClients_PermissionMissing_Returns403() throws Exception {
+        mockMvc.perform(get("/api/v1/clients?page=0&size=10")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
 }

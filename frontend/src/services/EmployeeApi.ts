@@ -23,8 +23,8 @@ export const EmployeeApi = {
         return response.data;
     },
 
-    getById: async (id: string) => {
-        const response = await apiClient.get<Employee>(`/employees/${id}`);
+    getById: async (id: string, signal?: AbortSignal) => {
+        const response = await apiClient.get<Employee>(`/employees/${id}`, { signal });
         return response.data;
     },
 
@@ -46,8 +46,8 @@ export const EmployeeApi = {
     },
 
     // Skills
-    getSkills: async (id: string) => {
-        const response = await apiClient.get<EmployeeSkill[]>(`/employees/${id}/skills`);
+    getSkills: async (id: string, signal?: AbortSignal) => {
+        const response = await apiClient.get<EmployeeSkill[]>(`/employees/${id}/skills`, { signal });
         return response.data;
     },
 
@@ -66,8 +66,8 @@ export const EmployeeApi = {
     },
 
     // Qualifications
-    getQualifications: async (id: string) => {
-        const response = await apiClient.get<EmployeeQualification[]>(`/employees/${id}/qualifications`);
+    getQualifications: async (id: string, signal?: AbortSignal) => {
+        const response = await apiClient.get<EmployeeQualification[]>(`/employees/${id}/qualifications`, { signal });
         return response.data;
     },
 
@@ -86,8 +86,8 @@ export const EmployeeApi = {
     },
 
     // Leaves
-    getLeaves: async (id: string) => {
-        const response = await apiClient.get<EmployeeLeave[]>(`/employees/${id}/leaves`);
+    getLeaves: async (id: string, signal?: AbortSignal) => {
+        const response = await apiClient.get<EmployeeLeave[]>(`/employees/${id}/leaves`, { signal });
         return response.data;
     },
 

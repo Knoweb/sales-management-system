@@ -3,7 +3,9 @@ import { X } from 'lucide-react';
 
 interface EmployeeQualificationFormProps {
   onClose: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSubmit: (data: any) => Promise<void>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialData?: any;
 }
 
@@ -45,6 +47,7 @@ export const EmployeeQualificationForm: React.FC<EmployeeQualificationFormProps>
         notes
       });
       onClose();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to save qualification');
     } finally {

@@ -4,6 +4,7 @@ import type { LeaveType } from '../types/leave';
 
 interface EmployeeLeaveFormProps {
   onClose: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSubmit: (data: any) => Promise<void>;
 }
 
@@ -47,6 +48,7 @@ export const EmployeeLeaveForm: React.FC<EmployeeLeaveFormProps> = ({ onClose, o
         reason
       });
       onClose();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to submit leave request');
     } finally {

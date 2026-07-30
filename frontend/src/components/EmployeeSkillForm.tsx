@@ -5,7 +5,9 @@ import { SkillApi } from '../services/SkillApi';
 
 interface EmployeeSkillFormProps {
   onClose: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSubmit: (data: any) => Promise<void>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialData?: any;
 }
 
@@ -54,6 +56,7 @@ export const EmployeeSkillForm: React.FC<EmployeeSkillFormProps> = ({ onClose, o
         notes
       });
       onClose();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to save skill');
     } finally {

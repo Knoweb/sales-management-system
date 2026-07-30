@@ -88,7 +88,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             return new Promise(function(resolve, reject) {
               failedQueue.push({ resolve, reject });
             }).then(token => {
-              originalRequest.headers.set ? originalRequest.headers.set('Authorization', 'Bearer ' + token) : originalRequest.headers.Authorization = 'Bearer ' + token;
+              if (originalRequest.headers.set) {
+                originalRequest.headers.set('Authorization', 'Bearer ' + token);
+              } else {
+                originalRequest.headers.Authorization = 'Bearer ' + token;
+              }
               return apiClient.request(originalRequest);
             }).catch(err => {
               return Promise.reject(err);
@@ -103,7 +107,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             inMemoryToken = data.accessToken;
             setUser(data.user);
             processQueue(null, data.accessToken);
-            originalRequest.headers.set ? originalRequest.headers.set('Authorization', 'Bearer ' + data.accessToken) : originalRequest.headers.Authorization = 'Bearer ' + data.accessToken;
+            if (originalRequest.headers.set) {
+              originalRequest.headers.set('Authorization', 'Bearer ' + data.accessToken);
+            } else {
+              originalRequest.headers.Authorization = 'Bearer ' + data.accessToken;
+            }
             return apiClient.request(originalRequest);
           } catch (err) {
             processQueue(err, null);

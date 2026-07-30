@@ -48,4 +48,33 @@ public class ClientMapper {
         dto.setActive(contact.isActive());
         return dto;
     }
+
+    public ClientSummaryDTO toSummaryDto(Client client) {
+        if (client == null) return null;
+        
+        ClientSummaryDTO dto = new ClientSummaryDTO();
+        dto.setId(client.getId());
+        dto.setName(client.getName());
+        dto.setEmail(client.getEmail());
+        dto.setPhone(client.getPhone());
+        dto.setRegistrationNumber(client.getRegistrationNumber());
+        dto.setIndustry(client.getIndustry());
+        dto.setClientType(client.getClientType());
+        dto.setActive(client.isActive());
+        dto.setCreatedAt(client.getCreatedAt());
+        dto.setUpdatedAt(client.getUpdatedAt());
+        
+        if (client.getContacts() != null) {
+            client.getContacts().stream()
+                .filter(ClientContact::isPrimary)
+                .findFirst()
+                .ifPresent(contact -> {
+                    dto.setPrimaryContactName(contact.getFirstName() + " " + contact.getLastName());
+                    dto.setPrimaryContactEmail(contact.getEmail());
+                    dto.setPrimaryContactPhone(contact.getPhone());
+                });
+        }
+        
+        return dto;
+    }
 }
