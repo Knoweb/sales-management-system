@@ -11,7 +11,7 @@ Currently, this repository is configured for local development and contains the 
 - **Frontend:** React 19 + TypeScript + Vite SPA
 - **Database:** Local PostgreSQL with automatic database creation and Flyway migrations
 - **Authentication:** JWT-based stateless Auth with HttpOnly refresh cookies
-- **Security:** Role-Based Access Control (RBAC) and permissions
+- **Security:** Granular Permission-Based Authorisation (Method Security in Spring, Role/Permission guards in React). Department-level row-level security for HODs and Managers.
 - **User Management:** Admin UI for managing users, statuses, and roles
 
 ### Project Structure
@@ -66,4 +66,9 @@ Currently, this repository is configured for local development and contains the 
 
 ## Phases
 - **Phase 1**: Project Foundation and Local Development Setup (Completed)
-- **Future Phases**: Authentication, Users, Leads, Projects, and Dashboards.
+- **Phase 2**: Authentication and Role-Based Access Control (Completed)
+- **Phase 3**: Core Employee and Department Management (Completed)
+  - Features dynamic availability calculations based on capacity and approved leave.
+  - Granular RBAC with department-restricted access for HODs.
+- **Phase 4**: Client and Lead Management (Upcoming)
+- **Future Phases**: Projects, Deliverables, and Dashboards.

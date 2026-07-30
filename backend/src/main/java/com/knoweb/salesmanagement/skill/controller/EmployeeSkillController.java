@@ -24,18 +24,19 @@ public class EmployeeSkillController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'HOD')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_SKILL_MANAGE')")
     public EmployeeSkillDTO assignSkill(@PathVariable UUID employeeId, @Valid @RequestBody AssignEmployeeSkillRequest request) {
         return employeeSkillService.assignSkill(employeeId, request);
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('EMPLOYEE_SKILL_READ')")
     public List<EmployeeSkillDTO> getEmployeeSkills(@PathVariable UUID employeeId) {
         return employeeSkillService.getEmployeeSkills(employeeId);
     }
 
     @PutMapping("/{skillId}")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'HOD')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_SKILL_MANAGE')")
     public EmployeeSkillDTO updateEmployeeSkill(@PathVariable UUID employeeId,
                                                 @PathVariable UUID skillId,
                                                 @Valid @RequestBody UpdateEmployeeSkillRequest request) {
@@ -44,7 +45,7 @@ public class EmployeeSkillController {
 
     @DeleteMapping("/{skillId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'HOD')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_SKILL_MANAGE')")
     public void removeEmployeeSkill(@PathVariable UUID employeeId, @PathVariable UUID skillId) {
         employeeSkillService.removeEmployeeSkill(employeeId, skillId);
     }

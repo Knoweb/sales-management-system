@@ -22,6 +22,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID>, JpaSp
     boolean existsByWorkEmailIgnoreCase(String workEmail);
     boolean existsByDepartmentIdAndEmploymentStatusNot(UUID departmentId, EmploymentStatus status);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"department", "user"})
     @org.springframework.data.jpa.repository.Query("SELECT e FROM Employee e WHERE " +
             "(LOWER(e.firstName) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(e.lastName) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(e.employeeNumber) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
             "(:departmentId IS NULL OR e.department.id = :departmentId) AND " +

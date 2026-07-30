@@ -24,17 +24,19 @@ public class EmployeeLeaveController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('EMPLOYEE_LEAVE_MANAGE') or hasAuthority('EMPLOYEE_SELF_READ')")
     public EmployeeLeaveDTO submitLeaveRequest(@PathVariable UUID employeeId, @Valid @RequestBody EmployeeLeaveRequest request) {
         return leaveService.submitLeaveRequest(employeeId, request);
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('EMPLOYEE_LEAVE_READ')")
     public List<EmployeeLeaveDTO> getEmployeeLeaves(@PathVariable UUID employeeId) {
         return leaveService.getEmployeeLeaves(employeeId);
     }
 
     @PutMapping("/{leaveId}/status")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'HOD')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_LEAVE_MANAGE')")
     public EmployeeLeaveDTO updateLeaveStatus(@PathVariable UUID employeeId,
                                               @PathVariable UUID leaveId,
                                               @RequestParam LeaveStatus status) {
@@ -43,6 +45,7 @@ public class EmployeeLeaveController {
 
     @DeleteMapping("/{leaveId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('EMPLOYEE_LEAVE_MANAGE') or hasAuthority('EMPLOYEE_SELF_READ')")
     public void cancelLeave(@PathVariable UUID employeeId, @PathVariable UUID leaveId) {
         leaveService.cancelLeave(employeeId, leaveId);
     }

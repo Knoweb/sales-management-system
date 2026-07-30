@@ -20,7 +20,7 @@ public class AvailabilityController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TOP_MANAGEMENT', 'TECHNICAL_COORDINATOR') or @departmentAccessService.isDepartmentHeadFor(#employeeId)")
+    @PreAuthorize("hasAuthority('EMPLOYEE_AVAILABILITY_READ')")
     public AvailabilityResponseDTO checkAvailability(
             @PathVariable UUID employeeId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,

@@ -37,7 +37,8 @@ public class EmployeeQualificationService {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
         
-        accessService.validateEmployeeAccess(employee.getId(), employee.getDepartment().getId());
+        UUID departmentId = employee.getDepartment() != null ? employee.getDepartment().getId() : null;
+        accessService.validateEmployeeAccess(employee.getId(), departmentId);
 
         EmployeeQualification qualification = new EmployeeQualification();
         qualification.setEmployee(employee);
@@ -50,7 +51,7 @@ public class EmployeeQualificationService {
         qualification.setCredentialNumber(request.getCredentialNumber());
         qualification.setNotes(request.getNotes());
 
-        if (Boolean.TRUE.equals(request.getVerified()) && (accessService.hasGlobalAccess() || accessService.isDepartmentHeadFor(employee.getDepartment().getId()))) {
+        if (Boolean.TRUE.equals(request.getVerified()) && (accessService.hasGlobalAccess() || (departmentId != null && accessService.isDepartmentHeadFor(departmentId)))) {
             qualification.setVerified(true);
             qualification.setVerifiedAt(OffsetDateTime.now());
         } else {
@@ -65,7 +66,8 @@ public class EmployeeQualificationService {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
         
-        accessService.validateEmployeeAccess(employee.getId(), employee.getDepartment().getId());
+        UUID departmentId = employee.getDepartment() != null ? employee.getDepartment().getId() : null;
+        accessService.validateEmployeeAccess(employee.getId(), departmentId);
 
         return qualificationRepository.findByEmployeeId(employeeId).stream()
                 .map(this::mapToDTO)
@@ -76,7 +78,8 @@ public class EmployeeQualificationService {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
         
-        accessService.validateEmployeeAccess(employee.getId(), employee.getDepartment().getId());
+        UUID departmentId = employee.getDepartment() != null ? employee.getDepartment().getId() : null;
+        accessService.validateEmployeeAccess(employee.getId(), departmentId);
 
         EmployeeQualification qualification = qualificationRepository.findById(qualificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Qualification not found"));
@@ -94,7 +97,7 @@ public class EmployeeQualificationService {
         qualification.setCredentialNumber(request.getCredentialNumber());
         qualification.setNotes(request.getNotes());
 
-        if (Boolean.TRUE.equals(request.getVerified()) && !qualification.isVerified() && (accessService.hasGlobalAccess() || accessService.isDepartmentHeadFor(employee.getDepartment().getId()))) {
+        if (Boolean.TRUE.equals(request.getVerified()) && !qualification.isVerified() && (accessService.hasGlobalAccess() || (departmentId != null && accessService.isDepartmentHeadFor(departmentId)))) {
             qualification.setVerified(true);
             qualification.setVerifiedAt(OffsetDateTime.now());
         } else if (Boolean.FALSE.equals(request.getVerified())) {
@@ -109,7 +112,8 @@ public class EmployeeQualificationService {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
         
-        accessService.validateEmployeeAccess(employee.getId(), employee.getDepartment().getId());
+        UUID departmentId = employee.getDepartment() != null ? employee.getDepartment().getId() : null;
+        accessService.validateEmployeeAccess(employee.getId(), departmentId);
 
         EmployeeQualification qualification = qualificationRepository.findById(qualificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Qualification not found"));

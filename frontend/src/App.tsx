@@ -32,45 +32,45 @@ function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             
             <Route path="/users" element={
-              <ProtectedRoute requiredRole="SYSTEM_ADMIN">
+              <ProtectedRoute requiredPermission="USER_READ">
                 <UserManagement />
               </ProtectedRoute>
             } />
             
             <Route path="/departments" element={
-              <ProtectedRoute requiredRole="SYSTEM_ADMIN">
+              <ProtectedRoute requiredPermission="DEPARTMENT_READ">
                 <DepartmentsPage />
               </ProtectedRoute>
             } />
             <Route path="/departments/new" element={
-              <ProtectedRoute requiredRole="SYSTEM_ADMIN">
+              <ProtectedRoute requiredPermission="DEPARTMENT_CREATE">
                 <DepartmentFormPage />
               </ProtectedRoute>
             } />
             
             <Route path="/employees" element={
-              <ProtectedRoute requiredRole="SYSTEM_ADMIN">
+              <ProtectedRoute requiredPermission="EMPLOYEE_READ">
                 <EmployeesPage />
               </ProtectedRoute>
             } />
             <Route path="/employees/new" element={
-              <ProtectedRoute requiredRole="SYSTEM_ADMIN">
+              <ProtectedRoute requiredPermission="EMPLOYEE_CREATE">
                 <EmployeeFormPage />
               </ProtectedRoute>
             } />
             <Route path="/employees/:id" element={
-              <ProtectedRoute requiredRole="SYSTEM_ADMIN">
+              <ProtectedRoute requiredPermission={["EMPLOYEE_READ", "EMPLOYEE_SELF_READ"]}>
                 <EmployeeDetailsPage />
               </ProtectedRoute>
             } />
             
             <Route path="/skills" element={
-              <ProtectedRoute requiredRole="SYSTEM_ADMIN">
+              <ProtectedRoute requiredPermission="SKILL_CATALOG_READ">
                 <SkillsPage />
               </ProtectedRoute>
             } />
             <Route path="/skills/new" element={
-              <ProtectedRoute requiredRole="SYSTEM_ADMIN">
+              <ProtectedRoute requiredPermission="SKILL_CATALOG_MANAGE">
                 <SkillFormPage />
               </ProtectedRoute>
             } />

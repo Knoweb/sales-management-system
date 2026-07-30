@@ -26,7 +26,7 @@ public class EmployeeController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_CREATE')")
     public EmployeeDTO createEmployee(@Valid @RequestBody CreateEmployeeRequest request) {
         return employeeService.createEmployee(request);
     }
@@ -37,7 +37,7 @@ public class EmployeeController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TOP_MANAGEMENT', 'TECHNICAL_COORDINATOR')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_READ')")
     public Page<EmployeeDTO> searchEmployees(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) UUID departmentId,
@@ -49,12 +49,14 @@ public class EmployeeController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('EMPLOYEE_READ') or hasAuthority('EMPLOYEE_SELF_READ')")
     public EmployeeDTO getEmployee(@PathVariable UUID id) {
         // Authorization handled in service
         return employeeService.getEmployee(id);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('EMPLOYEE_UPDATE')")
     public EmployeeDTO updateEmployee(@PathVariable UUID id, @Valid @RequestBody UpdateEmployeeRequest request) {
         // Authorization handled in service
         return employeeService.updateEmployee(id, request);
@@ -62,21 +64,21 @@ public class EmployeeController {
 
     @PatchMapping("/{id}/status")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_DISABLE')")
     public void updateEmployeeStatus(@PathVariable UUID id, @RequestParam EmploymentStatus status) {
         employeeService.updateEmployeeStatus(id, status);
     }
 
     @PostMapping("/{id}/user-link")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_USER_LINK')")
     public void linkUser(@PathVariable UUID id, @Valid @RequestBody LinkUserRequest request) {
         employeeService.linkUser(id, request);
     }
 
     @DeleteMapping("/{id}/user-link")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_USER_LINK')")
     public void unlinkUser(@PathVariable UUID id) {
         employeeService.unlinkUser(id);
     }

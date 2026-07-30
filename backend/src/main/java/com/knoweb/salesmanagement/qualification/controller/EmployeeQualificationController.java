@@ -23,18 +23,19 @@ public class EmployeeQualificationController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'HOD')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_QUALIFICATION_MANAGE')")
     public EmployeeQualificationDTO addQualification(@PathVariable UUID employeeId, @Valid @RequestBody EmployeeQualificationRequest request) {
         return qualificationService.addQualification(employeeId, request);
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('EMPLOYEE_QUALIFICATION_READ')")
     public List<EmployeeQualificationDTO> getEmployeeQualifications(@PathVariable UUID employeeId) {
         return qualificationService.getEmployeeQualifications(employeeId);
     }
 
     @PutMapping("/{qualificationId}")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'HOD')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_QUALIFICATION_MANAGE')")
     public EmployeeQualificationDTO updateQualification(@PathVariable UUID employeeId,
                                                         @PathVariable UUID qualificationId,
                                                         @Valid @RequestBody EmployeeQualificationRequest request) {
@@ -43,7 +44,7 @@ public class EmployeeQualificationController {
 
     @DeleteMapping("/{qualificationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'HOD')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_QUALIFICATION_MANAGE')")
     public void removeQualification(@PathVariable UUID employeeId, @PathVariable UUID qualificationId) {
         qualificationService.removeQualification(employeeId, qualificationId);
     }

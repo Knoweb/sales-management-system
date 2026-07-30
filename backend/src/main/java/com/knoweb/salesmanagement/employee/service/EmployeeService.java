@@ -101,6 +101,22 @@ public class EmployeeService {
 
     @Transactional(readOnly = true)
     public Page<EmployeeDTO> searchEmployees(String search, UUID departmentId, EmploymentStatus employmentStatus, String employmentType, UUID skillId, Pageable pageable) {
+        if (!accessService.hasGlobalAccess()) {
+            User currentUser = accessService.getAuthenticatedUser();
+            if (currentUser != null) {
+                java.util.Optional<Employee> currentEmp = employeeRepository.findByUserId(currentUser.getId());
+                if (currentEmp.isPresent()) {
+                    UUID myDeptId = currentEmp.get().getDepartment().getId();
+                    if (accessService.isDepartmentHeadFor(myDeptId)) {
+                        if (departmentId != null && !departmentId.equals(myDeptId)) {
+                            return Page.empty(pageable);
+                        }
+                        departmentId = myDeptId;
+                    }
+                }
+            }
+        }
+        
         String safeSearch = search == null ? "" : search;
         return employeeRepository.searchEmployees(safeSearch, departmentId, employmentStatus, employmentType, skillId, pageable)
                 .map(this::mapToDTO);

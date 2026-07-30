@@ -37,6 +37,15 @@ public class SecurityConfig {
     }
 
     @Bean
+    public org.springframework.security.authentication.dao.DaoAuthenticationProvider authenticationProvider(
+            com.knoweb.salesmanagement.security.principal.CustomUserDetailsService userDetailsService,
+            org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
+        org.springframework.security.authentication.dao.DaoAuthenticationProvider authProvider = new org.springframework.security.authentication.dao.DaoAuthenticationProvider(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder);
+        return authProvider;
+    }
+
+    @Bean
     public org.springframework.security.authentication.AuthenticationManager authenticationManager(
             org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();

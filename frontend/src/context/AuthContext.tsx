@@ -70,7 +70,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const requestInterceptor = apiClient.interceptors.request.use(
       (config) => {
         if (inMemoryToken && config.headers) {
-          config.headers.Authorization = `Bearer ${inMemoryToken}`;
+          config.headers.set('Authorization', `Bearer ${inMemoryToken}`);
         }
         return config;
       },
@@ -89,8 +89,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             return new Promise(function(resolve, reject) {
               failedQueue.push({ resolve, reject });
             }).then(token => {
-              originalRequest.headers.Authorization = 'Bearer ' + token;
-              return axios(originalRequest);
+              originalRequest.headers.set ? originalRequest.headers.set('Authorization', 'Bearer ' + token) : originalRequest.headers.Authorization = 'Bearer ' + token;
+              return apiClient.request(originalRequest);
             }).catch(err => {
               return Promise.reject(err);
             });
@@ -104,8 +104,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             inMemoryToken = data.accessToken;
             setUser(data.user);
             processQueue(null, data.accessToken);
-            originalRequest.headers.Authorization = 'Bearer ' + data.accessToken;
-            return axios(originalRequest); // Use axios instead of apiClient to avoid loop if this somehow 401s again
+            originalRequest.headers.set ? originalRequest.headers.set('Authorization', 'Bearer ' + data.accessToken) : originalRequest.headers.Authorization = 'Bearer ' + data.accessToken;
+            return apiClient.request(originalRequest);
           } catch (err) {
             processQueue(err, null);
             inMemoryToken = null;

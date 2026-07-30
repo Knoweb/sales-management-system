@@ -26,13 +26,13 @@ public class DepartmentController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('DEPARTMENT_CREATE')")
     public DepartmentDTO createDepartment(@Valid @RequestBody CreateDepartmentRequest request) {
         return departmentService.createDepartment(request);
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TOP_MANAGEMENT', 'TECHNICAL_COORDINATOR')")
+    @PreAuthorize("hasAuthority('DEPARTMENT_READ')")
     public Page<DepartmentDTO> searchDepartments(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Boolean active,
@@ -41,27 +41,27 @@ public class DepartmentController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'TOP_MANAGEMENT', 'TECHNICAL_COORDINATOR') or @departmentAccessService.isDepartmentHeadFor(#id)")
+    @PreAuthorize("hasAuthority('DEPARTMENT_READ')")
     public DepartmentDTO getDepartment(@PathVariable UUID id) {
         return departmentService.getDepartment(id);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('DEPARTMENT_UPDATE')")
     public DepartmentDTO updateDepartment(@PathVariable UUID id, @Valid @RequestBody UpdateDepartmentRequest request) {
         return departmentService.updateDepartment(id, request);
     }
 
     @PatchMapping("/{id}/status")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('DEPARTMENT_DISABLE')")
     public void updateDepartmentStatus(@PathVariable UUID id) {
         departmentService.updateDepartmentStatus(id);
     }
 
     @PostMapping("/{id}/head")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('DEPARTMENT_HEAD_ASSIGN')")
     public void assignDepartmentHead(@PathVariable UUID id, @Valid @RequestBody AssignDepartmentHeadRequest request) {
         departmentService.assignDepartmentHead(id, request);
     }

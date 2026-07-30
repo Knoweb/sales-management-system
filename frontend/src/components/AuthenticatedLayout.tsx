@@ -15,10 +15,10 @@ export const AuthenticatedLayout: React.FC = () => {
 
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={18} />, allowed: true },
-    { name: 'User Management', path: '/users', icon: <Users size={18} />, allowed: user?.roles.includes('SYSTEM_ADMIN') },
-    { name: 'Departments', path: '/departments', icon: <Briefcase size={18} />, allowed: user?.roles.includes('SYSTEM_ADMIN') || user?.roles.includes('TOP_MANAGEMENT') },
-    { name: 'Employees', path: '/employees', icon: <Users size={18} />, allowed: user?.roles.includes('SYSTEM_ADMIN') || user?.roles.includes('TOP_MANAGEMENT') },
-    { name: 'Skills', path: '/skills', icon: <CheckCircle size={18} />, allowed: user?.roles.includes('SYSTEM_ADMIN') },
+    { name: 'User Management', path: '/users', icon: <Users size={18} />, allowed: user?.permissions.includes('USER_READ') },
+    { name: 'Departments', path: '/departments', icon: <Briefcase size={18} />, allowed: user?.permissions.includes('DEPARTMENT_READ') },
+    { name: 'Employees', path: '/employees', icon: <Users size={18} />, allowed: user?.permissions.includes('EMPLOYEE_READ') },
+    { name: 'Skills', path: '/skills', icon: <CheckCircle size={18} />, allowed: user?.permissions.includes('SKILL_CATALOG_READ') },
   ];
 
   return (

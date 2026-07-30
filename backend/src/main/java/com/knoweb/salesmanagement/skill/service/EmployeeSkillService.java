@@ -46,7 +46,8 @@ public class EmployeeSkillService {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
         
-        accessService.validateEmployeeAccess(employee.getId(), employee.getDepartment().getId());
+        UUID departmentId = employee.getDepartment() != null ? employee.getDepartment().getId() : null;
+        accessService.validateEmployeeAccess(employee.getId(), departmentId);
 
         Skill skill = skillRepository.findById(request.getSkillId())
                 .orElseThrow(() -> new ResourceNotFoundException("Skill not found"));
@@ -66,7 +67,7 @@ public class EmployeeSkillService {
         employeeSkill.setYearsOfExperience(request.getYearsOfExperience());
         employeeSkill.setNotes(request.getNotes());
         
-        if (Boolean.TRUE.equals(request.getVerified()) && (accessService.hasGlobalAccess() || accessService.isDepartmentHeadFor(employee.getDepartment().getId()))) {
+        if (Boolean.TRUE.equals(request.getVerified()) && (accessService.hasGlobalAccess() || (departmentId != null && accessService.isDepartmentHeadFor(departmentId)))) {
             employeeSkill.setVerified(true);
             employeeSkill.setVerifiedAt(OffsetDateTime.now());
         } else {
@@ -80,7 +81,8 @@ public class EmployeeSkillService {
     public List<EmployeeSkillDTO> getEmployeeSkills(UUID employeeId) {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
-        accessService.validateEmployeeAccess(employee.getId(), employee.getDepartment().getId());
+        UUID departmentId = employee.getDepartment() != null ? employee.getDepartment().getId() : null;
+        accessService.validateEmployeeAccess(employee.getId(), departmentId);
 
         return employeeSkillRepository.findByEmployeeId(employeeId).stream()
                 .map(this::mapToDTO)
@@ -90,20 +92,17 @@ public class EmployeeSkillService {
     public EmployeeSkillDTO updateEmployeeSkill(UUID employeeId, UUID skillId, UpdateEmployeeSkillRequest request) {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
-        accessService.validateEmployeeAccess(employee.getId(), employee.getDepartment().getId());
+        UUID departmentId = employee.getDepartment() != null ? employee.getDepartment().getId() : null;
+        accessService.validateEmployeeAccess(employee.getId(), departmentId);
 
-        EmployeeSkill employeeSkill = employeeSkillRepository.findById(skillId)
+        EmployeeSkill employeeSkill = employeeSkillRepository.findByEmployeeIdAndSkillId(employeeId, skillId)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee skill record not found"));
-
-        if (!employeeSkill.getEmployee().getId().equals(employeeId)) {
-            throw new IllegalStateException("Skill record does not belong to this employee");
-        }
 
         employeeSkill.setProficiencyLevel(request.getProficiencyLevel());
         employeeSkill.setYearsOfExperience(request.getYearsOfExperience());
         employeeSkill.setNotes(request.getNotes());
 
-        if (Boolean.TRUE.equals(request.getVerified()) && !employeeSkill.isVerified() && (accessService.hasGlobalAccess() || accessService.isDepartmentHeadFor(employee.getDepartment().getId()))) {
+        if (Boolean.TRUE.equals(request.getVerified()) && !employeeSkill.isVerified() && (accessService.hasGlobalAccess() || (departmentId != null && accessService.isDepartmentHeadFor(departmentId)))) {
             employeeSkill.setVerified(true);
             employeeSkill.setVerifiedAt(OffsetDateTime.now());
         } else if (Boolean.FALSE.equals(request.getVerified())) {
@@ -117,14 +116,11 @@ public class EmployeeSkillService {
     public void removeEmployeeSkill(UUID employeeId, UUID skillId) {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
-        accessService.validateEmployeeAccess(employee.getId(), employee.getDepartment().getId());
+        UUID departmentId = employee.getDepartment() != null ? employee.getDepartment().getId() : null;
+        accessService.validateEmployeeAccess(employee.getId(), departmentId);
 
-        EmployeeSkill employeeSkill = employeeSkillRepository.findById(skillId)
+        EmployeeSkill employeeSkill = employeeSkillRepository.findByEmployeeIdAndSkillId(employeeId, skillId)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee skill record not found"));
-
-        if (!employeeSkill.getEmployee().getId().equals(employeeId)) {
-            throw new IllegalStateException("Skill record does not belong to this employee");
-        }
 
         employeeSkillRepository.delete(employeeSkill);
     }
