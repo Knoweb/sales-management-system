@@ -22,6 +22,7 @@ public class LeadDTO {
     private boolean active;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
+    private OffsetDateTime initialMeetingAt;
     
     // Getters and setters
     public UUID getId() { return id; }
@@ -56,4 +57,6 @@ public class LeadDTO {
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public OffsetDateTime getInitialMeetingAt() { return initialMeetingAt; }
+    public void setInitialMeetingAt(OffsetDateTime initialMeetingAt) { this.initialMeetingAt = initialMeetingAt; }
 }

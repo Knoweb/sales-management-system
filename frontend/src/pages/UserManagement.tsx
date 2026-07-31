@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { apiClient } from '../services/Api';
 import type { User } from '../context/AuthContext';
-import { Search, RefreshCw } from 'lucide-react';
+import { Search, RefreshCw, Users } from 'lucide-react';
+import { PageHeader } from '../components/PageHeader';
+import { Card } from '../components/Card';
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/Table';
+import { Input } from '../components/Forms';
+import { Button } from '../components/Button';
+import { StatusBadge } from '../components/StatusBadge';
+import { ErrorState, LoadingState, EmptyState } from '../components/FeedbackStates';
 
 export const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -13,8 +20,6 @@ export const UserManagement: React.FC = () => {
   const size = 20; // Hardcode size for now since we don't have a UI for it
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-
-  // removed unused useAuth
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -58,36 +63,30 @@ export const UserManagement: React.FC = () => {
   };
 
   return (
-    <>
-      <div className="page-header flex-between">
-        <div>
-          <h1 className="page-title">User Management</h1>
-          <p className="page-description">Manage system users, roles, and access.</p>
-        </div>
-        <button 
-          onClick={handleRefresh} 
-          disabled={loading}
-          className="btn-logout" 
-          style={{ backgroundColor: 'var(--accent-primary)', color: 'white', borderColor: 'var(--accent-primary)' }}
-        >
-          <RefreshCw size={16} className={loading ? 'spin' : ''} /> Refresh Data
-        </button>
-      </div>
+    <div className="p-6 max-w-7xl mx-auto w-full">
+      <PageHeader 
+        title={<><Users size={24} className="inline-icon text-blue-600" /> User Management</>}
+        description="Manage system users, roles, and access."
+        actionButton={{
+          label: 'Refresh Data',
+          show: true,
+          onClick: handleRefresh,
+          icon: <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+        }}
+      />
 
       {error && (
-        <div className="auth-error" style={{ marginBottom: '1.5rem' }}>
-          ⚠️ {error}
+        <div className="mb-6">
+          <ErrorState message={error} onRetry={handleRefresh} />
         </div>
       )}
 
-      <div className="card">
-        <div className="card-header flex-between">
-          <h2 className="card-title">All Users</h2>
-          <div className="input-wrapper" style={{ width: '250px' }}>
-            <Search className="input-icon" size={16} />
-            <input 
+      <Card>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+          <h2 className="text-lg font-semibold text-gray-900">All Users</h2>
+          <div className="w-full md:w-64">
+            <Input 
               type="text" 
-              className="form-input" 
               placeholder="Search users..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -95,56 +94,53 @@ export const UserManagement: React.FC = () => {
           </div>
         </div>
         
-        <div className="table-wrapper">
-          {loading ? (
-             <div className="empty-state">
-                <div className="spinner spinner-primary mb-4"></div>
-                <p>Loading user database...</p>
-             </div>
-          ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email Address</th>
-                  <th>System Roles</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="empty-state">No users found.</td>
-                  </tr>
-                ) : (
-                  users.map((u) => (
-                    <tr key={u.id}>
-                      <td style={{ fontWeight: 500 }}>{u.firstName} {u.lastName}</td>
-                      <td style={{ color: 'var(--text-secondary)' }}>{u.email}</td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                          {u.roles.map(role => (
-                            <span key={role} className={`badge ${role === 'SYSTEM_ADMIN' ? 'badge-blue' : 'badge-gray'}`}>
-                              {role.replace('_', ' ')}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td>
-                        <span className="badge badge-green">Active</span>
-                      </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <button className="nav-link" style={{ background: 'none', border: 'none' }}>Edit</button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
-    </>
+        {loading ? (
+          <LoadingState message="Loading user database..." />
+        ) : users.length === 0 ? (
+          <EmptyState 
+            icon={<Search size={48} />}
+            title="No users found" 
+            message="No users match your search." 
+          />
+        ) : (
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeader>Name</TableHeader>
+                <TableHeader>Email Address</TableHeader>
+                <TableHeader>System Roles</TableHeader>
+                <TableHeader>Status</TableHeader>
+                <TableHeader align="right">Actions</TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {users.map((u) => (
+                <TableRow key={u.id}>
+                  <TableCell className="font-medium text-gray-900">{u.firstName} {u.lastName}</TableCell>
+                  <TableCell className="text-gray-500">{u.email}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2 flex-wrap">
+                      {u.roles.map(role => (
+                        <StatusBadge 
+                          key={role} 
+                          status={role.replace('_', ' ')} 
+                          variant={role === 'SYSTEM_ADMIN' ? 'info' : 'neutral'} 
+                        />
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status="Active" variant="success" />
+                  </TableCell>
+                  <TableCell align="right">
+                    <Button variant="ghost">Edit</Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Card>
+    </div>
   );
 };

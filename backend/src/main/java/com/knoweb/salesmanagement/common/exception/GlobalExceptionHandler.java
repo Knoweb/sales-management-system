@@ -16,6 +16,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import com.knoweb.salesmanagement.client.service.DuplicateClientException;
+import com.knoweb.salesmanagement.common.exception.ResourceConflictException;
 
 import java.time.Instant;
 
@@ -46,6 +47,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleNoResourceFound(NoResourceFoundException ex, HttpServletRequest request) {
         String message = "Resource not found.";
         return buildErrorResponse(HttpStatus.NOT_FOUND, message, request.getRequestURI());
+    }
+
+    @ExceptionHandler(ResourceConflictException.class)
+    public ResponseEntity<ErrorResponse> handleResourceConflict(ResourceConflictException ex, HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), request.getRequestURI());
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)

@@ -1,20 +1,28 @@
 import React, { useState } from 'react';
+import { Button } from './Button';
+import { Input, Select } from './Forms';
+import { ErrorState } from './FeedbackStates';
 import { X } from 'lucide-react';
-import type { LeaveType } from '../types/leave';
 
 interface EmployeeLeaveFormProps {
   onClose: () => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSubmit: (data: any) => Promise<void>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initialData?: any;
 }
 
-export const EmployeeLeaveForm: React.FC<EmployeeLeaveFormProps> = ({ onClose, onSubmit }) => {
-  const [leaveType, setLeaveType] = useState<LeaveType>('ANNUAL');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [partialDay, setPartialDay] = useState(false);
-  const [leaveHours, setLeaveHours] = useState<number | ''>('');
-  const [reason, setReason] = useState('');
+export const EmployeeLeaveForm: React.FC<EmployeeLeaveFormProps> = ({ onClose, onSubmit, initialData }) => {
+  const isNew = !initialData;
+  const [formData, setFormData] = useState(initialData || {
+    leaveType: 'ANNUAL',
+    startDate: '',
+    endDate: '',
+    partialDay: false,
+    leaveHours: '',
+    reason: ''
+  });
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -22,17 +30,17 @@ export const EmployeeLeaveForm: React.FC<EmployeeLeaveFormProps> = ({ onClose, o
     e.preventDefault();
     setError('');
     
-    if (!startDate || !endDate) {
+    if (!formData.startDate || !formData.endDate) {
       setError('Start and End dates are required');
       return;
     }
     
-    if (new Date(startDate) > new Date(endDate)) {
+    if (new Date(formData.startDate) > new Date(formData.endDate)) {
       setError('End date must be after or equal to start date');
       return;
     }
-
-    if (partialDay && !leaveHours) {
+    
+    if (formData.partialDay && !formData.leaveHours) {
       setError('Leave hours are required for partial day leaves');
       return;
     }
@@ -40,12 +48,8 @@ export const EmployeeLeaveForm: React.FC<EmployeeLeaveFormProps> = ({ onClose, o
     setLoading(true);
     try {
       await onSubmit({
-        leaveType,
-        startDate,
-        endDate,
-        partialDay,
-        leaveHours: leaveHours === '' ? undefined : Number(leaveHours),
-        reason
+        ...formData,
+        leaveHours: formData.leaveHours === '' ? undefined : Number(formData.leaveHours),
       });
       onClose();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -59,52 +63,45 @@ export const EmployeeLeaveForm: React.FC<EmployeeLeaveFormProps> = ({ onClose, o
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <div className="modal-header">
-          <h2 className="modal-title">Request Leave</h2>
-          <button className="modal-close" onClick={onClose}><X size={20} /></button>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-gray-900">{isNew ? 'Request Leave' : 'Edit Leave Request'}</h2>
+          <button className="icon-btn" onClick={onClose} aria-label="Close"><X size={20} /></button>
         </div>
         
-        {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded" style={{ backgroundColor: 'var(--error-bg)', color: 'var(--error)' }}>{error}</div>}
+        {error && <ErrorState message={error} />}
         
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="form-label">Leave Type</label>
-            <select 
-              className="form-select"
-              value={leaveType}
-              onChange={(e) => setLeaveType(e.target.value as LeaveType)}
-            >
-              <option value="ANNUAL">Annual Leave</option>
-              <option value="SICK">Sick Leave</option>
-              <option value="UNPAID">Unpaid Leave</option>
-              <option value="MATERNITY">Maternity</option>
-              <option value="PATERNITY">Paternity</option>
-              <option value="OTHER">Other</option>
-            </select>
-          </div>
+          <Select
+            label="Leave Type"
+            value={formData.leaveType}
+            onChange={(e) => setFormData({ ...formData, leaveType: e.target.value })}
+            required
+            disabled={!isNew}
+          >
+            <option value="ANNUAL">Annual Leave</option>
+            <option value="SICK">Sick Leave</option>
+            <option value="UNPAID">Unpaid Leave</option>
+            <option value="MATERNITY">Maternity Leave</option>
+            <option value="PATERNITY">Paternity Leave</option>
+            <option value="OTHER">Other</option>
+          </Select>
 
           <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <div className="form-group">
-              <label className="form-label">Start Date *</label>
-              <input 
-                type="date" 
-                className="form-input" 
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                required
-              />
-            </div>
+            <Input 
+              label="Start Date *"
+              type="date"
+              value={formData.startDate}
+              onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+              required
+            />
             
-            <div className="form-group">
-              <label className="form-label">End Date *</label>
-              <input 
-                type="date" 
-                className="form-input" 
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                required
-              />
-            </div>
+            <Input 
+              label="End Date *"
+              type="date"
+              value={formData.endDate}
+              onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+              required
+            />
           </div>
           
           <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
@@ -112,26 +109,23 @@ export const EmployeeLeaveForm: React.FC<EmployeeLeaveFormProps> = ({ onClose, o
               <label className="flex items-center gap-2" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <input 
                   type="checkbox" 
-                  checked={partialDay}
-                  onChange={(e) => setPartialDay(e.target.checked)}
+                  checked={formData.partialDay}
+                  onChange={(e) => setFormData({ ...formData, partialDay: e.target.checked })}
                 />
                 <span className="form-label" style={{ marginBottom: 0 }}>Partial Day</span>
               </label>
             </div>
             
-            {partialDay && (
-              <div className="form-group">
-                <label className="form-label">Leave Hours</label>
-                <input 
-                  type="number" 
-                  className="form-input" 
-                  value={leaveHours}
-                  onChange={(e) => setLeaveHours(e.target.value === '' ? '' : Number(e.target.value))}
-                  min="0.5"
-                  step="0.5"
-                  required={partialDay}
-                />
-              </div>
+            {formData.partialDay && (
+              <Input 
+                label="Leave Hours"
+                type="number"
+                value={formData.leaveHours}
+                onChange={(e) => setFormData({ ...formData, leaveHours: e.target.value })}
+                min="0.5"
+                step="0.5"
+                required={formData.partialDay}
+              />
             )}
           </div>
           
@@ -139,17 +133,17 @@ export const EmployeeLeaveForm: React.FC<EmployeeLeaveFormProps> = ({ onClose, o
             <label className="form-label">Reason</label>
             <textarea 
               className="form-textarea"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
+              value={formData.reason}
+              onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
               rows={3}
             />
           </div>
           
-          <div className="form-actions">
-            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={loading}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Submitting...' : 'Submit Request'}
-            </button>
+          <div className="flex justify-end gap-3 mt-6">
+            <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>Cancel</Button>
+            <Button type="submit" variant="primary" disabled={loading}>
+              {loading ? 'Saving...' : 'Submit Request'}
+            </Button>
           </div>
         </form>
       </div>

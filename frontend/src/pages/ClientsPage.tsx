@@ -1,12 +1,18 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { ClientApi } from '../services/ClientApi';
 import type { Client } from '../types/client';
-import { Briefcase, Search, Plus, Filter, Edit, Eye, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Briefcase, Search, Plus, Edit, Eye, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { PermissionGuard } from '../components/PermissionGuard';
 import { Button } from '../components/Button';
+import { IconButton } from '../components/IconButton';
+import { Card } from '../components/Card';
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/Table';
+import { Input, Select } from '../components/Forms';
+import { ErrorState, EmptyState, LoadingState } from '../components/FeedbackStates';
+import { StatusBadge } from '../components/StatusBadge';
 
 export const ClientsPage: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
@@ -62,9 +68,9 @@ export const ClientsPage: React.FC = () => {
   };
 
   return (
-    <div className="page-container">
+    <div className="p-6 max-w-7xl mx-auto w-full">
       <PageHeader 
-        title={<><Briefcase size={24} className="inline-icon" /> Clients</>}
+        title={<><Briefcase size={24} className="inline-icon text-blue-600" /> Clients</>}
         description="Manage clients and their contacts."
         actionButton={{
           label: 'Add Client',
@@ -74,128 +80,122 @@ export const ClientsPage: React.FC = () => {
         }}
       />
 
-      <div className="card">
-        <div className="card-header flex-between">
-          <h2 className="card-title">Client List</h2>
-          <div className="flex gap-4">
-            <div className="search-input" style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '0.25rem 0.5rem' }}>
-              <Search size={16} style={{ color: 'var(--text-light)', marginRight: '0.5rem' }} />
-              <input 
-                type="text" 
-                placeholder="Search clients..." 
-                value={searchTerm}
-                onChange={e => { setSearchTerm(e.target.value); setPage(0); }}
-                style={{ border: 'none', outline: 'none', background: 'transparent' }}
-              />
-            </div>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Filter size={16} style={{ color: 'var(--text-light)' }} />
-              <select 
-                value={activeFilter} 
-                onChange={e => { setActiveFilter(e.target.value); setPage(0); }}
-                style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '0.25rem' }}
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </div>
+      <Card className="mb-6">
+        <div className="flex flex-col md:flex-row gap-4 items-end">
+          <div className="flex-1 w-full">
+            <Input 
+              type="text" 
+              placeholder="Search clients..." 
+              value={searchTerm}
+              onChange={e => { setSearchTerm(e.target.value); setPage(0); }}
+              label="Search"
+            />
+          </div>
+          
+          <div className="w-full md:w-48">
+            <Select 
+              value={activeFilter} 
+              onChange={e => { setActiveFilter(e.target.value); setPage(0); }}
+              label="Status"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </Select>
           </div>
         </div>
+      </Card>
 
-        <div className="card-body">
-          {error && <div className="error-message">{error}</div>}
-          
-          {loading && clients.length === 0 ? (
-            <p>Loading clients...</p>
-          ) : clients.length === 0 ? (
-            <p>No clients found.</p>
-          ) : (
-            <>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Type</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {clients.map(client => (
-                    <tr key={client.id}>
-                      <td>{client.name}</td>
-                      <td>{client.clientType}</td>
-                      <td>{client.email || '-'}</td>
-                      <td>{client.phone || '-'}</td>
-                      <td>
-                        <span style={{ 
-                          padding: '0.25rem 0.5rem', 
-                          borderRadius: '1rem', 
-                          fontSize: '0.75rem',
-                          backgroundColor: client.active ? 'var(--success-bg)' : 'var(--error-bg)',
-                          color: client.active ? 'var(--success)' : 'var(--error)'
-                        }}>
-                          {client.active ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <Button variant="ghost" onClick={() => navigate(`/clients/${client.id}`)} title="View Details">
-                            <Eye size={16} />
-                          </Button>
-                          <PermissionGuard permission="CLIENT_UPDATE">
-                            <Button variant="ghost" onClick={() => navigate(`/clients/${client.id}/edit`)} title="Edit Client">
-                              <Edit size={16} />
-                            </Button>
-                          </PermissionGuard>
-                          
-                          {client.active ? (
-                            <PermissionGuard permission="CLIENT_DELETE">
-                              <Button variant="ghost" onClick={() => handleActivateDeactivate(client)} title="Deactivate" style={{ color: 'var(--error)' }}>
-                                <ShieldAlert size={16} />
-                              </Button>
-                            </PermissionGuard>
-                          ) : (
-                            <PermissionGuard permission="CLIENT_UPDATE">
-                              <Button variant="ghost" onClick={() => handleActivateDeactivate(client)} title="Activate" style={{ color: 'var(--success)' }}>
-                                <ShieldCheck size={16} />
-                              </Button>
-                            </PermissionGuard>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      {error ? (
+        <ErrorState message={error} onRetry={loadClients} />
+      ) : loading && clients.length === 0 ? (
+        <LoadingState message="Loading clients..." />
+      ) : clients.length === 0 ? (
+        <EmptyState 
+          icon={<Search size={48} />}
+          title="No clients found" 
+          message="Try adjusting your filters or search terms." 
+        />
+      ) : (
+        <>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeader>Name</TableHeader>
+                <TableHeader>Type</TableHeader>
+                <TableHeader>Email</TableHeader>
+                <TableHeader>Phone</TableHeader>
+                <TableHeader>Status</TableHeader>
+                <TableHeader align="right">Actions</TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {clients.map(client => (
+                <TableRow key={client.id}>
+                  <TableCell className="font-medium">{client.name}</TableCell>
+                  <TableCell>{client.clientType}</TableCell>
+                  <TableCell>{client.email || '-'}</TableCell>
+                  <TableCell>{client.phone || '-'}</TableCell>
+                  <TableCell>
+                    <StatusBadge 
+                      status={client.active ? 'Active' : 'Inactive'} 
+                      variant={client.active ? 'success' : 'error'} 
+                    />
+                  </TableCell>
+                  <TableCell align="right">
+                    <div className="flex justify-end gap-2">
+                      <IconButton onClick={() => navigate(`/clients/${client.id}`)} title="View Details" aria-label="View Details">
+                        <Eye size={16} />
+                      </IconButton>
+                      <PermissionGuard permission="CLIENT_UPDATE">
+                        <IconButton onClick={() => navigate(`/clients/${client.id}/edit`)} title="Edit Client" aria-label="Edit Client">
+                          <Edit size={16} />
+                        </IconButton>
+                      </PermissionGuard>
+                      
+                      {client.active ? (
+                        <PermissionGuard permission="CLIENT_DELETE">
+                          <IconButton onClick={() => handleActivateDeactivate(client)} title="Deactivate" aria-label="Deactivate" className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                            <ShieldAlert size={16} />
+                          </IconButton>
+                        </PermissionGuard>
+                      ) : (
+                        <PermissionGuard permission="CLIENT_UPDATE">
+                          <IconButton onClick={() => handleActivateDeactivate(client)} title="Activate" aria-label="Activate" className="text-green-600 hover:text-green-700 hover:bg-green-50">
+                            <ShieldCheck size={16} />
+                          </IconButton>
+                        </PermissionGuard>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
 
-              {totalPages > 1 && (
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem', gap: '0.5rem', alignItems: 'center' }}>
-                  <Button 
-                    variant="secondary" 
-                    disabled={page === 0 || loading} 
-                    onClick={() => setPage(p => p - 1)}
-                  >
-                    Previous
-                  </Button>
-                  <span>Page {page + 1} of {totalPages}</span>
-                  <Button 
-                    variant="secondary" 
-                    disabled={page >= totalPages - 1 || loading} 
-                    onClick={() => setPage(p => p + 1)}
-                  >
-                    Next
-                  </Button>
-                </div>
-              )}
-            </>
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-6 space-x-4">
+              <Button 
+                variant="outline" 
+                disabled={page === 0 || loading} 
+                onClick={() => setPage(p => p - 1)}
+              >
+                Previous
+              </Button>
+              <span className="flex items-center text-gray-700 text-sm font-medium">
+                Page {page + 1} of {totalPages}
+              </span>
+              <Button 
+                variant="outline" 
+                disabled={page >= totalPages - 1 || loading} 
+                onClick={() => setPage(p => p + 1)}
+              >
+                Next
+              </Button>
+            </div>
           )}
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 };

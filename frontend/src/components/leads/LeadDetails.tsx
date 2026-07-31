@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { LeadApi } from '../../services/LeadApi';
 import type { Lead } from '../../types/lead';
+import { Tabs } from '../Tabs';
 import { LeadTimeline } from './LeadTimeline';
 import { LeadFollowUps } from './LeadFollowUps';
 import { LeadAttachments } from './LeadAttachments';
 import { Briefcase, Building, Tag, User, Contact, Calendar } from 'lucide-react';
 import type { FollowUp } from '../../types/lead';
+import LeadConversionModal from '../LeadConversionModal';
+import { useNavigate } from 'react-router-dom';
 
 interface LeadDetailsProps {
   leadId: string;
@@ -16,6 +19,8 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
   const [nextFollowUp, setNextFollowUp] = useState<FollowUp | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isConversionModalOpen, setIsConversionModalOpen] = useState(false);
+  const navigate = useNavigate();
   
   const [activeTab, setActiveTab] = useState<'info' | 'timeline' | 'followups' | 'attachments'>('info');
 
@@ -59,7 +64,23 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
               </p>
             </div>
           </div>
-          <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            {lead.status === 'QUALIFIED' && (
+              <button
+                onClick={() => setIsConversionModalOpen(true)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#10B981',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.375rem',
+                  cursor: 'pointer',
+                  fontWeight: 500
+                }}
+              >
+                Convert to Opportunity
+              </button>
+            )}
             <span style={{ 
               padding: '0.25rem 0.75rem', 
               borderRadius: '1rem', 
@@ -74,20 +95,27 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
         </div>
       </div>
 
-      <div className="tabs" style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
-        <button className={`tab-btn ${activeTab === 'info' ? 'active' : ''}`} onClick={() => setActiveTab('info')} style={{ background: 'none', border: 'none', padding: '0.5rem 1rem', cursor: 'pointer', borderBottom: activeTab === 'info' ? '2px solid var(--primary)' : 'none', color: activeTab === 'info' ? 'var(--primary)' : 'var(--text-light)', fontWeight: activeTab === 'info' ? 600 : 400 }}>
-          Information
-        </button>
-        <button className={`tab-btn ${activeTab === 'timeline' ? 'active' : ''}`} onClick={() => setActiveTab('timeline')} style={{ background: 'none', border: 'none', padding: '0.5rem 1rem', cursor: 'pointer', borderBottom: activeTab === 'timeline' ? '2px solid var(--primary)' : 'none', color: activeTab === 'timeline' ? 'var(--primary)' : 'var(--text-light)', fontWeight: activeTab === 'timeline' ? 600 : 400 }}>
-          Timeline Activity
-        </button>
-        <button className={`tab-btn ${activeTab === 'followups' ? 'active' : ''}`} onClick={() => setActiveTab('followups')} style={{ background: 'none', border: 'none', padding: '0.5rem 1rem', cursor: 'pointer', borderBottom: activeTab === 'followups' ? '2px solid var(--primary)' : 'none', color: activeTab === 'followups' ? 'var(--primary)' : 'var(--text-light)', fontWeight: activeTab === 'followups' ? 600 : 400 }}>
-          Follow-Ups
-        </button>
-        <button className={`tab-btn ${activeTab === 'attachments' ? 'active' : ''}`} onClick={() => setActiveTab('attachments')} style={{ background: 'none', border: 'none', padding: '0.5rem 1rem', cursor: 'pointer', borderBottom: activeTab === 'attachments' ? '2px solid var(--primary)' : 'none', color: activeTab === 'attachments' ? 'var(--primary)' : 'var(--text-light)', fontWeight: activeTab === 'attachments' ? 600 : 400 }}>
-          Attachments
-        </button>
-      </div>
+      <LeadConversionModal
+        isOpen={isConversionModalOpen}
+        onClose={() => setIsConversionModalOpen(false)}
+        leadId={lead.id}
+        leadTitle={`${lead.clientName} - New Opportunity`}
+        onSuccess={(oppId) => {
+          setIsConversionModalOpen(false);
+          navigate(`/opportunities/${oppId}`);
+        }}
+      />
+
+      <Tabs 
+        tabs={[
+          { id: 'info', label: 'Information' },
+          { id: 'timeline', label: 'Timeline Activity' },
+          { id: 'followups', label: 'Follow-Ups' },
+          { id: 'attachments', label: 'Attachments' }
+        ]} 
+        activeTab={activeTab}
+        onChange={(id) => setActiveTab(id as typeof activeTab)}
+      />
 
       <div className="tab-content">
         {activeTab === 'info' && (

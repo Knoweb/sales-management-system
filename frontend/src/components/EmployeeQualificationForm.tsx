@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { ErrorState } from './FeedbackStates';
+import { Button } from './Button';
+import { Input } from './Forms';
 
 interface EmployeeQualificationFormProps {
   onClose: () => void;
@@ -58,89 +61,63 @@ export const EmployeeQualificationForm: React.FC<EmployeeQualificationFormProps>
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <div className="modal-header">
-          <h2 className="modal-title">{isEdit ? 'Edit Qualification' : 'Add Qualification'}</h2>
-          <button className="modal-close" onClick={onClose}><X size={20} /></button>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-gray-900">{isEdit ? 'Edit Qualification' : 'Add Qualification'}</h2>
+          <button className="icon-btn" onClick={onClose} aria-label="Close"><X size={20} /></button>
         </div>
         
-        {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded" style={{ backgroundColor: 'var(--error-bg)', color: 'var(--error)' }}>{error}</div>}
+        {error && <ErrorState message={error} />}
         
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="form-label">Qualification Name *</label>
-            <input 
-              type="text" 
-              className="form-input" 
-              value={qualificationName}
-              onChange={(e) => setQualificationName(e.target.value)}
-              required
+          <Input 
+            label="Qualification Name *"
+            value={qualificationName}
+            onChange={(e) => setQualificationName(e.target.value)}
+            required
+          />
+
+          <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <Input 
+              label="Institution"
+              value={institution}
+              onChange={(e) => setInstitution(e.target.value)}
+            />
+            
+            <Input 
+              label="Field of Study"
+              value={fieldOfStudy}
+              onChange={(e) => setFieldOfStudy(e.target.value)}
             />
           </div>
 
           <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <div className="form-group">
-              <label className="form-label">Institution</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                value={institution}
-                onChange={(e) => setInstitution(e.target.value)}
-              />
-            </div>
+            <Input 
+              label="Level (e.g. BSc, MSc)"
+              value={qualificationLevel}
+              onChange={(e) => setQualificationLevel(e.target.value)}
+            />
             
-            <div className="form-group">
-              <label className="form-label">Field of Study</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                value={fieldOfStudy}
-                onChange={(e) => setFieldOfStudy(e.target.value)}
-              />
-            </div>
+            <Input 
+              label="Credential Number"
+              value={credentialNumber}
+              onChange={(e) => setCredentialNumber(e.target.value)}
+            />
           </div>
 
           <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <div className="form-group">
-              <label className="form-label">Level (e.g. BSc, MSc)</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                value={qualificationLevel}
-                onChange={(e) => setQualificationLevel(e.target.value)}
-              />
-            </div>
+            <Input 
+              label="Issue Date"
+              type="date"
+              value={issueDate}
+              onChange={(e) => setIssueDate(e.target.value)}
+            />
             
-            <div className="form-group">
-              <label className="form-label">Credential Number</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                value={credentialNumber}
-                onChange={(e) => setCredentialNumber(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <div className="form-group">
-              <label className="form-label">Issue Date</label>
-              <input 
-                type="date" 
-                className="form-input" 
-                value={issueDate}
-                onChange={(e) => setIssueDate(e.target.value)}
-              />
-            </div>
-            
-            <div className="form-group">
-              <label className="form-label">Expiry Date</label>
-              <input 
-                type="date" 
-                className="form-input" 
-                value={expiryDate}
-                onChange={(e) => setExpiryDate(e.target.value)}
-              />
-            </div>
+            <Input 
+              label="Expiry Date"
+              type="date"
+              value={expiryDate}
+              onChange={(e) => setExpiryDate(e.target.value)}
+            />
           </div>
           
           <div className="form-group">
@@ -164,11 +141,11 @@ export const EmployeeQualificationForm: React.FC<EmployeeQualificationFormProps>
             />
           </div>
           
-          <div className="form-actions">
-            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={loading}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
+          <div className="flex justify-end gap-3 mt-6">
+            <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>Cancel</Button>
+            <Button type="submit" variant="primary" disabled={loading}>
               {loading ? 'Saving...' : 'Save Qualification'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

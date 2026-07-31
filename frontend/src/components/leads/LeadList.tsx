@@ -4,9 +4,15 @@ import { ClientApi } from '../../services/ClientApi';
 import type { Lead } from '../../types/lead';
 import type { Client } from '../../types/client';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Eye, Edit, ShieldAlert } from 'lucide-react';
+import { Search, Eye, Edit, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { Button } from '../Button';
+import { IconButton } from '../IconButton';
 import { PermissionGuard } from '../PermissionGuard';
+import { Card } from '../Card';
+import { Input, Select } from '../Forms';
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../Table';
+import { StatusBadge } from '../StatusBadge';
+import { ErrorState, EmptyState, LoadingState } from '../FeedbackStates';
 
 export const LeadList: React.FC = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -59,57 +65,44 @@ export const LeadList: React.FC = () => {
       if (!window.confirm(`Are you sure you want to ${action} this lead?`)) return;
       await LeadApi.updateStatus(lead.id, undefined, undefined, !lead.active);
       void loadLeads();
-      alert(`Lead successfully ${action}d!`);
     } catch (err) {
       const error = err as { response?: { data?: { message?: string } } };
       alert(error?.response?.data?.message || 'Failed to update lead status');
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'NEW': return { bg: 'var(--primary-bg)', color: 'var(--primary)' };
-      case 'CONTACTED': return { bg: 'var(--warning-bg)', color: 'var(--warning)' };
-      case 'QUALIFIED': return { bg: 'var(--info-bg)', color: 'var(--info)' };
-      case 'PROPOSAL_SENT': return { bg: 'var(--primary-bg)', color: 'var(--primary)' };
-      case 'CLOSED_WON': return { bg: 'var(--success-bg)', color: 'var(--success)' };
-      case 'CLOSED_LOST': return { bg: 'var(--error-bg)', color: 'var(--error)' };
-      default: return { bg: 'var(--text-light)', color: 'white' };
-    }
-  };
-
   return (
-    <div className="card">
-      <div className="card-header flex-between">
-        <h2 className="card-title">Lead List</h2>
-        <div className="flex gap-4">
-          <div className="search-input" style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '0.25rem 0.5rem' }}>
-            <Search size={16} style={{ color: 'var(--text-light)', marginRight: '0.5rem' }} />
-            <input 
+    <div>
+      <Card className="mb-6">
+        <div className="flex flex-col md:flex-row gap-4 items-end">
+          <div className="flex-1 w-full">
+            <Input 
               type="text" 
               placeholder="Search leads..." 
               value={searchTerm}
               onChange={e => { setSearchTerm(e.target.value); setPage(0); }}
-              style={{ border: 'none', outline: 'none', background: 'transparent' }}
+              label="Search"
             />
           </div>
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Filter size={16} style={{ color: 'var(--text-light)' }} />
-            <select 
+          <div className="w-full md:w-48">
+            <Select 
               value={clientFilter} 
               onChange={e => { setClientFilter(e.target.value); setPage(0); }}
-              style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '0.25rem' }}
+              label="Client"
             >
               <option value="all">All Clients</option>
               {clients.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
-            </select>
-            <select 
+            </Select>
+          </div>
+          
+          <div className="w-full md:w-48">
+            <Select 
               value={statusFilter} 
               onChange={e => { setStatusFilter(e.target.value); setPage(0); }}
-              style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '0.25rem' }}
+              label="Status"
             >
               <option value="all">All Status</option>
               <option value="NEW">New</option>
@@ -118,113 +111,110 @@ export const LeadList: React.FC = () => {
               <option value="PROPOSAL_SENT">Proposal Sent</option>
               <option value="CLOSED_WON">Closed Won</option>
               <option value="CLOSED_LOST">Closed Lost</option>
-            </select>
-            <select 
+            </Select>
+          </div>
+          
+          <div className="w-full md:w-48">
+            <Select 
               value={activeFilter} 
               onChange={e => { setActiveFilter(e.target.value); setPage(0); }}
-              style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '0.25rem' }}
+              label="Active State"
             >
               <option value="all">All Active State</option>
               <option value="active">Active Only</option>
               <option value="inactive">Inactive Only</option>
-            </select>
+            </Select>
           </div>
         </div>
-      </div>
+      </Card>
 
-      <div className="card-body">
-        {error && <div className="error-message">{error}</div>}
-        
-        {loading && leads.length === 0 ? (
-          <p>Loading leads...</p>
-        ) : leads.length === 0 ? (
-          <p>No leads found.</p>
-        ) : (
-          <>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Client</th>
-                  <th>Source</th>
-                  <th>Assigned To</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {leads.map(lead => {
-                  const statusStyle = getStatusColor(lead.status);
-                  return (
-                  <tr key={lead.id}>
-                    <td style={{ fontWeight: '500' }}>{lead.title}</td>
-                    <td>{lead.clientName}</td>
-                    <td>{lead.inquirySource.replace('_', ' ')}</td>
-                    <td>{lead.assignedToName || 'Unassigned'}</td>
-                    <td>
-                      <span style={{ 
-                        padding: '0.25rem 0.5rem', 
-                        borderRadius: '1rem', 
-                        fontSize: '0.75rem',
-                        backgroundColor: statusStyle.bg,
-                        color: statusStyle.color
-                      }}>
-                        {lead.status.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <Button variant="ghost" onClick={() => navigate(`/leads/${lead.id}`)} title="View Details">
-                          <Eye size={16} />
-                        </Button>
+      {error ? (
+        <ErrorState message={error} onRetry={loadLeads} />
+      ) : loading && leads.length === 0 ? (
+        <LoadingState message="Loading leads..." />
+      ) : leads.length === 0 ? (
+        <EmptyState 
+          icon={<Search size={48} />}
+          title="No leads found" 
+          message="Try adjusting your filters or search terms." 
+        />
+      ) : (
+        <>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeader>Title</TableHeader>
+                <TableHeader>Client</TableHeader>
+                <TableHeader>Source</TableHeader>
+                <TableHeader>Assigned To</TableHeader>
+                <TableHeader>Status</TableHeader>
+                <TableHeader align="right">Actions</TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {leads.map(lead => (
+                <TableRow key={lead.id}>
+                  <TableCell className="font-medium">{lead.title}</TableCell>
+                  <TableCell>{lead.clientName}</TableCell>
+                  <TableCell>{lead.inquirySource.replace('_', ' ')}</TableCell>
+                  <TableCell>{lead.assignedToName || 'Unassigned'}</TableCell>
+                  <TableCell>
+                    <StatusBadge status={lead.status} />
+                  </TableCell>
+                  <TableCell align="right">
+                    <div className="flex justify-end gap-2">
+                      <IconButton onClick={() => navigate(`/leads/${lead.id}`)} title="View Details" aria-label="View Details">
+                        <Eye size={16} />
+                      </IconButton>
+                      <PermissionGuard permission="LEAD_UPDATE">
+                        <IconButton onClick={() => navigate(`/leads/${lead.id}/edit`)} title="Edit Lead" aria-label="Edit Lead">
+                          <Edit size={16} />
+                        </IconButton>
+                      </PermissionGuard>
+                      
+                      {lead.active ? (
                         <PermissionGuard permission="LEAD_UPDATE">
-                          <Button variant="ghost" onClick={() => navigate(`/leads/${lead.id}/edit`)} title="Edit Lead">
-                            <Edit size={16} />
-                          </Button>
+                          <IconButton onClick={() => handleToggleActive(lead)} title="Deactivate" aria-label="Deactivate" className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                            <ShieldAlert size={16} />
+                          </IconButton>
                         </PermissionGuard>
-                        
-                        {lead.active ? (
-                          <PermissionGuard permission="LEAD_UPDATE">
-                            <Button variant="ghost" onClick={() => handleToggleActive(lead)} title="Deactivate" style={{ color: 'var(--error)' }}>
-                              <ShieldAlert size={16} />
-                            </Button>
-                          </PermissionGuard>
-                        ) : (
-                          <PermissionGuard permission="LEAD_UPDATE">
-                            <Button variant="ghost" onClick={() => handleToggleActive(lead)} title="Reactivate" style={{ color: 'var(--success)' }}>
-                              <ShieldAlert size={16} />
-                            </Button>
-                          </PermissionGuard>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                )})}
-              </tbody>
-            </table>
+                      ) : (
+                        <PermissionGuard permission="LEAD_UPDATE">
+                          <IconButton onClick={() => handleToggleActive(lead)} title="Reactivate" aria-label="Reactivate" className="text-green-600 hover:text-green-700 hover:bg-green-50">
+                            <ShieldCheck size={16} />
+                          </IconButton>
+                        </PermissionGuard>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
 
-            {totalPages > 1 && (
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem', gap: '0.5rem', alignItems: 'center' }}>
-                <Button 
-                  variant="secondary" 
-                  disabled={page === 0 || loading} 
-                  onClick={() => setPage(p => p - 1)}
-                >
-                  Previous
-                </Button>
-                <span>Page {page + 1} of {totalPages}</span>
-                <Button 
-                  variant="secondary" 
-                  disabled={page >= totalPages - 1 || loading} 
-                  onClick={() => setPage(p => p + 1)}
-                >
-                  Next
-                </Button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-6 space-x-4">
+              <Button 
+                variant="outline" 
+                disabled={page === 0 || loading} 
+                onClick={() => setPage(p => p - 1)}
+              >
+                Previous
+              </Button>
+              <span className="flex items-center text-gray-700 text-sm font-medium">
+                Page {page + 1} of {totalPages}
+              </span>
+              <Button 
+                variant="outline" 
+                disabled={page >= totalPages - 1 || loading} 
+                onClick={() => setPage(p => p + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };

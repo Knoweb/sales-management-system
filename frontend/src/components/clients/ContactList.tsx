@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import type { ClientContact } from '../../types/client';
 import { ClientApi } from '../../services/ClientApi';
 import { Button } from '../Button';
-import { Edit, ShieldCheck, ShieldAlert, Star, StarOff } from 'lucide-react';
+import { Star, StarOff, Edit, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../Table';
 import { PermissionGuard } from '../PermissionGuard';
 import { ContactModal } from './ContactModal';
 
@@ -65,31 +66,30 @@ export const ContactList: React.FC<ContactListProps> = ({ clientId, contacts, on
           No contacts found for this client.
         </p>
       ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Title</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeader>Name</TableHeader>
+                <TableHeader>Title</TableHeader>
+                <TableHeader>Email</TableHeader>
+                <TableHeader>Phone</TableHeader>
+                <TableHeader>Status</TableHeader>
+                <TableHeader>Actions</TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {contacts.map(contact => (
-                <tr key={contact.id}>
-                  <td>
+                <TableRow key={contact.id}>
+                  <TableCell>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       {contact.firstName} {contact.lastName}
                       {contact.primary && <span title="Primary Contact" style={{ color: 'var(--primary)' }}><Star size={16} fill="currentColor" /></span>}
                     </div>
-                  </td>
-                  <td>{contact.jobTitle || '-'}</td>
-                  <td>{contact.email || '-'}</td>
-                  <td>{contact.phone || '-'}</td>
-                  <td>
+                  </TableCell>
+                  <TableCell>{contact.jobTitle || '-'}</TableCell>
+                  <TableCell>{contact.email || '-'}</TableCell>
+                  <TableCell>{contact.phone || '-'}</TableCell>
+                  <TableCell>
                     <span style={{ 
                       padding: '0.25rem 0.5rem', 
                       borderRadius: '1rem', 
@@ -99,8 +99,8 @@ export const ContactList: React.FC<ContactListProps> = ({ clientId, contacts, on
                     }}>
                       {contact.active ? 'Active' : 'Inactive'}
                     </span>
-                  </td>
-                  <td>
+                  </TableCell>
+                  <TableCell>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <PermissionGuard permission="CLIENT_UPDATE">
                         <Button variant="ghost" onClick={() => handleEdit(contact)} title="Edit Contact">
@@ -124,12 +124,11 @@ export const ContactList: React.FC<ContactListProps> = ({ clientId, contacts, on
                         )}
                       </PermissionGuard>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
       )}
 
       <ContactModal 

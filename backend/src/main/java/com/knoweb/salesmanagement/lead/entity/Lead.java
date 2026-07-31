@@ -62,6 +62,9 @@ public class Lead {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
+    @Column(name = "initial_meeting_at")
+    private OffsetDateTime initialMeetingAt;
+
     @Column(name = "created_by")
     private UUID createdBy;
 
@@ -112,4 +115,7 @@ public class Lead {
     
     public UUID getUpdatedBy() { return updatedBy; }
     public void setUpdatedBy(UUID updatedBy) { this.updatedBy = updatedBy; }
+
+    public OffsetDateTime getInitialMeetingAt() { return initialMeetingAt; }
+    public void setInitialMeetingAt(OffsetDateTime initialMeetingAt) { this.initialMeetingAt = initialMeetingAt; }
 }

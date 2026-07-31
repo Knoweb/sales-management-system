@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { SkillApi } from '../services/SkillApi';
 import type { Skill } from '../types/skill';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Plus, Search } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Card } from '../components/Card';
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/Table';
+import { LoadingState, EmptyState } from '../components/FeedbackStates';
+import { StatusBadge } from '../components/StatusBadge';
 
 export const SkillsPage: React.FC = () => {
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -32,48 +36,57 @@ export const SkillsPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="page-container">
+    <div className="p-6 max-w-7xl mx-auto w-full">
       <PageHeader 
-        title={<><BookOpen size={24} className="inline-icon" /> Skills Directory</>}
+        title={<><BookOpen size={24} className="inline-icon text-blue-600" /> Skills Directory</>}
         description="Manage the global list of employee skills."
         actionButton={{
           label: 'Add Skill',
           show: canCreate,
-          onClick: () => navigate('/skills/new')
+          onClick: () => navigate('/skills/new'),
+          icon: <Plus size={16} />
         }}
       />
 
-      <div className="card">
-        <div className="card-header flex-between">
-          <h2 className="card-title">Skill List</h2>
+      <Card>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-lg font-semibold text-gray-900">Skill List</h2>
         </div>
-        <div className="card-body">
-          {loading ? (
-            <p>Loading skills...</p>
-          ) : skills.length === 0 ? (
-            <p>No skills found.</p>
-          ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Code</th>
-                  <th>Name</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {skills.map(skill => (
-                  <tr key={skill.id}>
-                    <td>{skill.code}</td>
-                    <td>{skill.name}</td>
-                    <td>{skill.active ? 'Active' : 'Inactive'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
+        
+        {loading ? (
+          <LoadingState message="Loading skills..." />
+        ) : skills.length === 0 ? (
+          <EmptyState 
+            icon={<Search size={48} />}
+            title="No skills found" 
+            message="No skills match your criteria." 
+          />
+        ) : (
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeader>Code</TableHeader>
+                <TableHeader>Name</TableHeader>
+                <TableHeader>Status</TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {skills.map(skill => (
+                <TableRow key={skill.id}>
+                  <TableCell className="font-medium text-gray-900">{skill.code}</TableCell>
+                  <TableCell>{skill.name}</TableCell>
+                  <TableCell>
+                    <StatusBadge 
+                      status={skill.active ? 'Active' : 'Inactive'} 
+                      variant={skill.active ? 'success' : 'neutral'} 
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Card>
     </div>
   );
 };

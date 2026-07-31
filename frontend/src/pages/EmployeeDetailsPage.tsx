@@ -11,6 +11,14 @@ import { PermissionGuard } from '../components/PermissionGuard';
 import { EmployeeSkillForm } from '../components/EmployeeSkillForm';
 import { EmployeeQualificationForm } from '../components/EmployeeQualificationForm';
 import { EmployeeLeaveForm } from '../components/EmployeeLeaveForm';
+import { Tabs } from '../components/Tabs';
+import { PageHeader } from '../components/PageHeader';
+import { Card } from '../components/Card';
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/Table';
+import { Button } from '../components/Button';
+import { StatusBadge } from '../components/StatusBadge';
+import { ErrorState, LoadingState } from '../components/FeedbackStates';
+import { Input } from '../components/Forms';
 
 export const EmployeeDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,7 +28,7 @@ export const EmployeeDetailsPage: React.FC = () => {
   const [leaves, setLeaves] = useState<EmployeeLeave[]>([]);
   
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'skills' | 'qualifications' | 'leave' | 'availability'>('overview');
+  const [activeTab, setActiveTab] = useState('overview');
 
   // Modal states
   const [showSkillForm, setShowSkillForm] = useState(false);
@@ -241,247 +249,307 @@ export const EmployeeDetailsPage: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="page-container">
-        <div className="card p-8" style={{ textAlign: 'center', margin: '2rem 0' }}>
-          <p>Loading employee details...</p>
-        </div>
-      </div>
-    );
+    return <div className="p-6 max-w-7xl mx-auto"><LoadingState message="Loading employee details..." /></div>;
   }
 
   if (error) {
-    return (
-      <div className="page-container">
-        <div className="card p-8" style={{ textAlign: 'center', margin: '2rem 0', border: '1px solid var(--error)' }}>
-          <h2 style={{ color: 'var(--error)', marginBottom: '1rem' }}>{error}</h2>
-          <button className="btn btn-primary" onClick={() => setRetryCount(c => c + 1)}>Retry</button>
-        </div>
-      </div>
-    );
+    return <div className="p-6 max-w-7xl mx-auto"><ErrorState message={error} onRetry={() => setRetryCount(c => c + 1)} /></div>;
   }
 
   if (!employee) {
     return (
-      <div className="page-container">
-        <div className="card p-8" style={{ textAlign: 'center', margin: '2rem 0' }}>
-          <h2 style={{ marginBottom: '1rem' }}>Employee Not Found</h2>
-          <p style={{ marginBottom: '1.5rem', color: 'var(--text-light)' }}>The employee you are looking for does not exist.</p>
+      <div className="p-6 max-w-7xl mx-auto">
+        <ErrorState title="Employee Not Found" message="The employee you are looking for does not exist." />
+        <div className="text-center mt-4">
           <Link to="/employees" className="btn btn-secondary">Back to Employees</Link>
         </div>
       </div>
     );
   }
 
+  const tabItems = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'skills', label: 'Skills' },
+    { id: 'qualifications', label: 'Qualifications' },
+    { id: 'leave', label: 'Leave' },
+    { id: 'availability', label: 'Availability' }
+  ];
+
   return (
-    <div className="page-container">
-      <div className="mb-4">
-        <Link to="/employees" className="btn btn-secondary flex-inline gap-2">
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="mb-6">
+        <Link to="/employees" className="btn btn-ghost text-sm text-gray-500 hover:text-gray-900">
           <ArrowLeft size={16} /> Back to Directory
         </Link>
       </div>
 
-      <div className="page-header">
-        <h1 className="page-title"><User size={24} className="inline-icon" /> {employee.firstName} {employee.lastName}</h1>
-        <p className="page-description">{employee.jobTitle} • {employee.department?.name || 'No Department'}</p>
-      </div>
-
-      <div className="tabs mb-4">
-        <button className={`tab ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>Overview</button>
-        <button className={`tab ${activeTab === 'skills' ? 'active' : ''}`} onClick={() => setActiveTab('skills')}>Skills</button>
-        <button className={`tab ${activeTab === 'qualifications' ? 'active' : ''}`} onClick={() => setActiveTab('qualifications')}>Qualifications</button>
-        <button className={`tab ${activeTab === 'leave' ? 'active' : ''}`} onClick={() => setActiveTab('leave')}>Leave</button>
-        <button className={`tab ${activeTab === 'availability' ? 'active' : ''}`} onClick={() => setActiveTab('availability')}>Availability</button>
-      </div>
-
-      <div className="card">
-        <div className="card-body">
-          {activeTab === 'overview' && (
-            <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-              <div>
-                <h3 className="mb-2" style={{ fontWeight: 600 }}>Contact Information</h3>
-                <p><strong>Work Email:</strong> {employee.workEmail || 'N/A'}</p>
-                <p><strong>Personal Email:</strong> {employee.personalEmail || 'N/A'}</p>
-                <p><strong>Contact Number:</strong> {employee.contactNumber || 'N/A'}</p>
-              </div>
-              <div>
-                <h3 className="mb-2" style={{ fontWeight: 600 }}>Employment Details</h3>
-                <p><strong>Employee ID:</strong> {employee.employeeNumber}</p>
-                <p><strong>Type:</strong> {employee.employmentType}</p>
-                <p><strong>Status:</strong> {employee.employmentStatus}</p>
-                <p><strong>Hire Date:</strong> {employee.hireDate || 'N/A'}</p>
-                <p><strong>Linked User:</strong> {employee.user ? employee.user.email : 'None'}</p>
-              </div>
+      <PageHeader 
+        title={
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-100 text-blue-600 p-2 rounded-full">
+              <User size={24} />
             </div>
-          )}
+            {employee.firstName} {employee.lastName}
+          </div>
+        }
+        description={`${employee.jobTitle} • ${employee.department?.name || 'No Department'}`}
+      />
 
-          {activeTab === 'skills' && (
-            <div>
-              <div className="flex-between mb-4">
-                <h3 style={{ fontWeight: 600 }}><CheckCircle size={18} className="inline-icon" /> Skills</h3>
-                <PermissionGuard permission="EMPLOYEE_SKILL_MANAGE">
-                  <button className="btn btn-primary" onClick={() => { setEditSkillData(undefined); setShowSkillForm(true); }}>Add Skill</button>
-                </PermissionGuard>
-              </div>
-              {skills.length === 0 ? <p>No skills assigned.</p> : (
-                <table className="data-table">
-                  <thead><tr><th>Skill</th><th>Proficiency</th><th>Years</th><th>Verified</th><th>Actions</th></tr></thead>
-                  <tbody>
-                    {skills.map(s => (
-                      <tr key={s.id}>
-                        <td>{s.skill?.name}</td>
-                        <td>{s.proficiencyLevel}</td>
-                        <td>{s.yearsOfExperience || '-'}</td>
-                        <td>{s.verified ? 'Yes' : 'No'}</td>
-                        <td>
-                          <PermissionGuard permission="EMPLOYEE_SKILL_MANAGE">
-                            <div className="flex gap-2" style={{ display: 'flex', gap: '8px' }}>
-                              <button className="btn btn-secondary" onClick={() => { setEditSkillData(s); setShowSkillForm(true); }}>Edit</button>
-                              <button className="btn btn-secondary" onClick={() => handleRemoveSkill(s.skill.id)} style={{ color: 'var(--error)', borderColor: 'var(--error)' }}>Remove</button>
-                            </div>
-                          </PermissionGuard>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          )}
+      <Tabs tabs={tabItems} activeTab={activeTab} onChange={setActiveTab} />
 
-          {activeTab === 'qualifications' && (
-            <div>
-              <div className="flex-between mb-4">
-                <h3 style={{ fontWeight: 600 }}><BookOpen size={18} className="inline-icon" /> Qualifications</h3>
-                <PermissionGuard permission="EMPLOYEE_QUALIFICATION_MANAGE">
-                  <button className="btn btn-primary" onClick={() => { setEditQualData(undefined); setShowQualForm(true); }}>Add Qualification</button>
-                </PermissionGuard>
-              </div>
-              {qualifications.length === 0 ? <p>No qualifications added.</p> : (
-                <table className="data-table">
-                  <thead><tr><th>Name</th><th>Institution</th><th>Level</th><th>Verified</th><th>Actions</th></tr></thead>
-                  <tbody>
-                    {qualifications.map(q => (
-                      <tr key={q.id}>
-                        <td>{q.qualificationName}</td>
-                        <td>{q.institution || '-'}</td>
-                        <td>{q.qualificationLevel || '-'}</td>
-                        <td>{q.verified ? 'Yes' : 'No'}</td>
-                        <td>
-                          <PermissionGuard permission="EMPLOYEE_QUALIFICATION_MANAGE">
-                            <div className="flex gap-2" style={{ display: 'flex', gap: '8px' }}>
-                              <button className="btn btn-secondary" onClick={() => { setEditQualData(q); setShowQualForm(true); }}>Edit</button>
-                              <button className="btn btn-secondary" onClick={() => handleRemoveQual(q.id)} style={{ color: 'var(--error)', borderColor: 'var(--error)' }}>Remove</button>
-                            </div>
-                          </PermissionGuard>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'leave' && (
-            <div>
-              <div className="flex-between mb-4">
-                <h3 style={{ fontWeight: 600 }}><Calendar size={18} className="inline-icon" /> Leave Requests</h3>
-                <PermissionGuard permission={['EMPLOYEE_LEAVE_MANAGE', 'EMPLOYEE_SELF_READ']}>
-                  <button className="btn btn-primary" onClick={() => setShowLeaveForm(true)}>Request Leave</button>
-                </PermissionGuard>
-              </div>
-              {leaves.length === 0 ? <p>No leave requests.</p> : (
-                <table className="data-table">
-                  <thead><tr><th>Type</th><th>Start Date</th><th>End Date</th><th>Status</th><th>Actions</th></tr></thead>
-                  <tbody>
-                    {leaves.map(l => (
-                      <tr key={l.id}>
-                        <td>{l.leaveType}</td>
-                        <td>{l.startDate}</td>
-                        <td>{l.endDate}</td>
-                        <td>
-                          <span className={`status-badge ${l.status.toLowerCase()}`}>
-                            {l.status}
-                          </span>
-                        </td>
-                        <td>
-                          <PermissionGuard permission="EMPLOYEE_LEAVE_MANAGE">
-                            {l.status === 'PENDING' && (
-                              <div className="flex gap-2" style={{ display: 'flex', gap: '8px' }}>
-                                <button className="btn btn-secondary" style={{ color: 'var(--success)', borderColor: 'var(--success)' }} onClick={() => handleLeaveStatusUpdate(l.id, 'APPROVED')}>Approve</button>
-                                <button className="btn btn-secondary" style={{ color: 'var(--error)', borderColor: 'var(--error)' }} onClick={() => handleLeaveStatusUpdate(l.id, 'REJECTED')}>Reject</button>
-                              </div>
-                            )}
-                          </PermissionGuard>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'availability' && (
-            <div>
-              <div className="flex-between mb-4">
-                <h3 style={{ fontWeight: 600 }}><Clock size={18} className="inline-icon" /> Availability</h3>
-              </div>
-              <p><strong>Weekly Capacity:</strong> {employee.weeklyCapacityHours} hours</p>
-              
-              <div className="mt-4 p-4" style={{ backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
-                <div className="grid" style={{ gridTemplateColumns: '1fr 1fr auto', gap: '16px', alignItems: 'end', marginBottom: '16px' }}>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label">Start Date</label>
-                    <input type="date" className="form-input" value={availStart} onChange={(e) => setAvailStart(e.target.value)} />
-                  </div>
-                  <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label">End Date</label>
-                    <input type="date" className="form-input" value={availEnd} onChange={(e) => setAvailEnd(e.target.value)} />
-                  </div>
-                  <button className="btn btn-primary" onClick={checkAvailability} disabled={availLoading || !availStart || !availEnd}>
-                    {availLoading ? 'Checking...' : 'Check'}
-                  </button>
+      <div>
+        {activeTab === 'overview' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <h3 className="text-lg font-semibold mb-4 text-gray-900 border-b pb-2">Contact Information</h3>
+              <div className="space-y-3 text-sm">
+                <div className="grid grid-cols-3 gap-2">
+                  <span className="text-gray-500 font-medium">Work Email</span>
+                  <span className="col-span-2 text-gray-900">{employee.workEmail || <span className="text-gray-400">N/A</span>}</span>
                 </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <span className="text-gray-500 font-medium">Personal Email</span>
+                  <span className="col-span-2 text-gray-900">{employee.personalEmail || <span className="text-gray-400">N/A</span>}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <span className="text-gray-500 font-medium">Phone Number</span>
+                  <span className="col-span-2 text-gray-900">{employee.contactNumber || <span className="text-gray-400">N/A</span>}</span>
+                </div>
+              </div>
+            </Card>
 
-                {availData && (
-                  <div className="grid mt-4" style={{ gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', backgroundColor: 'var(--bg-card)', padding: '16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+            <Card>
+              <h3 className="text-lg font-semibold mb-4 text-gray-900 border-b pb-2">Employment Details</h3>
+              <div className="space-y-3 text-sm">
+                <div className="grid grid-cols-3 gap-2">
+                  <span className="text-gray-500 font-medium">Employee ID</span>
+                  <span className="col-span-2 text-gray-900">{employee.employeeNumber}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <span className="text-gray-500 font-medium">Type</span>
+                  <span className="col-span-2 text-gray-900">
+                    <StatusBadge status={employee.employmentType} variant="neutral" />
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <span className="text-gray-500 font-medium">Status</span>
+                  <span className="col-span-2">
+                    <StatusBadge status={employee.employmentStatus} />
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <span className="text-gray-500 font-medium">Hire Date</span>
+                  <span className="col-span-2 text-gray-900">{employee.hireDate || <span className="text-gray-400">N/A</span>}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <span className="text-gray-500 font-medium">Linked User</span>
+                  <span className="col-span-2 text-gray-900">{employee.user ? employee.user.email : <span className="text-gray-400">None</span>}</span>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === 'skills' && (
+          <Card>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-semibold flex items-center gap-2 text-gray-900">
+                <CheckCircle size={20} className="text-blue-500" /> Skills
+              </h3>
+              <PermissionGuard permission="EMPLOYEE_SKILL_MANAGE">
+                <Button onClick={() => { setEditSkillData(undefined); setShowSkillForm(true); }}>Add Skill</Button>
+              </PermissionGuard>
+            </div>
+            {skills.length === 0 ? <p className="text-gray-500 text-center py-4">No skills assigned.</p> : (
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableHeader>Skill</TableHeader>
+                    <TableHeader>Proficiency</TableHeader>
+                    <TableHeader>Years</TableHeader>
+                    <TableHeader>Verified</TableHeader>
+                    <TableHeader>Actions</TableHeader>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {skills.map(s => (
+                    <TableRow key={s.id}>
+                      <TableCell className="font-medium">{s.skill?.name}</TableCell>
+                      <TableCell>{s.proficiencyLevel}</TableCell>
+                      <TableCell>{s.yearsOfExperience || '-'}</TableCell>
+                      <TableCell>
+                        <StatusBadge status={s.verified ? 'Verified' : 'Unverified'} variant={s.verified ? 'success' : 'neutral'} />
+                      </TableCell>
+                      <TableCell>
+                        <PermissionGuard permission="EMPLOYEE_SKILL_MANAGE">
+                          <div className="flex gap-2">
+                            <Button variant="outline" onClick={() => { setEditSkillData(s); setShowSkillForm(true); }}>Edit</Button>
+                            <Button variant="danger" onClick={() => handleRemoveSkill(s.skill.id)}>Remove</Button>
+                          </div>
+                        </PermissionGuard>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </Card>
+        )}
+
+        {activeTab === 'qualifications' && (
+          <Card>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-semibold flex items-center gap-2 text-gray-900">
+                <BookOpen size={20} className="text-blue-500" /> Qualifications
+              </h3>
+              <PermissionGuard permission="EMPLOYEE_QUALIFICATION_MANAGE">
+                <Button onClick={() => { setEditQualData(undefined); setShowQualForm(true); }}>Add Qualification</Button>
+              </PermissionGuard>
+            </div>
+            {qualifications.length === 0 ? <p className="text-gray-500 text-center py-4">No qualifications added.</p> : (
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableHeader>Name</TableHeader>
+                    <TableHeader>Institution</TableHeader>
+                    <TableHeader>Level</TableHeader>
+                    <TableHeader>Verified</TableHeader>
+                    <TableHeader>Actions</TableHeader>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {qualifications.map(q => (
+                    <TableRow key={q.id}>
+                      <TableCell className="font-medium">{q.qualificationName}</TableCell>
+                      <TableCell>{q.institution || '-'}</TableCell>
+                      <TableCell>{q.qualificationLevel || '-'}</TableCell>
+                      <TableCell>
+                        <StatusBadge status={q.verified ? 'Verified' : 'Unverified'} variant={q.verified ? 'success' : 'neutral'} />
+                      </TableCell>
+                      <TableCell>
+                        <PermissionGuard permission="EMPLOYEE_QUALIFICATION_MANAGE">
+                          <div className="flex gap-2">
+                            <Button variant="outline" onClick={() => { setEditQualData(q); setShowQualForm(true); }}>Edit</Button>
+                            <Button variant="danger" onClick={() => handleRemoveQual(q.id)}>Remove</Button>
+                          </div>
+                        </PermissionGuard>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </Card>
+        )}
+
+        {activeTab === 'leave' && (
+          <Card>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-semibold flex items-center gap-2 text-gray-900">
+                <Calendar size={20} className="text-blue-500" /> Leave Requests
+              </h3>
+              <PermissionGuard permission={['EMPLOYEE_LEAVE_MANAGE', 'EMPLOYEE_SELF_READ']}>
+                <Button onClick={() => setShowLeaveForm(true)}>Request Leave</Button>
+              </PermissionGuard>
+            </div>
+            {leaves.length === 0 ? <p className="text-gray-500 text-center py-4">No leave requests.</p> : (
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableHeader>Type</TableHeader>
+                    <TableHeader>Start Date</TableHeader>
+                    <TableHeader>End Date</TableHeader>
+                    <TableHeader>Status</TableHeader>
+                    <TableHeader>Actions</TableHeader>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {leaves.map(l => (
+                    <TableRow key={l.id}>
+                      <TableCell className="font-medium">{l.leaveType}</TableCell>
+                      <TableCell>{l.startDate}</TableCell>
+                      <TableCell>{l.endDate}</TableCell>
+                      <TableCell>
+                        <StatusBadge status={l.status} />
+                      </TableCell>
+                      <TableCell>
+                        <PermissionGuard permission="EMPLOYEE_LEAVE_MANAGE">
+                          {l.status === 'PENDING' && (
+                            <div className="flex gap-2">
+                              <Button variant="primary" onClick={() => handleLeaveStatusUpdate(l.id, 'APPROVED')}>Approve</Button>
+                              <Button variant="danger" onClick={() => handleLeaveStatusUpdate(l.id, 'REJECTED')}>Reject</Button>
+                            </div>
+                          )}
+                        </PermissionGuard>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </Card>
+        )}
+
+        {activeTab === 'availability' && (
+          <Card>
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold flex items-center gap-2 text-gray-900">
+                <Clock size={20} className="text-blue-500" /> Availability
+              </h3>
+            </div>
+            <p className="mb-4 text-sm"><strong className="font-medium text-gray-700">Weekly Capacity:</strong> {employee.weeklyCapacityHours} hours</p>
+            
+            <div className="bg-gray-50 p-6 rounded-lg border border-gray-100">
+              <div className="flex flex-col md:flex-row gap-4 items-end mb-6">
+                <div className="flex-1 w-full">
+                  <Input type="date" label="Start Date" value={availStart} onChange={(e) => setAvailStart(e.target.value)} />
+                </div>
+                <div className="flex-1 w-full">
+                  <Input type="date" label="End Date" value={availEnd} onChange={(e) => setAvailEnd(e.target.value)} />
+                </div>
+                <div className="w-full md:w-auto">
+                  <Button onClick={checkAvailability} disabled={availLoading || !availStart || !availEnd} className="w-full md:w-auto">
+                    {availLoading ? 'Checking...' : 'Check'}
+                  </Button>
+                </div>
+              </div>
+
+              {availData && (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 rounded-md border border-gray-200 shadow-sm mb-4">
                     <div>
-                      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Est. Capacity Hours</p>
-                      <p style={{ fontSize: '1.25rem', fontWeight: 600 }}>{availData.estimatedCapacityHours}</p>
+                      <p className="text-xs font-medium text-gray-500 uppercase">Est. Capacity</p>
+                      <p className="text-2xl font-semibold text-gray-900 mt-1">{availData.estimatedCapacityHours} <span className="text-sm font-normal text-gray-500">hrs</span></p>
                     </div>
                     <div>
-                      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Leave Hours</p>
-                      <p style={{ fontSize: '1.25rem', fontWeight: 600 }}>{availData.approvedLeaveHours}</p>
+                      <p className="text-xs font-medium text-gray-500 uppercase">Leave</p>
+                      <p className="text-2xl font-semibold text-gray-900 mt-1">{availData.approvedLeaveHours} <span className="text-sm font-normal text-gray-500">hrs</span></p>
                     </div>
                     <div>
-                      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Available Hours</p>
-                      <p style={{ fontSize: '1.25rem', fontWeight: 600, color: availData.estimatedAvailableHours < 0 ? 'var(--error)' : 'var(--success)' }}>
-                        {availData.estimatedAvailableHours}
+                      <p className="text-xs font-medium text-gray-500 uppercase">Available</p>
+                      <p className={`text-2xl font-semibold mt-1 ${availData.estimatedAvailableHours < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                        {availData.estimatedAvailableHours} <span className="text-sm font-normal">hrs</span>
                       </p>
                     </div>
                   </div>
-                )}
-                
-                {availData && (
-                  <div className="mt-4" style={{ padding: '16px', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
-                    <p><strong>Availability Percentage:</strong> {availData.availabilityPercentage.toFixed(1)}%</p>
-                    <div style={{ width: '100%', height: '8px', backgroundColor: 'var(--bg-secondary)', borderRadius: '4px', overflow: 'hidden', marginTop: '8px' }}>
+                  
+                  <div className="bg-white p-4 rounded-md border border-gray-200 shadow-sm">
+                    <div className="flex justify-between items-center mb-2">
+                      <p className="text-sm font-medium text-gray-700">Availability Utilization</p>
+                      <p className="text-sm font-bold text-gray-900">{availData.availabilityPercentage.toFixed(1)}%</p>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
                       <div 
-                        style={{ 
-                          height: '100%', 
-                          backgroundColor: availData.availabilityPercentage < 0 ? 'var(--error)' : 'var(--success)',
-                          width: `${Math.min(Math.max(availData.availabilityPercentage, 0), 100)}%`
-                        }}
+                        className={`h-2.5 rounded-full ${availData.availabilityPercentage < 0 ? 'bg-red-600' : 'bg-green-500'}`}
+                        style={{ width: `${Math.min(Math.max(availData.availabilityPercentage, 0), 100)}%` }}
                       />
                     </div>
                   </div>
-                )}
-              </div>
+                </>
+              )}
             </div>
-          )}
-        </div>
+          </Card>
+        )}
       </div>
 
       {showSkillForm && (
@@ -499,7 +567,7 @@ export const EmployeeDetailsPage: React.FC = () => {
           onSubmit={handleQualificationSubmit} 
         />
       )}
-      
+
       {showLeaveForm && (
         <EmployeeLeaveForm 
           onClose={() => setShowLeaveForm(false)} 
@@ -509,3 +577,4 @@ export const EmployeeDetailsPage: React.FC = () => {
     </div>
   );
 };
+

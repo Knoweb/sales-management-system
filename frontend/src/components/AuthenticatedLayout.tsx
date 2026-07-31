@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link, useLocation, Outlet } from 'react-router-dom';
 import { LayoutDashboard, Users, LogOut, CheckCircle, Briefcase, Menu, X, Calendar } from 'lucide-react';
+import NotificationsDropdown from './NotificationsDropdown';
 
 export const AuthenticatedLayout: React.FC = () => {
   const { user, logout } = useAuth();
@@ -29,6 +30,7 @@ export const AuthenticatedLayout: React.FC = () => {
     { name: 'Clients', path: '/clients', icon: <Briefcase size={20} />, allowed: user?.permissions.includes('CLIENT_READ') },
     { name: 'Leads', path: '/leads', icon: <Briefcase size={20} />, allowed: user?.permissions.includes('LEAD_READ') },
     { name: 'Follow-ups', path: '/follow-ups', icon: <Calendar size={20} />, allowed: user?.permissions.includes('LEAD_READ') },
+    { name: 'Opportunities', path: '/opportunities', icon: <Briefcase size={20} />, allowed: user?.permissions.includes('OPPORTUNITY_READ') },
   ];
 
   return (
@@ -71,7 +73,8 @@ export const AuthenticatedLayout: React.FC = () => {
             <Menu size={24} />
           </button>
           
-          <div className="topbar-right">
+          <div className="topbar-right" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <NotificationsDropdown />
             <div className="user-info">
               <span className="user-name">{user?.firstName} {user?.lastName}</span>
               <span className="user-role">{user?.roles[0]?.replace('_', ' ') || 'User'}</span>

@@ -185,6 +185,7 @@ public class LeadService {
         lead.setInitialRequest(request.getInitialRequest());
         lead.setStatus(request.getStatus());
         lead.setNotes(request.getNotes());
+        lead.setInitialMeetingAt(request.getInitialMeetingAt());
         
         // Auto-assign to current employee if not specified or no assign authority
         Employee currentEmployee = getCurrentEmployee();
@@ -217,6 +218,7 @@ public class LeadService {
         lead.setInitialRequest(request.getInitialRequest());
         lead.setStatus(request.getStatus());
         lead.setNotes(request.getNotes());
+        lead.setInitialMeetingAt(request.getInitialMeetingAt());
 
         lead = leadRepository.save(lead);
         logSystemActivity(lead, "Lead details updated");

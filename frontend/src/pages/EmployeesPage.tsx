@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { EmployeeApi } from '../services/EmployeeApi';
 import type { Employee } from '../types/employee';
-import { Users } from 'lucide-react';
+import { Users, Eye, Plus, Search } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Card } from '../components/Card';
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/Table';
+import { LoadingState, EmptyState } from '../components/FeedbackStates';
+import { StatusBadge } from '../components/StatusBadge';
+import { IconButton } from '../components/IconButton';
 
 export const EmployeesPage: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -32,60 +37,66 @@ export const EmployeesPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="page-container">
+    <div className="p-6 max-w-7xl mx-auto w-full">
       <PageHeader 
-        title={<><Users size={24} className="inline-icon" /> Employees</>}
+        title={<><Users size={24} className="inline-icon text-blue-600" /> Employees</>}
         description="Manage employee records, skills, qualifications, and leaves."
         actionButton={{
           label: 'Add Employee',
           show: canCreate,
-          onClick: () => navigate('/employees/new')
+          onClick: () => navigate('/employees/new'),
+          icon: <Plus size={16} />
         }}
       />
 
-      <div className="card">
-        <div className="card-header flex-between">
-          <h2 className="card-title">Employee Directory</h2>
+      <Card>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-lg font-semibold text-gray-900">Employee Directory</h2>
         </div>
-        <div className="card-body">
-          {loading ? (
-            <p>Loading employees...</p>
-          ) : employees.length === 0 ? (
-            <p>No employees found.</p>
-          ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Number</th>
-                  <th>Name</th>
-                  <th>Department</th>
-                  <th>Job Title</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {employees.map(emp => (
-                  <tr key={emp.id}>
-                    <td>{emp.employeeNumber}</td>
-                    <td>{emp.firstName} {emp.lastName}</td>
-                    <td>{emp.department?.name || 'N/A'}</td>
-                    <td>{emp.jobTitle}</td>
-                    <td>
-                      <span className={`badge badge-${emp.employmentStatus === 'ACTIVE' ? 'green' : 'red'}`}>
-                        {emp.employmentStatus}
-                      </span>
-                    </td>
-                    <td>
-                      <Link to={`/employees/${emp.id}`} className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}>View</Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
+        
+        {loading ? (
+          <LoadingState message="Loading employees..." />
+        ) : employees.length === 0 ? (
+          <EmptyState 
+            icon={<Search size={48} />}
+            title="No employees found" 
+            message="No employees match your criteria." 
+          />
+        ) : (
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeader>Number</TableHeader>
+                <TableHeader>Name</TableHeader>
+                <TableHeader>Department</TableHeader>
+                <TableHeader>Job Title</TableHeader>
+                <TableHeader>Status</TableHeader>
+                <TableHeader align="right">Actions</TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {employees.map(emp => (
+                <TableRow key={emp.id}>
+                  <TableCell className="font-medium">{emp.employeeNumber}</TableCell>
+                  <TableCell>{emp.firstName} {emp.lastName}</TableCell>
+                  <TableCell>{emp.department?.name || 'N/A'}</TableCell>
+                  <TableCell>{emp.jobTitle}</TableCell>
+                  <TableCell>
+                    <StatusBadge status={emp.employmentStatus} />
+                  </TableCell>
+                  <TableCell align="right">
+                    <div className="flex justify-end">
+                      <IconButton onClick={() => navigate(`/employees/${emp.id}`)} title="View Details" aria-label="View Details">
+                        <Eye size={16} />
+                      </IconButton>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Card>
     </div>
   );
 };

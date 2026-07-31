@@ -22,6 +22,7 @@ public class LeadMapper {
         dto.setStatus(lead.getStatus());
         dto.setNotes(lead.getNotes());
         dto.setActive(lead.isActive());
+        dto.setInitialMeetingAt(lead.getInitialMeetingAt());
         dto.setCreatedAt(lead.getCreatedAt());
         dto.setUpdatedAt(lead.getUpdatedAt());
         

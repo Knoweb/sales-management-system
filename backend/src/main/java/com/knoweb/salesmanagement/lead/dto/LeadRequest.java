@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public class LeadRequest {
@@ -32,6 +33,8 @@ public class LeadRequest {
 
     private String notes;
 
+    private OffsetDateTime initialMeetingAt;
+
     // Getters and setters
     public UUID getClientId() { return clientId; }
     public void setClientId(UUID clientId) { this.clientId = clientId; }
@@ -49,4 +52,6 @@ public class LeadRequest {
     public void setStatus(LeadStatus status) { this.status = status; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+    public OffsetDateTime getInitialMeetingAt() { return initialMeetingAt; }
+    public void setInitialMeetingAt(OffsetDateTime initialMeetingAt) { this.initialMeetingAt = initialMeetingAt; }
 }

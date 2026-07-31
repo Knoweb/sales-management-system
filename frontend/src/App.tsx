@@ -14,6 +14,9 @@ import { SkillsPage } from './pages/SkillsPage';
 import { SkillFormPage } from './pages/SkillFormPage';
 import { EmployeesPage } from './pages/EmployeesPage';
 import { EmployeeDetailsPage } from './pages/EmployeeDetailsPage';
+import SalesOpportunitiesPage from './pages/SalesOpportunitiesPage';
+import SalesOpportunityDetailsPage from './pages/SalesOpportunityDetailsPage';
+import ProjectBriefEditor from './pages/ProjectBriefEditor';
 import { EmployeeFormPage } from './pages/EmployeeFormPage';
 import { ClientsPage } from './pages/ClientsPage';
 import { ClientFormPage } from './pages/ClientFormPage';
@@ -33,6 +36,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          {/* Removed from here */}
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
           
           <Route element={<ProtectedRoute><AuthenticatedLayout /></ProtectedRoute>}>
@@ -127,6 +131,22 @@ function App() {
             <Route path="/follow-ups" element={
               <ProtectedRoute requiredPermission="LEAD_READ">
                 <FollowUpDashboard />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/opportunities" element={
+              <ProtectedRoute requiredPermission="OPPORTUNITY_READ">
+                <SalesOpportunitiesPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/opportunities/:id" element={
+              <ProtectedRoute requiredPermission="OPPORTUNITY_READ">
+                <SalesOpportunityDetailsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/project-briefs/:id" element={
+              <ProtectedRoute requiredPermission="PROJECT_BRIEF_READ">
+                <ProjectBriefEditor />
               </ProtectedRoute>
             } />
           </Route>
