@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.knoweb.salesmanagement.common.exception.ResourceConflictException;
+
 @Service
 @Transactional(readOnly = true)
 public class ProductCategoryService {
@@ -38,6 +40,12 @@ public class ProductCategoryService {
 
     @Transactional
     public ProductCategoryDTO createCategory(ProductCategoryRequest request) {
+        if (productCategoryRepository.existsByCode(request.getCode())) {
+            throw new ResourceConflictException("Product category with code '" + request.getCode() + "' already exists");
+        }
+        if (productCategoryRepository.existsByNameIgnoreCase(request.getName())) {
+            throw new ResourceConflictException("Product category with name '" + request.getName() + "' already exists");
+        }
         ProductCategory entity = new ProductCategory();
         entity.setCode(request.getCode());
         entity.setName(request.getName());
@@ -51,6 +59,14 @@ public class ProductCategoryService {
     public ProductCategoryDTO updateCategory(UUID id, ProductCategoryRequest request) {
         ProductCategory entity = productCategoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+
+        if (productCategoryRepository.existsByCodeAndIdNot(request.getCode(), id)) {
+            throw new ResourceConflictException("Product category with code '" + request.getCode() + "' already exists");
+        }
+        if (productCategoryRepository.existsByNameIgnoreCaseAndIdNot(request.getName(), id)) {
+            throw new ResourceConflictException("Product category with name '" + request.getName() + "' already exists");
+        }
+
         entity.setCode(request.getCode());
         entity.setName(request.getName());
         entity.setDescription(request.getDescription());

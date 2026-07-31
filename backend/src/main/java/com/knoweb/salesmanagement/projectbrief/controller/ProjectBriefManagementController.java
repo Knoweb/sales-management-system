@@ -67,16 +67,44 @@ public class ProjectBriefManagementController {
     }
 
     @PostMapping("/{id}/attachments")
-    @PreAuthorize("hasAuthority('PROJECT_BRIEF_UPDATE')")
+    @PreAuthorize("hasAuthority('PROJECT_BRIEF_ATTACHMENT_MANAGE')")
     public ProjectBriefAttachmentDTO addAttachment(
             @PathVariable UUID id,
             @Valid @RequestBody ProjectBriefAttachmentRequest request) {
         return projectBriefService.addAttachment(id, request);
     }
 
+    @PostMapping(value = "/{id}/attachments/upload", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAuthority('PROJECT_BRIEF_ATTACHMENT_MANAGE')")
+    public ProjectBriefAttachmentDTO uploadAttachment(
+            @PathVariable UUID id,
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        return projectBriefService.uploadAttachment(id, file);
+    }
+
     @GetMapping("/{id}/attachments")
     @PreAuthorize("hasAuthority('PROJECT_BRIEF_READ')")
     public List<ProjectBriefAttachmentDTO> getAttachments(@PathVariable UUID id) {
         return projectBriefService.getAttachments(id);
+    }
+
+    @GetMapping("/{id}/attachments/{attachmentId}/download")
+    @PreAuthorize("hasAuthority('PROJECT_BRIEF_READ')")
+    public org.springframework.http.ResponseEntity<org.springframework.core.io.Resource> downloadAttachment(
+            @PathVariable UUID id,
+            @PathVariable UUID attachmentId) {
+        org.springframework.core.io.Resource resource = projectBriefService.downloadAttachmentResource(id, attachmentId);
+        return org.springframework.http.ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                .body(resource);
+    }
+
+    @DeleteMapping("/{id}/attachments/{attachmentId}")
+    @PreAuthorize("hasAuthority('PROJECT_BRIEF_ATTACHMENT_MANAGE')")
+    public org.springframework.http.ResponseEntity<Void> deleteAttachment(
+            @PathVariable UUID id,
+            @PathVariable UUID attachmentId) {
+        projectBriefService.deleteAttachment(id, attachmentId);
+        return org.springframework.http.ResponseEntity.noContent().build();
     }
 }

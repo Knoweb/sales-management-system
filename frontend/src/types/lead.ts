@@ -34,6 +34,7 @@ export interface LeadRequest {
   initialRequest?: string;
   status: LeadStatus;
   notes?: string;
+  initialMeetingAt?: string; // ISO timestamp for Phase 5 brief deadline
 }
 
 export interface LeadActivity {

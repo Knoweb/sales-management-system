@@ -133,7 +133,7 @@ public class SalesOpportunityService {
             }
         }
 
-        if (opportunityRepository.existsByLeadId(leadId)) {
+        if (opportunityRepository.existsByLeadId(leadId) || lead.getStatus() == LeadStatus.QUALIFIED) {
             throw new ResourceConflictException("Lead has already been converted to an opportunity");
         }
 

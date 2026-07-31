@@ -427,3 +427,175 @@ a:hover {
   padding-top: 16px;
 }
 
+/* Form grid — 2-col responsive layout */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 640px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-col-full {
+  grid-column: 1 / -1;
+}
+
+/* form-control — alias used in LeadForm and legacy forms */
+.form-control {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background-color: var(--bg-card);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+  box-shadow: var(--shadow-sm);
+  font-family: inherit;
+}
+
+.form-control:hover:not(:disabled) {
+  border-color: #cbd5e1;
+}
+
+.form-control:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.form-control:disabled {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.form-control.has-error {
+  border-color: var(--error);
+}
+
+.form-control.has-error:focus {
+  box-shadow: var(--focus-ring-danger);
+}
+
+select.form-control {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+}
+
+textarea.form-control {
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+/* Hover state on form-input and form-select */
+.form-input:hover:not(:disabled),
+.form-select:hover:not(:disabled) {
+  border-color: #cbd5e1;
+}
+
+.form-input.has-error,
+.form-select.has-error,
+.form-textarea.has-error {
+  border-color: var(--error);
+}
+
+.form-textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background-color: var(--bg-card);
+  transition: all 0.2s;
+  outline: none;
+  box-shadow: var(--shadow-sm);
+  resize: vertical;
+  line-height: 1.5;
+  font-family: inherit;
+}
+
+.form-textarea:hover:not(:disabled) { border-color: #cbd5e1; }
+.form-textarea:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--accent-light); }
+.form-textarea:disabled { background-color: var(--bg-secondary); color: var(--text-secondary); cursor: not-allowed; }
+
+/* Required star */
+.form-required {
+  color: var(--error);
+  margin-left: 2px;
+}
+
+/* Field help text */
+.form-help {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* Field error message */
+.form-error {
+  font-size: 0.75rem;
+  color: var(--error);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Section heading inside form cards */
+.form-section-heading {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Disabled field hint */
+.field-disabled-hint {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* Form page max width wrapper */
+.form-page-body {
+  max-width: 860px;
+  width: 100%;
+}
+
+/* Alert banner inside forms */
+.form-alert {
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.form-alert-error {
+  background-color: var(--error-bg);
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+
