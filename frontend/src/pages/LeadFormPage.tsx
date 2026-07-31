@@ -1,8 +1,8 @@
 import React from 'react';
-import { PageHeader } from '../components/PageHeader';
-import { LeadForm } from '../components/leads/LeadForm';
 import { Briefcase } from 'lucide-react';
 import { useParams } from 'react-router-dom';
+import { PageHeader } from '../components/PageHeader';
+import { LeadForm } from '../components/leads/LeadForm';
 
 export const LeadFormPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -10,13 +10,26 @@ export const LeadFormPage: React.FC = () => {
 
   return (
     <div className="page-container">
-      <PageHeader 
-        title={<><Briefcase className="page-icon" style={{ display: 'inline', marginRight: '0.5rem' }} /> {isEditing ? 'Edit Lead' : 'Create Lead'}</>} 
+      <PageHeader
+        title={
+          <>
+            <Briefcase
+              className="page-icon"
+              size={24}
+              style={{ display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }}
+              aria-hidden="true"
+            />
+            {isEditing ? 'Edit Lead' : 'Create Lead'}
+          </>
+        }
+        description={
+          isEditing
+            ? 'Update lead information and sales progress.'
+            : 'Register a new sales inquiry and assign it to a client.'
+        }
       />
-      
-      <div className="page-content">
-        <LeadForm />
-      </div>
+
+      <LeadForm />
     </div>
   );
 };

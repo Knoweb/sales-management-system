@@ -29,6 +29,9 @@ public class ProjectBriefAttachment {
     @Column(name = "file_size")
     private Long fileSize;
 
+    @Column(name = "storage_path")
+    private String storagePath;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
@@ -53,6 +56,9 @@ public class ProjectBriefAttachment {
     
     public Long getFileSize() { return fileSize; }
     public void setFileSize(Long fileSize) { this.fileSize = fileSize; }
+
+    public String getStoragePath() { return storagePath; }
+    public void setStoragePath(String storagePath) { this.storagePath = storagePath; }
     
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }

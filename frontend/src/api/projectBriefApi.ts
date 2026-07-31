@@ -51,9 +51,32 @@ export interface ProjectBriefUpdateDraftRequest {
   requiredDepartmentIds?: string[];
 }
 
+export interface ProjectBriefVersionDTO {
+  id: string;
+  projectBriefId: string;
+  versionNumber: number;
+  snapshot: string;
+  changeSummary?: string;
+  submittedVersion: boolean;
+  createdById?: string;
+  createdByName?: string;
+  createdAt: string;
+}
+
+export interface ProjectBriefAttachmentDTO {
+  id: string;
+  projectBriefId: string;
+  fileName: string;
+  fileType?: string;
+  fileUrl: string;
+  fileSize?: number;
+  createdById?: string;
+  createdByName?: string;
+  createdAt: string;
+}
+
 export interface ProjectBriefSubmitRequest {
-  // Can contain electronic signature or confirmation flag
-  confirmation: boolean;
+  confirmation?: boolean;
 }
 
 export const initializeProjectBrief = async (opportunityId: string): Promise<ProjectBriefDTO> => {
@@ -71,7 +94,37 @@ export const updateProjectBriefDraft = async (id: string, data: ProjectBriefUpda
   return response.data;
 };
 
+export const saveProjectBriefVersion = async (id: string, data: ProjectBriefUpdateDraftRequest): Promise<ProjectBriefDTO> => {
+  const response = await api.post(`/project-briefs/${id}/version`, data);
+  return response.data;
+};
+
 export const submitProjectBrief = async (id: string, data: ProjectBriefSubmitRequest): Promise<ProjectBriefDTO> => {
   const response = await api.post(`/project-briefs/${id}/submit`, data);
   return response.data;
+};
+
+export const getProjectBriefVersions = async (id: string): Promise<ProjectBriefVersionDTO[]> => {
+  const response = await api.get(`/project-briefs/${id}/versions`);
+  return response.data;
+};
+
+export const getProjectBriefAttachments = async (id: string): Promise<ProjectBriefAttachmentDTO[]> => {
+  const response = await api.get(`/project-briefs/${id}/attachments`);
+  return response.data;
+};
+
+export const uploadProjectBriefAttachment = async (id: string, file: File): Promise<ProjectBriefAttachmentDTO> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post(`/project-briefs/${id}/attachments/upload`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+export const deleteProjectBriefAttachment = async (id: string, attachmentId: string): Promise<void> => {
+  await api.delete(`/project-briefs/${id}/attachments/${attachmentId}`);
 };

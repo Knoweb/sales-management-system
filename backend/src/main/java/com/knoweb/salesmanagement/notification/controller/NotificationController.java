@@ -29,6 +29,7 @@ public class NotificationController {
     }
 
     @GetMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('NOTIFICATION_SELF_READ')")
     public List<NotificationDTO> getMyNotifications(Authentication authentication) {
         User user = getAuthenticatedUser(authentication);
         if (user == null) return Collections.emptyList();
@@ -36,6 +37,7 @@ public class NotificationController {
     }
 
     @PostMapping("/{id}/read")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('NOTIFICATION_SELF_UPDATE')")
     public void markAsRead(@PathVariable UUID id, Authentication authentication) {
         User user = getAuthenticatedUser(authentication);
         if (user != null) {

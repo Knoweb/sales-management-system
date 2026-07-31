@@ -140,6 +140,23 @@ public class ProjectBriefService {
         return mapToDTO(brief);
     }
 
+    private void validateMandatorySubmissionFields(ProjectBrief brief) {
+        List<String> missingFields = new java.util.ArrayList<>();
+        if (brief.getOpportunity() == null) missingFields.add("Opportunity");
+        if (!org.springframework.util.StringUtils.hasText(brief.getProjectTitle())) missingFields.add("Project Title");
+        if (!org.springframework.util.StringUtils.hasText(brief.getBusinessProblem())) missingFields.add("Business Problem");
+        if (!org.springframework.util.StringUtils.hasText(brief.getRequiredSolution())) missingFields.add("Required Solution");
+        if (!org.springframework.util.StringUtils.hasText(brief.getProjectScope())) missingFields.add("Project Scope");
+        if (!org.springframework.util.StringUtils.hasText(brief.getTechnicalRequirements())) missingFields.add("Technical Requirements");
+        if (brief.getExpectedBudget() == null || brief.getExpectedBudget().compareTo(java.math.BigDecimal.ZERO) <= 0) missingFields.add("Valid Expected Budget");
+        if (brief.getExpectedDeadline() == null) missingFields.add("Expected Deadline");
+        if (brief.getRequiredDepartments() == null || brief.getRequiredDepartments().isEmpty()) missingFields.add("At least one Required Department");
+
+        if (!missingFields.isEmpty()) {
+            throw new IllegalArgumentException("Cannot submit project brief. Mandatory fields missing or invalid: " + String.join(", ", missingFields));
+        }
+    }
+
     @Transactional
     public ProjectBriefDTO updateDraft(UUID briefId, ProjectBriefUpdateDraftRequest request) {
         ProjectBrief brief = projectBriefRepository.findById(briefId)
@@ -148,7 +165,7 @@ public class ProjectBriefService {
         validateWriteAccess(brief.getOpportunity());
 
         if (brief.getStatus() != ProjectBriefStatus.DRAFT) {
-            throw new IllegalStateException("Cannot update a submitted project brief directly");
+            throw new ResourceConflictException("Cannot update a submitted project brief directly");
         }
 
         if (request.getVersionNumber() != null && !request.getVersionNumber().equals(brief.getCurrentVersionNumber())) {
@@ -182,6 +199,12 @@ public class ProjectBriefService {
 
     @Transactional
     public ProjectBriefDTO saveVersion(UUID briefId, ProjectBriefUpdateDraftRequest request) {
+        ProjectBrief briefCheck = projectBriefRepository.findById(briefId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project brief not found"));
+        if (briefCheck.getStatus() != ProjectBriefStatus.DRAFT) {
+            throw new ResourceConflictException("Cannot create a new version for a submitted project brief");
+        }
+
         ProjectBriefDTO dto = updateDraft(briefId, request);
         ProjectBrief brief = projectBriefRepository.findById(briefId).orElseThrow();
         
@@ -206,19 +229,6 @@ public class ProjectBriefService {
 
         versionRepository.save(version);
         
-        List<User> bdms = userRepository.findByRolesCode("BDM");
-        for (User bdm : bdms) {
-            notificationService.createNotification(
-                    bdm,
-                    "PROJECT_BRIEF_SUBMITTED",
-                    "Project Brief Submitted",
-                    "A new project brief has been submitted for opportunity " + brief.getOpportunity().getOpportunityNumber() + ".",
-                    "PROJECT_BRIEF",
-                    brief.getId(),
-                    null
-            );
-        }
-        
         return snapshotDto != null ? snapshotDto : mapToDTO(brief);
     }
 
@@ -230,8 +240,10 @@ public class ProjectBriefService {
         validateWriteAccess(brief.getOpportunity());
 
         if (brief.getStatus() == ProjectBriefStatus.SUBMITTED) {
-            throw new IllegalStateException("Project brief is already submitted");
+            throw new ResourceConflictException("Project brief is already submitted");
         }
+
+        validateMandatorySubmissionFields(brief);
 
         brief.setStatus(ProjectBriefStatus.SUBMITTED);
         brief.setSubmittedAt(OffsetDateTime.now());
@@ -263,6 +275,19 @@ public class ProjectBriefService {
         }
 
         versionRepository.save(version);
+
+        List<User> bdms = userRepository.findByRolesCode("BDM");
+        for (User bdm : bdms) {
+            notificationService.createNotification(
+                    bdm,
+                    "PROJECT_BRIEF_SUBMITTED",
+                    "Project Brief Submitted",
+                    "A new project brief has been submitted for opportunity " + opp.getOpportunityNumber() + ".",
+                    "PROJECT_BRIEF",
+                    brief.getId(),
+                    "PB_SUBMITTED_" + brief.getId().toString()
+            );
+        }
 
         return snapshotDto != null ? snapshotDto : mapToDTO(brief);
     }
@@ -314,6 +339,10 @@ public class ProjectBriefService {
         ProjectBrief brief = projectBriefRepository.findById(briefId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project brief not found"));
         validateWriteAccess(brief.getOpportunity());
+
+        if (brief.getStatus() == ProjectBriefStatus.SUBMITTED) {
+            throw new ResourceConflictException("Cannot add attachments to a submitted project brief");
+        }
         
         ProjectBriefAttachment attachment = new ProjectBriefAttachment();
         attachment.setProjectBrief(brief);
@@ -325,6 +354,123 @@ public class ProjectBriefService {
         
         attachment = attachmentRepository.save(attachment);
         return mapAttachmentToDTO(attachment);
+    }
+
+    @Transactional
+    public ProjectBriefAttachmentDTO uploadAttachment(UUID briefId, org.springframework.web.multipart.MultipartFile file) {
+        ProjectBrief brief = projectBriefRepository.findById(briefId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project brief not found"));
+        validateWriteAccess(brief.getOpportunity());
+
+        if (brief.getStatus() == ProjectBriefStatus.SUBMITTED) {
+            throw new ResourceConflictException("Cannot add attachments to a submitted project brief");
+        }
+
+        String originalFileName = org.springframework.util.StringUtils.cleanPath(java.util.Objects.requireNonNull(file.getOriginalFilename()));
+        if (originalFileName.contains("..")) {
+            throw new IllegalArgumentException("Filename contains invalid path sequence: " + originalFileName);
+        }
+
+        String lowerCaseName = originalFileName.toLowerCase();
+        if (!lowerCaseName.endsWith(".pdf") && 
+            !lowerCaseName.endsWith(".docx") && 
+            !lowerCaseName.endsWith(".jpg") && 
+            !lowerCaseName.endsWith(".jpeg") && 
+            !lowerCaseName.endsWith(".png") &&
+            !lowerCaseName.endsWith(".txt") &&
+            !lowerCaseName.endsWith(".xlsx")) {
+            throw new IllegalArgumentException("Invalid file type. Allowed formats: PDF, DOCX, JPG, PNG, TXT, XLSX.");
+        }
+
+        long maxSizeBytes = 10 * 1024 * 1024;
+        if (file.getSize() > maxSizeBytes) {
+            throw new IllegalArgumentException("File size exceeds maximum allowed limit of 10MB.");
+        }
+
+        String sanitizedFileName = originalFileName.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
+        String uniqueFileName = UUID.randomUUID().toString() + "_" + sanitizedFileName;
+
+        java.nio.file.Path storageDir = java.nio.file.Paths.get("./uploads/project-briefs").toAbsolutePath().normalize();
+        try {
+            java.nio.file.Files.createDirectories(storageDir);
+            java.nio.file.Path targetLocation = storageDir.resolve(uniqueFileName);
+            java.nio.file.Files.copy(file.getInputStream(), targetLocation, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("Failed to store attachment file: " + e.getMessage(), e);
+        }
+
+        ProjectBriefAttachment attachment = new ProjectBriefAttachment();
+        attachment.setProjectBrief(brief);
+        attachment.setFileName(originalFileName);
+        attachment.setFileType(file.getContentType());
+        attachment.setFileSize(file.getSize());
+        attachment.setStoragePath(uniqueFileName);
+        attachment.setFileUrl("/api/v1/project-briefs/" + briefId + "/attachments/download");
+        attachment.setCreatedBy(getAuthenticatedUser() != null ? getAuthenticatedUser().getId() : null);
+
+        attachment = attachmentRepository.save(attachment);
+        attachment.setFileUrl("/api/v1/project-briefs/" + briefId + "/attachments/" + attachment.getId() + "/download");
+        attachment = attachmentRepository.save(attachment);
+
+        return mapAttachmentToDTO(attachment);
+    }
+
+    @Transactional(readOnly = true)
+    public org.springframework.core.io.Resource downloadAttachmentResource(UUID briefId, UUID attachmentId) {
+        ProjectBrief brief = projectBriefRepository.findById(briefId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project brief not found"));
+        validateReadAccess(brief.getOpportunity());
+
+        ProjectBriefAttachment attachment = attachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Attachment not found"));
+
+        if (!attachment.getProjectBrief().getId().equals(briefId)) {
+            throw new ResourceNotFoundException("Attachment not found for this project brief");
+        }
+
+        try {
+            java.nio.file.Path storageDir = java.nio.file.Paths.get("./uploads/project-briefs").toAbsolutePath().normalize();
+            java.nio.file.Path filePath = storageDir.resolve(attachment.getStoragePath()).normalize();
+            org.springframework.core.io.Resource resource = new org.springframework.core.io.UrlResource(filePath.toUri());
+
+            if (resource.exists() && resource.isReadable()) {
+                return resource;
+            } else {
+                throw new ResourceNotFoundException("Attachment file not found on disk");
+            }
+        } catch (Exception ex) {
+            throw new ResourceNotFoundException("Attachment file could not be read");
+        }
+    }
+
+    @Transactional
+    public void deleteAttachment(UUID briefId, UUID attachmentId) {
+        ProjectBrief brief = projectBriefRepository.findById(briefId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project brief not found"));
+        validateWriteAccess(brief.getOpportunity());
+
+        if (brief.getStatus() == ProjectBriefStatus.SUBMITTED) {
+            throw new ResourceConflictException("Cannot delete attachments from a submitted project brief");
+        }
+
+        ProjectBriefAttachment attachment = attachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Attachment not found"));
+
+        if (!attachment.getProjectBrief().getId().equals(briefId)) {
+            throw new ResourceNotFoundException("Attachment not found for this project brief");
+        }
+
+        if (attachment.getStoragePath() != null) {
+            try {
+                java.nio.file.Path storageDir = java.nio.file.Paths.get("./uploads/project-briefs").toAbsolutePath().normalize();
+                java.nio.file.Path filePath = storageDir.resolve(attachment.getStoragePath()).normalize();
+                java.nio.file.Files.deleteIfExists(filePath);
+            } catch (java.io.IOException e) {
+                // ignore disk delete error
+            }
+        }
+
+        attachmentRepository.delete(attachment);
     }
     
     public List<ProjectBriefAttachmentDTO> getAttachments(UUID briefId) {
