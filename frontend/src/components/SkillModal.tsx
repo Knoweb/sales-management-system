@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { SkillApi } from '../services/SkillApi';
 import type { Skill } from '../types/skill';
-import { Input } from './Forms';
+import { FormField, Input, Textarea } from './Forms';
 import { Button } from './Button';
-import { ErrorState } from './FeedbackStates';
-import { X } from 'lucide-react';
+import { Modal } from './Modal';
+import { Alert } from './Alert';
 
 interface SkillModalProps {
   isOpen: boolean;
@@ -112,64 +112,70 @@ export const SkillModal: React.FC<SkillModalProps> = ({ isOpen, onClose, skill, 
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h2 className="modal-title">
-            {isEdit ? 'Edit Skill' : 'Add Skill'}
-          </h2>
-          <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
-            <X size={20} />
-          </button>
+    <Modal 
+      isOpen={isOpen} 
+      onClose={() => !loading && onClose()} 
+      title={isEdit ? 'Edit Skill' : 'Add Skill'}
+    >
+      {error && (
+        <Alert variant="error" style={{ marginBottom: '1.5rem' }}>
+          {error}
+        </Alert>
+      )}
+
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: '1.5rem' }}>
+          <FormField label="Skill Code" required error={formErrors.code} id="code">
+            <Input
+              id="code"
+              type="text"
+              name="code"
+              required
+              disabled={isEdit || loading}
+              value={formData.code}
+              onChange={handleChange}
+              placeholder="e.g. JAVA_DEV"
+            />
+          </FormField>
+        </div>
+        
+        <div style={{ marginBottom: '1.5rem' }}>
+          <FormField label="Skill Name" required error={formErrors.name} id="name">
+            <Input
+              id="name"
+              type="text"
+              name="name"
+              required
+              disabled={loading}
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="e.g. Java Development"
+            />
+          </FormField>
         </div>
 
-        {error && <ErrorState message={error} />}
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <Input
-            label="Skill Code"
-            type="text"
-            name="code"
-            required
-            disabled={isEdit}
-            value={formData.code}
-            onChange={handleChange}
-            error={formErrors.code}
-            placeholder="e.g. JAVA_DEV"
-          />
-          
-          <Input
-            label="Skill Name"
-            type="text"
-            name="name"
-            required
-            value={formData.name}
-            onChange={handleChange}
-            error={formErrors.name}
-            placeholder="e.g. Java Development"
-          />
-
-          <div className="form-group">
-            <label className="form-label">Description</label>
-            <textarea
+        <div style={{ marginBottom: '2rem' }}>
+          <FormField label="Description" id="description">
+            <Textarea
+              id="description"
               name="description"
               value={formData.description}
               onChange={handleChange}
-              className="form-textarea"
               rows={3}
+              disabled={loading}
             />
-          </div>
+          </FormField>
+        </div>
 
-          <div className="form-actions">
-            <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary" disabled={loading} isLoading={loading}>
-              {loading ? 'Saving...' : (isEdit ? 'Save Changes' : 'Create Skill')}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button type="submit" variant="primary" isLoading={loading}>
+            {isEdit ? 'Save Changes' : 'Create Skill'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 };

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from './Button';
-import { Select } from './Forms';
+import { FormField, Input, Select, Textarea, Checkbox } from './Forms';
+import { Modal } from './Modal';
+import { Alert } from './Alert';
 import type { Skill } from '../types/skill';
 import { SkillApi } from '../services/SkillApi';
 
@@ -63,84 +65,99 @@ export const EmployeeSkillForm: React.FC<EmployeeSkillFormProps> = ({ onClose, o
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-gray-900">{isNew ? 'Add Skill' : 'Edit Skill'}</h2>
-        </div>
+    <Modal 
+      isOpen={true} 
+      onClose={() => !loading && onClose()} 
+      title={isNew ? 'Add Skill' : 'Edit Skill'}
+    >
+      {error && (
+        <Alert variant="error" style={{ marginBottom: '1.5rem' }}>
+          {error}
+        </Alert>
+      )}
+      
+      <form onSubmit={handleSubmit}>
+        {isNew && (
+          <div style={{ marginBottom: '1.5rem' }}>
+            <FormField label="Skill" required id="skillId">
+              <Select
+                id="skillId"
+                value={formData.skillId}
+                onChange={(e) => setFormData({ ...formData, skillId: e.target.value })}
+                required
+                disabled={loading}
+              >
+                <option value="">Select a skill</option>
+                {skills.map(skill => (
+                  <option key={skill.id} value={skill.id}>
+                    {skill.name}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+          </div>
+        )}
         
-        {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded" style={{ backgroundColor: 'var(--error-bg)', color: 'var(--error)' }}>{error}</div>}
-        
-        <form onSubmit={handleSubmit}>
-          {isNew && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+          <FormField label="Proficiency Level" required id="proficiencyLevel">
             <Select
-              label="Skill"
-              value={formData.skillId}
-              onChange={(e) => setFormData({ ...formData, skillId: e.target.value })}
+              id="proficiencyLevel"
+              value={formData.proficiencyLevel}
+              onChange={(e) => setFormData({ ...formData, proficiencyLevel: e.target.value as 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT' })}
               required
+              disabled={loading}
             >
-              <option value="">Select a skill</option>
-              {skills.map(skill => (
-                <option key={skill.id} value={skill.id}>
-                  {skill.name}
-                </option>
-              ))}
+              <option value="BEGINNER">Beginner</option>
+              <option value="INTERMEDIATE">Intermediate</option>
+              <option value="ADVANCED">Advanced</option>
+              <option value="EXPERT">Expert</option>
             </Select>
-          )}
+          </FormField>
           
-          <Select
-            label="Proficiency Level"
-            value={formData.proficiencyLevel}
-            onChange={(e) => setFormData({ ...formData, proficiencyLevel: e.target.value as 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT' })}
-            required
-          >
-            <option value="BEGINNER">Beginner</option>
-            <option value="INTERMEDIATE">Intermediate</option>
-            <option value="ADVANCED">Advanced</option>
-            <option value="EXPERT">Expert</option>
-          </Select>
-          
-          <div className="form-group">
-            <label className="form-label">Years of Experience</label>
-            <input 
+          <FormField label="Years of Experience" id="yearsOfExperience">
+            <Input 
+              id="yearsOfExperience"
               type="number" 
-              className="form-input"
               value={formData.yearsOfExperience}
               onChange={(e) => setFormData({ ...formData, yearsOfExperience: e.target.value === '' ? '' : Number(e.target.value) })}
               min="0"
               step="0.5"
+              disabled={loading}
             />
-          </div>
-          
-          <div className="form-group">
-            <label className="flex items-center gap-2" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <input 
-                type="checkbox" 
-                checked={formData.verified}
-                onChange={(e) => setFormData({ ...formData, verified: e.target.checked })}
-              />
-              <span className="form-label" style={{ marginBottom: 0 }}>Verified</span>
-            </label>
-          </div>
-          
-          <div className="form-group">
-            <label className="form-label">Notes</label>
-            <textarea 
-              className="form-textarea"
+          </FormField>
+        </div>
+        
+        <div style={{ marginBottom: '1.5rem' }}>
+          <Checkbox 
+            id="verified"
+            label="Verified"
+            checked={formData.verified}
+            onChange={(e) => setFormData({ ...formData, verified: e.target.checked })}
+            disabled={loading}
+          />
+        </div>
+        
+        <div style={{ marginBottom: '2rem' }}>
+          <FormField label="Notes" id="notes">
+            <Textarea 
+              id="notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={3}
+              disabled={loading}
             />
-          </div>
-          
-          <div className="flex justify-end gap-3 mt-6">
-            <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>Cancel</Button>
-            <Button type="submit" variant="primary" disabled={loading}>
-              {loading ? 'Saving...' : 'Save Skill'}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+          </FormField>
+        </div>
+        
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button type="submit" variant="primary" isLoading={loading}>
+            {isNew ? 'Add Skill' : 'Save Changes'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 };

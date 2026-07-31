@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { AlertCircle, Loader2, Info, Lock } from 'lucide-react';
+import { Loader2, Lock } from 'lucide-react';
 import { LeadApi } from '../../services/LeadApi';
 import { ClientApi } from '../../services/ClientApi';
 import type { LeadRequest, LeadStatus, InquirySource } from '../../types/lead';
 import type { Client, ClientContact } from '../../types/client';
 import { Button } from '../Button';
 import { LoadingState, ErrorState } from '../FeedbackStates';
+import { FormField, Input, Select, Textarea } from '../Forms';
+import { Card } from '../Card';
+import { Alert } from '../Alert';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -49,39 +52,7 @@ function mapApiError(message: string): string {
   return message;
 }
 
-// ── Reusable field wrapper ─────────────────────────────────────────────────
 
-interface FieldProps {
-  id: string;
-  label: string;
-  required?: boolean;
-  error?: string;
-  help?: string;
-  children: React.ReactNode;
-  className?: string;
-}
-
-const Field: React.FC<FieldProps> = ({ id, label, required, error, help, children, className = '' }) => (
-  <div className={`form-group ${className}`} style={{ marginBottom: 0 }}>
-    <label htmlFor={id} className="form-label" id={`${id}-label`}>
-      {label}
-      {required && <span className="form-required" aria-hidden="true"> *</span>}
-    </label>
-    {children}
-    {error && (
-      <p className="form-error" id={`${id}-error`} role="alert">
-        <AlertCircle size={12} aria-hidden="true" />
-        {error}
-      </p>
-    )}
-    {help && !error && (
-      <p className="form-help" id={`${id}-help`}>
-        <Info size={12} style={{ display: 'inline', marginRight: 3 }} aria-hidden="true" />
-        {help}
-      </p>
-    )}
-  </div>
-);
 
 // ── Form state ─────────────────────────────────────────────────────────────
 
@@ -185,7 +156,6 @@ export const LeadForm: React.FC = () => {
     if (!clientId) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setContacts([]);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoadingContacts(false);
       return;
     }
@@ -201,7 +171,6 @@ export const LeadForm: React.FC = () => {
         if (active) setLoadingContacts(false);
       });
     return () => { active = false; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.clientId]);
 
   // ── Unsaved-changes guard ────────────────────────────────────────────────
@@ -317,91 +286,66 @@ export const LeadForm: React.FC = () => {
 
   // ── Render: form ─────────────────────────────────────────────────────────
   return (
-    <div className="form-page-body">
+    <div className="space-y-6">
       {/* API error banner */}
       {apiError && (
-        <div className="form-alert form-alert-error" role="alert" aria-live="assertive">
-          <AlertCircle size={18} style={{ flexShrink: 0, marginTop: 1 }} aria-hidden="true" />
-          <span>{apiError}</span>
-        </div>
+        <Alert variant="error" style={{ marginBottom: '1rem' }}>{apiError}</Alert>
       )}
 
       <form
         onSubmit={handleSubmit}
         noValidate
         aria-label={isEditing ? 'Edit Lead form' : 'Create Lead form'}
+        className="space-y-6"
       >
         {/* ── Section: Lead Information ── */}
-        <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <p className="form-section-heading">Lead Information</p>
-          <div className="form-grid">
+        <Card>
+          <h3 className="text-lg font-medium text-gray-900 mb-4 border-b border-gray-200 pb-2">Lead Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Title — full width */}
-            <Field
-              id="title"
-              label="Lead Title"
-              required
-              error={fieldErrors.title}
-              className="form-col-full"
-            >
-              <input
-                type="text"
-                id="title"
-                name="title"
-                className={`form-control${fieldErrors.title ? ' has-error' : ''}`}
-                value={formData.title}
-                onChange={handleChange}
-                placeholder="e.g. Needs a new e-commerce website"
-                required
-                aria-required="true"
-                aria-describedby={fieldErrors.title ? 'title-error' : undefined}
-                disabled={saving}
-                maxLength={255}
-              />
-            </Field>
+            <div className="md:col-span-2">
+              <FormField label="Lead Title" required error={fieldErrors.title}>
+                <Input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  placeholder="e.g. Needs a new e-commerce website"
+                  required
+                  disabled={saving}
+                  maxLength={255}
+                  error={fieldErrors.title ? "true" : undefined}
+                />
+              </FormField>
+            </div>
 
             {/* Inquiry Source */}
-            <Field
-              id="inquirySource"
-              label="Inquiry Source"
-              required
-              error={fieldErrors.inquirySource}
-            >
-              <select
-                id="inquirySource"
+            <FormField label="Inquiry Source" required error={fieldErrors.inquirySource}>
+              <Select
                 name="inquirySource"
-                className={`form-control${fieldErrors.inquirySource ? ' has-error' : ''}`}
                 value={formData.inquirySource}
                 onChange={handleChange}
                 required
-                aria-required="true"
-                aria-describedby={fieldErrors.inquirySource ? 'inquirySource-error' : undefined}
                 disabled={saving}
+                error={fieldErrors.inquirySource ? "true" : undefined}
               >
                 <option value="WEBSITE">Website</option>
                 <option value="REFERRAL">Referral</option>
                 <option value="COLD_CALL">Cold Call</option>
                 <option value="EVENT">Event</option>
                 <option value="OTHER">Other</option>
-              </select>
-            </Field>
+              </Select>
+            </FormField>
 
             {/* Status */}
-            <Field
-              id="status"
-              label="Lead Status"
-              required
-              error={fieldErrors.status}
-            >
-              <select
-                id="status"
+            <FormField label="Lead Status" required error={fieldErrors.status}>
+              <Select
                 name="status"
-                className={`form-control${fieldErrors.status ? ' has-error' : ''}`}
                 value={formData.status}
                 onChange={handleChange}
                 required
-                aria-required="true"
-                aria-describedby={fieldErrors.status ? 'status-error' : undefined}
                 disabled={saving}
+                error={fieldErrors.status ? "true" : undefined}
               >
                 <option value="NEW">New</option>
                 <option value="CONTACTED">Contacted</option>
@@ -409,93 +353,52 @@ export const LeadForm: React.FC = () => {
                 <option value="PROPOSAL_SENT">Proposal Sent</option>
                 <option value="CLOSED_WON">Closed Won</option>
                 <option value="CLOSED_LOST">Closed Lost</option>
-              </select>
-            </Field>
+              </Select>
+            </FormField>
           </div>
-        </div>
+        </Card>
 
         {/* ── Section: Client Information ── */}
-        <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <p className="form-section-heading">Client Information</p>
-          <div className="form-grid">
+        <Card>
+          <h3 className="text-lg font-medium text-gray-900 mb-4 border-b border-gray-200 pb-2">Client Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Client */}
-            <Field
-              id="clientId"
-              label="Client"
-              required
+            <FormField 
+              label="Client" 
+              required 
               error={fieldErrors.clientId}
-              help={
-                isEditing
-                  ? undefined
-                  : undefined
-              }
+              helpText={isEditing ? 'The client cannot be changed after the lead is created.' : undefined}
             >
-              {isEditing ? (
-                /* Disabled in edit — show readable text with locked icon */
-                <div style={{ position: 'relative' }}>
-                  <select
-                    id="clientId"
-                    name="clientId"
-                    className="form-control"
-                    value={formData.clientId}
-                    disabled
-                    aria-disabled="true"
-                    aria-describedby="clientId-help"
-                    style={{ paddingRight: '2.5rem' }}
-                  >
-                    <option value="">No client selected</option>
-                    {clients.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                    {/* Fallback if client isn't in the loaded list */}
-                    {formData.clientId && !clients.find(c => c.id === formData.clientId) && (
-                      <option value={formData.clientId}>Current client</option>
-                    )}
-                  </select>
-                  <Lock
-                    size={14}
-                    aria-hidden="true"
-                    style={{
-                      position: 'absolute',
-                      right: '2rem',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: 'var(--text-secondary)',
-                      pointerEvents: 'none',
-                    }}
-                  />
-                </div>
-              ) : (
-                <select
-                  id="clientId"
+              <div className="relative">
+                <Select
                   name="clientId"
-                  className={`form-control${fieldErrors.clientId ? ' has-error' : ''}`}
                   value={formData.clientId}
                   onChange={handleChange}
                   required
-                  aria-required="true"
-                  aria-describedby={fieldErrors.clientId ? 'clientId-error' : undefined}
-                  disabled={saving}
+                  disabled={saving || isEditing}
+                  error={fieldErrors.clientId ? "true" : undefined}
                 >
                   <option value="">— Select a client —</option>
                   {clients.map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
-                </select>
-              )}
-              {isEditing && (
-                <p className="field-disabled-hint" id="clientId-help">
-                  <Lock size={11} style={{ display: 'inline', marginRight: 4 }} aria-hidden="true" />
-                  The client cannot be changed after the lead is created.
-                </p>
-              )}
-            </Field>
+                  {isEditing && formData.clientId && !clients.find(c => c.id === formData.clientId) && (
+                    <option value={formData.clientId}>Current client</option>
+                  )}
+                </Select>
+                {isEditing && (
+                  <Lock
+                    size={14}
+                    className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                  />
+                )}
+              </div>
+            </FormField>
 
             {/* Client Contact */}
-            <Field
-              id="contactId"
+            <FormField 
               label="Client Contact"
-              help={
+              helpText={
                 !formData.clientId
                   ? 'Select a client first to load contacts.'
                   : loadingContacts
@@ -505,15 +408,12 @@ export const LeadForm: React.FC = () => {
                   : undefined
               }
             >
-              <div style={{ position: 'relative' }}>
-                <select
-                  id="contactId"
+              <div className="relative">
+                <Select
                   name="contactId"
-                  className="form-control"
                   value={formData.contactId ?? ''}
                   onChange={handleChange}
                   disabled={saving || !formData.clientId || loadingContacts}
-                  aria-describedby="contactId-help"
                 >
                   <option value="">
                     {loadingContacts
@@ -530,128 +430,95 @@ export const LeadForm: React.FC = () => {
                       {contact.primary ? ' (Primary)' : ''}
                     </option>
                   ))}
-                </select>
+                </Select>
                 {loadingContacts && (
                   <Loader2
                     size={14}
-                    className="animate-spin"
-                    aria-hidden="true"
-                    style={{
-                      position: 'absolute',
-                      right: '2rem',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: 'var(--text-secondary)',
-                      pointerEvents: 'none',
-                    }}
+                    className="absolute right-8 top-1/2 -translate-y-1/2 animate-spin text-gray-400 pointer-events-none"
                   />
                 )}
               </div>
-            </Field>
+            </FormField>
           </div>
-        </div>
+        </Card>
 
         {/* ── Section: Inquiry Details ── */}
-        <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <p className="form-section-heading">Inquiry Details</p>
-          <div className="form-grid">
+        <Card>
+          <h3 className="text-lg font-medium text-gray-900 mb-4 border-b border-gray-200 pb-2">Inquiry Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Interested Product */}
-            <Field
-              id="interestedProduct"
+            <FormField 
               label="Interested Product / Service"
-              help="Optional — the product or service the client expressed interest in."
+              helpText="Optional — the product or service the client expressed interest in."
             >
-              <input
+              <Input
                 type="text"
-                id="interestedProduct"
                 name="interestedProduct"
-                className="form-control"
                 value={formData.interestedProduct ?? ''}
                 onChange={handleChange}
                 placeholder="e.g. E-commerce Platform"
                 disabled={saving}
                 maxLength={255}
-                aria-describedby="interestedProduct-help"
               />
-            </Field>
+            </FormField>
 
             {/* Initial Meeting Date & Time */}
-            <Field
-              id="initialMeetingAt"
+            <FormField 
               label="Initial Meeting Date and Time"
               error={fieldErrors.initialMeetingAt}
-              help="Used to calculate the project brief deadline (meeting time + 24 hours)."
+              helpText="Used to calculate the project brief deadline (meeting time + 24 hours)."
             >
-              <input
+              <Input
                 type="datetime-local"
-                id="initialMeetingAt"
                 name="initialMeetingAt"
-                className={`form-control${fieldErrors.initialMeetingAt ? ' has-error' : ''}`}
                 value={formData.initialMeetingAt}
                 onChange={handleChange}
                 disabled={saving}
-                aria-describedby={
-                  fieldErrors.initialMeetingAt
-                    ? 'initialMeetingAt-error'
-                    : 'initialMeetingAt-help'
-                }
+                error={fieldErrors.initialMeetingAt ? "true" : undefined}
               />
-            </Field>
+            </FormField>
 
             {/* Initial Request — full width */}
-            <Field
-              id="initialRequest"
-              label="Initial Request"
-              help="What the client initially requested or described."
-              className="form-col-full"
-            >
-              <textarea
-                id="initialRequest"
-                name="initialRequest"
-                className="form-control"
-                value={formData.initialRequest ?? ''}
-                onChange={handleChange}
-                placeholder="Describe what the client requested…"
-                rows={4}
-                disabled={saving}
-                aria-describedby="initialRequest-help"
-              />
-            </Field>
+            <div className="md:col-span-2">
+              <FormField 
+                label="Initial Request"
+                helpText="What the client initially requested or described."
+              >
+                <Textarea
+                  name="initialRequest"
+                  value={formData.initialRequest ?? ''}
+                  onChange={handleChange}
+                  placeholder="Describe what the client requested…"
+                  rows={4}
+                  disabled={saving}
+                />
+              </FormField>
+            </div>
 
             {/* Notes — full width */}
-            <Field
-              id="notes"
-              label="Notes"
-              help="Internal notes or observations about this lead."
-              className="form-col-full"
-            >
-              <textarea
-                id="notes"
-                name="notes"
-                className="form-control"
-                value={formData.notes ?? ''}
-                onChange={handleChange}
-                placeholder="Add any additional notes…"
-                rows={3}
-                disabled={saving}
-                aria-describedby="notes-help"
-              />
-            </Field>
+            <div className="md:col-span-2">
+              <FormField 
+                label="Notes"
+                helpText="Internal notes or observations about this lead."
+              >
+                <Textarea
+                  name="notes"
+                  value={formData.notes ?? ''}
+                  onChange={handleChange}
+                  placeholder="Add any additional notes…"
+                  rows={3}
+                  disabled={saving}
+                />
+              </FormField>
+            </div>
           </div>
-        </div>
+        </Card>
 
         {/* ── Form actions ── */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '0.75rem',
-            flexWrap: 'wrap',
-          }}
-        >
+        <div className="flex justify-end gap-3 mt-8 border-t border-gray-200 pt-4">
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
             onClick={handleCancel}
             disabled={saving}
           >
@@ -662,7 +529,6 @@ export const LeadForm: React.FC = () => {
             variant="primary"
             isLoading={saving}
             disabled={saving}
-            aria-disabled={saving}
           >
             {saving
               ? 'Saving…'

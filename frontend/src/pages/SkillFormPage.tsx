@@ -3,7 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { SkillApi } from '../services/SkillApi';
 import { PageHeader } from '../components/PageHeader';
 import { Button } from '../components/Button';
+import { Card } from '../components/Card';
+import { FormField, Input, Textarea } from '../components/Forms';
+import { Alert } from '../components/Alert';
 import type { CreateSkillRequest } from '../types/skill';
+import { BadgeCheck } from 'lucide-react';
 
 export const SkillFormPage: React.FC = () => {
   const navigate = useNavigate();
@@ -36,68 +40,63 @@ export const SkillFormPage: React.FC = () => {
   };
 
   return (
-    <div className="page-container">
+    <div className="p-6 max-w-3xl mx-auto w-full">
       <PageHeader 
         title="Create Skill"
+        icon={<BadgeCheck size={24} />}
         description="Add a new skill to the global registry."
       />
 
-      <div className="card" style={{ maxWidth: '600px' }}>
-        <div className="card-body">
-          {error && <div className="error-message" style={{ color: 'var(--error)', marginBottom: '1rem', padding: '0.75rem', backgroundColor: 'var(--error-bg)', borderRadius: 'var(--radius-md)' }}>{error}</div>}
-          
-          <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>Code *</label>
-              <input
-                type="text"
-                name="code"
-                value={formData.code}
-                onChange={handleChange}
-                required
-                disabled={loading}
-                style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}
-                placeholder="e.g. JAVA"
-              />
-            </div>
+      <Card>
+        {error && <Alert variant="error" style={{ marginBottom: '1.5rem' }}>{error}</Alert>}
+        
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <FormField label="Code" required>
+            <Input
+              name="code"
+              value={formData.code}
+              onChange={handleChange}
+              required
+              disabled={loading}
+              placeholder="e.g. JAVA"
+              maxLength={20}
+            />
+          </FormField>
 
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>Name *</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                disabled={loading}
-                style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}
-                placeholder="e.g. Java Programming"
-              />
-            </div>
+          <FormField label="Name" required>
+            <Input
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              disabled={loading}
+              placeholder="e.g. Java Programming"
+              maxLength={100}
+            />
+          </FormField>
 
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>Description</label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                disabled={loading}
-                style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', minHeight: '100px' }}
-                placeholder="Skill description..."
-              />
-            </div>
+          <FormField label="Description">
+            <Textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              disabled={loading}
+              placeholder="Skill description..."
+              rows={4}
+              maxLength={500}
+            />
+          </FormField>
 
-            <div className="flex-between" style={{ justifyContent: 'flex-end', gap: '1rem' }}>
-              <Button type="button" variant="ghost" onClick={() => navigate('/skills')} disabled={loading}>
-                Cancel
-              </Button>
-              <Button type="submit" variant="primary" isLoading={loading}>
-                Save Skill
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
+          <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
+            <Button type="button" variant="ghost" onClick={() => navigate('/skills')} disabled={loading}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" isLoading={loading}>
+              Save Skill
+            </Button>
+          </div>
+        </form>
+      </Card>
     </div>
   );
 };

@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import type { ClientContact } from '../../types/client';
 import { ClientApi } from '../../services/ClientApi';
 import { Button } from '../Button';
+import { IconButton } from '../IconButton';
 import { Star, StarOff, Edit, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../Table';
 import { PermissionGuard } from '../PermissionGuard';
 import { ContactModal } from './ContactModal';
+import { StatusBadge } from '../StatusBadge';
 
 interface ContactListProps {
   clientId: string;
@@ -54,18 +56,19 @@ export const ContactList: React.FC<ContactListProps> = ({ clientId, contacts, on
 
   return (
     <div>
-      <div className="flex-between" style={{ marginBottom: '1rem' }}>
-        <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>Contacts</h3>
+      <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900">Contacts</h3>
         <PermissionGuard permission="CLIENT_UPDATE">
           <Button variant="secondary" onClick={handleAddNew}>Add Contact</Button>
         </PermissionGuard>
       </div>
 
       {contacts.length === 0 ? (
-        <p style={{ color: 'var(--text-light)', padding: '1rem', textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
-          No contacts found for this client.
-        </p>
+        <div className="text-center p-8 bg-gray-50 rounded-md border border-dashed border-gray-300">
+          <p className="text-gray-500">No contacts found for this client.</p>
+        </div>
       ) : (
+        <div className="overflow-x-auto">
           <Table>
             <TableHead>
               <TableRow>
@@ -74,53 +77,67 @@ export const ContactList: React.FC<ContactListProps> = ({ clientId, contacts, on
                 <TableHeader>Email</TableHeader>
                 <TableHeader>Phone</TableHeader>
                 <TableHeader>Status</TableHeader>
-                <TableHeader>Actions</TableHeader>
+                <TableHeader align="right">Actions</TableHeader>
               </TableRow>
             </TableHead>
             <TableBody>
               {contacts.map(contact => (
                 <TableRow key={contact.id}>
                   <TableCell>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div className="flex items-center gap-2 font-medium text-gray-900">
                       {contact.firstName} {contact.lastName}
-                      {contact.primary && <span title="Primary Contact" style={{ color: 'var(--primary)' }}><Star size={16} fill="currentColor" /></span>}
+                      {contact.primary && (
+                        <span title="Primary Contact" className="text-yellow-500">
+                          <Star size={16} fill="currentColor" />
+                        </span>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>{contact.jobTitle || '-'}</TableCell>
                   <TableCell>{contact.email || '-'}</TableCell>
                   <TableCell>{contact.phone || '-'}</TableCell>
                   <TableCell>
-                    <span style={{ 
-                      padding: '0.25rem 0.5rem', 
-                      borderRadius: '1rem', 
-                      fontSize: '0.75rem',
-                      backgroundColor: contact.active ? 'var(--success-bg)' : 'var(--error-bg)',
-                      color: contact.active ? 'var(--success)' : 'var(--error)'
-                    }}>
-                      {contact.active ? 'Active' : 'Inactive'}
-                    </span>
+                    <StatusBadge 
+                      status={contact.active ? 'Active' : 'Inactive'} 
+                      variant={contact.active ? 'success' : 'neutral'} 
+                    />
                   </TableCell>
-                  <TableCell>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <TableCell align="right">
+                    <div className="flex justify-end gap-2">
                       <PermissionGuard permission="CLIENT_UPDATE">
-                        <Button variant="ghost" onClick={() => handleEdit(contact)} title="Edit Contact">
+                        <IconButton onClick={() => handleEdit(contact)} title="Edit Contact" aria-label="Edit Contact">
                           <Edit size={16} />
-                        </Button>
+                        </IconButton>
                         
                         {!contact.primary && contact.active && (
-                          <Button variant="ghost" onClick={() => handleSetPrimary(contact.id)} title="Set as Primary" style={{ color: 'var(--warning)' }}>
+                          <IconButton 
+                            onClick={() => handleSetPrimary(contact.id)} 
+                            title="Set as Primary" 
+                            aria-label="Set as Primary"
+                            className="text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
+                          >
                             <StarOff size={16} />
-                          </Button>
+                          </IconButton>
                         )}
                         
                         {contact.active ? (
-                          <Button variant="ghost" onClick={() => handleToggleStatus(contact)} title="Deactivate Contact" style={{ color: 'var(--error)' }}>
+                          <IconButton 
+                            onClick={() => handleToggleStatus(contact)} 
+                            title="Deactivate Contact"
+                            aria-label="Deactivate Contact" 
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
                             <ShieldAlert size={16} />
-                          </Button>
+                          </IconButton>
                         ) : (
-                          <Button variant="ghost" onClick={() => handleToggleStatus(contact)} title="Activate Contact" style={{ color: 'var(--success)' }}>
+                          <IconButton 
+                            onClick={() => handleToggleStatus(contact)} 
+                            title="Activate Contact" 
+                            aria-label="Activate Contact"
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          >
                             <ShieldCheck size={16} />
-                          </Button>
+                          </IconButton>
                         )}
                       </PermissionGuard>
                     </div>
@@ -129,6 +146,7 @@ export const ContactList: React.FC<ContactListProps> = ({ clientId, contacts, on
               ))}
             </TableBody>
           </Table>
+        </div>
       )}
 
       <ContactModal 

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { ClientApi } from '../../services/ClientApi';
 import type { ClientRequest, Client } from '../../types/client';
 import { Button } from '../Button';
-import { AlertCircle } from 'lucide-react';
+import { FormField, Input, Select, Textarea } from '../Forms';
+import { Alert } from '../Alert';
 
 interface ClientFormProps {
   initialData?: Client;
@@ -109,142 +110,134 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSuccess, 
   };
 
   return (
-    <form onSubmit={(e) => handleSubmit(e, false)} className="client-form" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-8">
       {error && (
-        <div style={{ padding: '0.75rem', backgroundColor: 'var(--error-bg)', color: 'var(--error)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-          <AlertCircle size={16} style={{ marginTop: '0.125rem', flexShrink: 0 }} />
-          <div>
-            {typeof error === 'object' && error.title && (
-              <strong style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.9375rem' }}>{error.title}</strong>
-            )}
-            <span style={{ fontSize: '0.875rem' }}>{typeof error === 'object' ? error.message : error}</span>
-          </div>
-        </div>
+        <Alert variant="error" style={{ marginBottom: '1rem' }}>
+          {typeof error === 'object' ? error.message : error}
+        </Alert>
       )}
 
       {warning && (
-        <div style={{ padding: '0.75rem', backgroundColor: 'var(--warning-bg)', color: 'var(--warning)', borderRadius: 'var(--radius-md)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <AlertCircle size={16} />
-            <strong>Warning:</strong> {warning}
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-            <Button type="button" variant="ghost" onClick={() => setWarning(null)}>Cancel</Button>
-            <Button type="button" variant="primary" onClick={(e) => handleSubmit(e, true)}>Proceed Anyway</Button>
-          </div>
-        </div>
+        <Alert variant="warning" style={{ marginBottom: '1rem' }}>
+          {warning}
+        </Alert>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>Client Type *</label>
-          <select
-            name="clientType"
-            value={formData.clientType}
-            onChange={handleChange}
-            required
-            disabled={loading}
-            style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-card)' }}
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 mb-4 border-b border-gray-200 pb-2">Client Information</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField label="Client Type" required>
+            <Select
+              name="clientType"
+              value={formData.clientType}
+              onChange={handleChange}
+              required
+              disabled={loading}
+            >
+              <option value="COMPANY">Company</option>
+              <option value="INDIVIDUAL">Individual</option>
+              <option value="GOVERNMENT">Government</option>
+              <option value="NON_PROFIT">Non-Profit</option>
+              <option value="OTHER">Other</option>
+            </Select>
+          </FormField>
+
+          <FormField label="Name" required>
+            <Input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              maxLength={100}
+              disabled={loading}
+              placeholder="Company or individual name"
+            />
+          </FormField>
+
+          <FormField 
+            label="Registration Number"
+            error={fieldErrors.registrationNumber}
           >
-            <option value="COMPANY">Company</option>
-            <option value="INDIVIDUAL">Individual</option>
-            <option value="GOVERNMENT">Government</option>
-            <option value="NON_PROFIT">Non-Profit</option>
-            <option value="OTHER">Other</option>
-          </select>
-        </div>
+            <Input
+              type="text"
+              name="registrationNumber"
+              value={formData.registrationNumber}
+              onChange={handleChange}
+              disabled={loading}
+              maxLength={50}
+              placeholder="Business/Tax ID"
+              error={fieldErrors.registrationNumber ? "true" : undefined}
+            />
+          </FormField>
 
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>Name *</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-            maxLength={100}
-            disabled={loading}
-            style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}
-            placeholder="Company or individual name"
-          />
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>Email</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            disabled={loading}
-            maxLength={100}
-            style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}
-            placeholder="client@example.com"
-          />
-        </div>
-
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>Phone</label>
-          <input
-            type="tel"
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-            disabled={loading}
-            maxLength={50}
-            style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}
-            placeholder="+1 555-1234"
-          />
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>Registration Number</label>
-          <input
-            type="text"
-            name="registrationNumber"
-            value={formData.registrationNumber}
-            onChange={handleChange}
-            disabled={loading}
-            maxLength={50}
-            style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: fieldErrors.registrationNumber ? '1px solid var(--error)' : '1px solid var(--border)' }}
-            placeholder="Business/Tax ID"
-          />
-        </div>
-
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>Industry</label>
-          <input
-            type="text"
-            name="industry"
-            value={formData.industry}
-            onChange={handleChange}
-            disabled={loading}
-            maxLength={50}
-            style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}
-            placeholder="e.g. Technology"
-          />
+          <FormField label="Industry">
+            <Input
+              type="text"
+              name="industry"
+              value={formData.industry}
+              onChange={handleChange}
+              disabled={loading}
+              maxLength={50}
+              placeholder="e.g. Technology"
+            />
+          </FormField>
         </div>
       </div>
 
       <div>
-        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>Address</label>
-        <textarea
-          name="address"
-          value={formData.address}
-          onChange={handleChange}
-          disabled={loading}
-          maxLength={255}
-          style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', minHeight: '80px' }}
-          placeholder="Full address"
-        />
+        <h3 className="text-lg font-medium text-gray-900 mb-4 border-b border-gray-200 pb-2">Contact Information</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField label="Email">
+            <Input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              disabled={loading}
+              maxLength={100}
+              placeholder="client@example.com"
+            />
+          </FormField>
+
+          <FormField label="Phone">
+            <Input
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              disabled={loading}
+              maxLength={50}
+              placeholder="+1 555-1234"
+            />
+          </FormField>
+        </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-        <Button type="button" variant="ghost" onClick={onCancel} disabled={loading}>
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 mb-4 border-b border-gray-200 pb-2">Address</h3>
+        <FormField label="Full Address">
+          <Textarea
+            name="address"
+            value={formData.address}
+            onChange={handleChange}
+            disabled={loading}
+            maxLength={255}
+            rows={3}
+            placeholder="Full address"
+          />
+        </FormField>
+      </div>
+
+      {warning && (
+        <div className="flex justify-end gap-4 mt-4">
+          <Button type="button" variant="outline" onClick={() => setWarning(null)}>Cancel</Button>
+          <Button type="button" variant="primary" onClick={(e) => handleSubmit(e, true)}>Proceed Anyway</Button>
+        </div>
+      )}
+
+      <div className="flex justify-end gap-4 mt-8 pt-4 border-t border-gray-200">
+        <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
           Cancel
         </Button>
         <Button type="submit" variant="primary" isLoading={loading}>

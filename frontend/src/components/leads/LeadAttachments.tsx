@@ -103,9 +103,9 @@ export const LeadAttachments: React.FC<LeadAttachmentsProps> = ({ entityId, enti
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
             {attachments.map(att => (
-              <div key={att.id} className="card" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', border: '1px solid var(--border)', boxShadow: 'none' }}>
+              <div key={att.id} className="card" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', border: '1px solid var(--color-border)', boxShadow: 'none' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
-                  <div style={{ padding: '0.5rem', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', color: 'var(--text-light)' }}>
+                  <div style={{ padding: '0.5rem', backgroundColor: 'var(--color-surface-secondary)', borderRadius: 'var(--radius-md)', color: 'var(--text-light)' }}>
                     <File size={24} />
                   </div>
                   <div style={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
@@ -130,7 +130,7 @@ export const LeadAttachments: React.FC<LeadAttachmentsProps> = ({ entityId, enti
                   <Button
                     variant="ghost"
                     onClick={() => handleDelete(att.id)}
-                    style={{ padding: '0.25rem 0.5rem', color: 'var(--error)' }}
+                    style={{ padding: '0.25rem 0.5rem', color: 'var(--color-danger)' }}
                     title="Delete"
                   >
                     <Trash2 size={14} />

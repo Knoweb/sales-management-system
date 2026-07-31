@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Sun, Moon, Briefcase } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { apiClient } from '../services/Api';
 import type { AuthResponse } from '../context/AuthContext';
+import { Input, FormField } from '../components/Forms';
+import { Button } from '../components/Button';
+import { IconButton } from '../components/IconButton';
+import { Alert } from '../components/Alert';
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -13,6 +18,7 @@ export const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   
   const { login, isAuthenticated } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -48,78 +54,84 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div className="auth-container">
+      <div className="auth-theme-toggle">
+        <IconButton 
+          icon={theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />} 
+          onClick={toggleTheme}
+          aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          title="Toggle theme"
+          style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' }}
+        />
+      </div>
+
       <div className="auth-card">
         <div className="auth-header">
-          <div style={{ display: 'inline-block', backgroundColor: 'var(--accent-light)', padding: '12px', borderRadius: '50%', marginBottom: '1rem' }}>
-             <Lock size={28} color="var(--accent-hover)" />
+          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--color-primary-soft)', padding: '16px', borderRadius: '50%', marginBottom: '1.25rem' }}>
+             <Briefcase size={32} color="var(--color-primary)" />
           </div>
-          <h1 className="auth-title">Sign in to your account</h1>
-          <p className="auth-subtitle">Sales Management System</p>
+          <h1 className="auth-title">Welcome back</h1>
+          <p className="auth-subtitle">Sign in to Knoweb Sales Management System</p>
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           {error && (
-            <div className="auth-error">
-              <div style={{ flexShrink: 0 }}>⚠️</div>
-              <div>{error}</div>
-            </div>
+            <Alert variant="error">
+              {error}
+            </Alert>
           )}
 
-          <div className="form-group">
-            <label htmlFor="email" className="form-label">Email address</label>
-            <div className="input-wrapper">
-              <Mail className="input-icon" size={18} />
-              <input
+          <FormField label="Email address" id="email">
+            <div style={{ position: 'relative' }}>
+              <Input
                 id="email"
                 type="email"
-                className="form-input"
                 placeholder="Enter your email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
                 disabled={loading}
+                style={{ paddingLeft: '2.5rem' }}
               />
+              <Mail size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
             </div>
-          </div>
+          </FormField>
 
-          <div className="form-group">
-            <label htmlFor="password" className="form-label">Password</label>
-            <div className="input-wrapper">
-              <Lock className="input-icon" size={18} />
-              <input
+          <FormField label="Password" id="password">
+            <div style={{ position: 'relative' }}>
+              <Input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
-                className="form-input"
                 placeholder="Enter your password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
                 disabled={loading}
+                style={{ paddingLeft: '2.5rem', paddingRight: '2.5rem' }}
               />
-              <button 
-                type="button" 
-                className="input-action"
-                onClick={() => setShowPassword(!showPassword)}
-                title={showPassword ? "Hide password" : "Show password"}
-                disabled={loading}
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
+              <Lock size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
+              <div style={{ position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)' }}>
+                <IconButton 
+                  icon={showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  onClick={() => setShowPassword(!showPassword)}
+                  title={showPassword ? "Hide password" : "Show password"}
+                  disabled={loading}
+                  variant="ghost"
+                  type="button"
+                />
+              </div>
             </div>
-          </div>
+          </FormField>
 
-          <button type="submit" className="auth-button" disabled={loading}>
-            {loading ? (
-              <>
-                <div className="spinner"></div>
-                Signing in...
-              </>
-            ) : (
-              'Sign in'
-            )}
-          </button>
+          <Button 
+            type="submit" 
+            variant="primary" 
+            isLoading={loading}
+            style={{ width: '100%', marginTop: '0.5rem' }}
+          >
+            Sign in
+          </Button>
         </form>
         
         <div className="auth-footer">

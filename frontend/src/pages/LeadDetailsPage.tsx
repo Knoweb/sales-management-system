@@ -8,12 +8,17 @@ export const LeadDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
 
   return (
-    <div className="page-container">
+    <div className="p-6 max-w-7xl mx-auto w-full">
       <PageHeader 
-        title={<><Briefcase className="page-icon" style={{ display: 'inline', marginRight: '0.5rem' }} /> Lead Details</>} 
+        title={
+          <div className="flex items-center gap-2">
+            <Briefcase size={24} className="inline-icon text-blue-600" />
+            Lead Details
+          </div>
+        } 
       />
       
-      <div className="page-content">
+      <div className="mt-6">
         <LeadDetails leadId={id!} />
       </div>
     </div>
