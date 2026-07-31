@@ -187,10 +187,10 @@ public class DepartmentService {
             dto.setActiveHod(headDto);
         }
 
-        // We can skip counts for now or implement them if requested heavily. For a true implementation, 
-        // these should be populated via aggregate queries for performance, but basic requirement just lists them.
-        dto.setEmployeeCount(0); // Implement actual count later if required
-        dto.setActiveEmployeeCount(0);
+        // Populate actual employee count
+        long activeCount = employeeRepository.countByDepartmentIdAndEmploymentStatus(department.getId(), EmploymentStatus.ACTIVE);
+        dto.setEmployeeCount(activeCount);
+        dto.setActiveEmployeeCount(activeCount);
         return dto;
     }
 }

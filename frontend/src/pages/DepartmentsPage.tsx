@@ -68,7 +68,7 @@ export const DepartmentsPage: React.FC = () => {
                     <td>{dept.code}</td>
                     <td>{dept.name}</td>
                     <td>{dept.active ? 'Active' : 'Inactive'}</td>
-                    <td>{dept.employeeCount}</td>
+                    <td>{dept.employeeCount ?? 0}</td>
                   </tr>
                 ))}
               </tbody>
