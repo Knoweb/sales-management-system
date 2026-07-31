@@ -3,6 +3,8 @@ import { LeadApi } from '../../services/LeadApi';
 import type { FollowUp, FollowUpStatus } from '../../types/lead';
 import { Button } from '../Button';
 import { Calendar, CheckCircle, Plus } from 'lucide-react';
+import { FormField, Input, Select, Textarea } from '../Forms';
+import { Card } from '../Card';
 
 interface LeadFollowUpsProps {
   leadId: string;
@@ -67,44 +69,41 @@ export const LeadFollowUps: React.FC<LeadFollowUpsProps> = ({ leadId }) => {
   };
 
   const getStatusDisplay = (fu: FollowUp) => {
-    if (fu.status === 'COMPLETED') return { label: 'Completed', bg: 'var(--success-bg)', color: 'var(--success)', border: 'var(--success)' };
-    if (fu.status === 'CANCELLED') return { label: 'Cancelled', bg: 'var(--bg-secondary)', color: 'var(--text-light)', border: 'var(--text-light)' };
+    if (fu.status === 'COMPLETED') return { label: 'Completed', bg: 'var(--color-success-bg)', color: 'var(--color-success)', border: 'var(--color-success)' };
+    if (fu.status === 'CANCELLED') return { label: 'Cancelled', bg: 'var(--color-surface-secondary)', color: 'var(--color-text-secondary)', border: 'var(--color-text-muted)' };
     
     // PENDING logic
     // eslint-disable-next-line react-hooks/purity
     const isOverdue = new Date(fu.followUpDate).getTime() < Date.now();
     if (isOverdue) {
-      return { label: 'Overdue', bg: 'var(--error-bg)', color: 'var(--error)', border: 'var(--error)' };
+      return { label: 'Overdue', bg: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: 'var(--color-danger)' };
     }
-    return { label: 'Pending', bg: 'var(--warning-bg)', color: 'var(--warning)', border: 'var(--warning)' };
+    return { label: 'Pending', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning)' };
   };
 
   return (
-    <div className="card">
-      <div className="card-header flex-between">
-        <h3 className="card-title">Follow-Ups</h3>
+    <Card>
+      <div className="flex-between mb-6 border-b border-border pb-4">
+        <h3 className="text-lg font-semibold text-text-primary">Follow-Ups</h3>
         <Button variant="primary" onClick={() => setShowForm(!showForm)}>
-          <Plus size={16} /> Schedule Follow-Up
+          <Plus size={16} className="mr-2" /> Schedule Follow-Up
         </Button>
       </div>
-      <div className="card-body">
+      
+      <div>
         {showForm && (
-          <form onSubmit={handleSubmit} className="card" style={{ marginBottom: '2rem', padding: '1rem', backgroundColor: 'var(--bg-light)' }}>
-            <div className="form-grid">
-              <div className="form-group">
-                <label className="form-label">Date & Time *</label>
-                <input
+          <div className="bg-surface-secondary p-4 rounded-lg mb-6 border border-border">
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField label="Date & Time" required>
+                <Input
                   type="datetime-local"
-                  className="form-control"
                   required
                   value={newFollowUp.followUpDate}
                   onChange={e => setNewFollowUp(prev => ({ ...prev, followUpDate: e.target.value }))}
                 />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Status *</label>
-                <select
-                  className="form-control"
+              </FormField>
+              <FormField label="Status" required>
+                <Select
                   required
                   value={newFollowUp.status}
                   onChange={e => setNewFollowUp(prev => ({ ...prev, status: e.target.value as FollowUpStatus }))}
@@ -112,47 +111,44 @@ export const LeadFollowUps: React.FC<LeadFollowUpsProps> = ({ leadId }) => {
                   <option value="PENDING">Pending</option>
                   <option value="COMPLETED">Completed</option>
                   <option value="CANCELLED">Cancelled</option>
-                </select>
+                </Select>
+              </FormField>
+              <div className="md:col-span-2">
+                <FormField label="Notes">
+                  <Textarea
+                    rows={3}
+                    value={newFollowUp.notes}
+                    onChange={e => setNewFollowUp(prev => ({ ...prev, notes: e.target.value }))}
+                  />
+                </FormField>
               </div>
-              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                <label className="form-label">Notes</label>
-                <textarea
-                  className="form-control"
-                  rows={3}
-                  value={newFollowUp.notes}
-                  onChange={e => setNewFollowUp(prev => ({ ...prev, notes: e.target.value }))}
-                />
-              </div>
-              <div className="form-actions" style={{ gridColumn: '1 / -1' }}>
-                <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>Cancel</Button>
+              <div className="md:col-span-2 flex justify-end gap-3 pt-2">
+                <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>Cancel</Button>
                 <Button type="submit" variant="primary">Save Follow-Up</Button>
               </div>
-            </div>
-          </form>
+            </form>
+          </div>
         )}
 
         {loading ? (
-          <p>Loading follow-ups...</p>
+          <p className="text-text-secondary py-4 text-center">Loading follow-ups...</p>
         ) : error ? (
-          <p className="error-message">{error}</p>
+          <p className="text-danger py-4 text-center">{error}</p>
         ) : followUps.length === 0 ? (
-          <p>No follow-ups scheduled.</p>
+          <p className="text-text-muted py-8 text-center bg-surface-secondary rounded-lg border border-dashed border-border">No follow-ups scheduled.</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="flex flex-col gap-4">
             {followUps.map(fu => {
               const display = getStatusDisplay(fu);
               return (
-              <div key={fu.id} className="card" style={{ padding: '1rem', borderLeft: `4px solid ${display.border}` }}>
-                <div className="flex-between" style={{ marginBottom: '0.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <h4 style={{ margin: 0, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Calendar size={16} style={{ color: 'var(--text-light)' }} />
+              <div key={fu.id} className="p-4 rounded-lg border border-border" style={{ borderLeft: `4px solid ${display.border}`, backgroundColor: 'var(--color-surface)' }}>
+                <div className="flex-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <h4 className="m-0 text-base flex items-center gap-2 font-medium text-text-primary">
+                      <Calendar size={16} className="text-text-muted" />
                       {new Date(fu.followUpDate).toLocaleString()}
                     </h4>
-                    <span style={{ 
-                      padding: '0.125rem 0.5rem', 
-                      borderRadius: '1rem', 
-                      fontSize: '0.75rem',
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ 
                       backgroundColor: display.bg,
                       color: display.color
                     }}>
@@ -160,19 +156,19 @@ export const LeadFollowUps: React.FC<LeadFollowUpsProps> = ({ leadId }) => {
                     </span>
                   </div>
                   {fu.status === 'PENDING' && (
-                    <Button variant="ghost" onClick={() => handleComplete(fu.id)} style={{ color: 'var(--success)' }} title="Mark as Completed">
+                    <Button variant="ghost" onClick={() => handleComplete(fu.id)} title="Mark as Completed" style={{ color: 'var(--color-success)' }}>
                       <CheckCircle size={18} />
                     </Button>
                   )}
                 </div>
                 {fu.notes && (
-                  <p style={{ margin: 0, marginTop: '0.5rem', color: 'var(--text-secondary)' }}>
+                  <p className="m-0 mt-2 text-sm text-text-secondary">
                     {fu.notes}
                   </p>
                 )}
                 {fu.assignedToName && (
-                  <p style={{ margin: 0, marginTop: '0.5rem', fontSize: '0.875rem', color: 'var(--text-light)' }}>
-                    Assigned to: {fu.assignedToName}
+                  <p className="m-0 mt-2 text-xs text-text-muted">
+                    Assigned to: <span className="font-medium text-text-secondary">{fu.assignedToName}</span>
                   </p>
                 )}
               </div>
@@ -180,6 +176,6 @@ export const LeadFollowUps: React.FC<LeadFollowUpsProps> = ({ leadId }) => {
           </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 };

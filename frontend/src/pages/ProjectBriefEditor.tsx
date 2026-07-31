@@ -17,11 +17,11 @@ import { DepartmentApi } from '../services/DepartmentApi';
 import type { Department } from '../types/department';
 import { PageHeader } from '../components/PageHeader';
 import { Card } from '../components/Card';
-import { Input } from '../components/Forms';
+import { Input, Textarea, Checkbox } from '../components/Forms';
 import { Button } from '../components/Button';
 import { ErrorState, LoadingState } from '../components/FeedbackStates';
 import { StatusBadge } from '../components/StatusBadge';
-import { Tabs } from '../components/Tabs';
+import { Tabs, type TabItem } from '../components/Tabs';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/Table';
 import { FileText, Save, Send, History, Paperclip, Upload, Trash2, Download, AlertTriangle } from 'lucide-react';
 
@@ -35,7 +35,7 @@ const ProjectBriefEditor: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [conflictError, setConflictError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'edit' | 'versions' | 'attachments'>('edit');
+  const [activeTab, setActiveTab] = useState('edit');
 
   const [allDepartments, setAllDepartments] = useState<Department[]>([]);
   const [versions, setVersions] = useState<ProjectBriefVersionDTO[]>([]);
@@ -236,286 +236,305 @@ const ProjectBriefEditor: React.FC = () => {
 
   const isReadOnly = brief.status === 'SUBMITTED';
 
+  const tabs: TabItem[] = [
+    { id: 'edit', label: 'Brief Details', icon: <FileText size={18} /> },
+    { id: 'versions', label: `Versions (${versions.length})`, icon: <History size={18} /> },
+    { id: 'attachments', label: `Attachments (${attachments.length})`, icon: <Paperclip size={18} /> }
+  ];
+
   return (
-    <div className="p-6 max-w-7xl mx-auto w-full">
+    <div className="p-6 max-w-5xl mx-auto w-full space-y-6">
       <PageHeader 
-        title={<><FileText size={24} className="inline-icon text-blue-600" /> Project Brief: {brief.projectTitle || 'Untitled'}</>}
-        description={`Status: ${brief.status} | Version: v${brief.currentVersionNumber}`}
+        title={`Project Brief: ${brief.projectTitle || 'Untitled'}`}
+        icon={<FileText size={24} />}
+        description={`Version: v${brief.currentVersionNumber}`}
+        actionElement={
+          <div className="ml-4 flex gap-3 items-center">
+            <StatusBadge status={brief.status} variant={brief.status === 'SUBMITTED' ? 'success' : 'neutral'} />
+          </div>
+        }
       />
 
       {conflictError && (
-        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between">
-          <div className="flex items-center gap-2 text-amber-800 font-medium">
-            <AlertTriangle size={20} />
+        <div className="p-4 bg-danger-bg text-danger border border-danger-border rounded-md flex items-center justify-between">
+          <div className="flex items-center gap-2 font-medium">
+            <AlertTriangle />
             <span>{conflictError}</span>
           </div>
           <Button variant="outline" onClick={() => id && loadBrief(id)}>Reload Latest</Button>
         </div>
       )}
 
-      {error && <div className="mb-6"><ErrorState message={error} /></div>}
+      {error && <ErrorState message={error} />}
 
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <Tabs
-          tabs={[
-            { id: 'edit', label: 'Brief Details' },
-            { id: 'versions', label: `Versions (${versions.length})` },
-            { id: 'attachments', label: `Attachments (${attachments.length})` }
-          ]}
+          tabs={tabs}
           activeTab={activeTab}
-          onChange={(tab) => setActiveTab(tab as typeof activeTab)}
+          onChange={setActiveTab}
         />
 
         {!isReadOnly && activeTab === 'edit' && (
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={handleSaveDraft} isLoading={saving} icon={<Save size={16} />}>
+          <div className="flex gap-2 shrink-0">
+            <Button variant="outline" onClick={handleSaveDraft} isLoading={saving} icon={<Save />}>
               Save Draft
             </Button>
-            <Button variant="secondary" onClick={handleSaveVersion} isLoading={saving} icon={<History size={16} />}>
+            <Button variant="secondary" onClick={handleSaveVersion} isLoading={saving} icon={<History />}>
               Save Version
             </Button>
-            <Button variant="primary" onClick={handleSubmit} isLoading={submitting} icon={<Send size={16} />}>
+            <Button variant="primary" onClick={handleSubmit} isLoading={submitting} icon={<Send />}>
               Submit Brief
             </Button>
           </div>
         )}
       </div>
 
-      {activeTab === 'edit' && (
-        <Card>
-          <div className="flex flex-col gap-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Input
-                label="Project Title *"
-                type="text"
-                name="projectTitle"
-                value={formData.projectTitle}
-                onChange={handleChange}
-                disabled={isReadOnly}
-                required
-              />
-              <Input
-                label="Expected Deadline *"
-                type="date"
-                name="expectedDeadline"
-                value={formData.expectedDeadline}
-                onChange={handleChange}
-                disabled={isReadOnly}
-                required
-              />
-            </div>
+      <div className="mt-6">
+        {activeTab === 'edit' && (
+          <Card>
+            <div className="flex flex-col gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Input
+                  label="Project Title"
+                  type="text"
+                  name="projectTitle"
+                  value={formData.projectTitle}
+                  onChange={handleChange}
+                  disabled={isReadOnly}
+                  required
+                />
+                <Input
+                  label="Expected Deadline"
+                  type="date"
+                  name="expectedDeadline"
+                  value={formData.expectedDeadline}
+                  onChange={handleChange}
+                  disabled={isReadOnly}
+                  required
+                />
+              </div>
 
-            <div className="form-group">
-              <label className="form-label">Business Problem *</label>
-              <textarea
+              <Textarea
+                label="Business Problem"
                 name="businessProblem"
                 value={formData.businessProblem}
                 onChange={handleChange}
                 disabled={isReadOnly}
                 rows={3}
-                className="form-textarea"
                 placeholder="Describe the business problem..."
+                required
               />
-            </div>
 
-            <div className="form-group">
-              <label className="form-label">Required Solution *</label>
-              <textarea
+              <Textarea
+                label="Required Solution"
                 name="requiredSolution"
                 value={formData.requiredSolution}
                 onChange={handleChange}
                 disabled={isReadOnly}
                 rows={3}
-                className="form-textarea"
                 placeholder="Describe the required solution..."
+                required
               />
-            </div>
 
-            <div className="form-group">
-              <label className="form-label">Project Scope *</label>
-              <textarea
+              <Textarea
+                label="Project Scope"
                 name="projectScope"
                 value={formData.projectScope}
                 onChange={handleChange}
                 disabled={isReadOnly}
                 rows={3}
-                className="form-textarea"
                 placeholder="Detail the scope of work..."
+                required
               />
-            </div>
 
-            <div className="form-group">
-              <label className="form-label">Technical Requirements *</label>
-              <textarea
+              <Textarea
+                label="Technical Requirements"
                 name="technicalRequirements"
                 value={formData.technicalRequirements}
                 onChange={handleChange}
                 disabled={isReadOnly}
                 rows={3}
-                className="form-textarea"
                 placeholder="List technical constraints and stack..."
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Input
-                label="Expected Budget *"
-                type="number"
-                name="expectedBudget"
-                value={formData.expectedBudget}
-                onChange={handleChange}
-                disabled={isReadOnly}
-                required
-                min="0"
-              />
-              <Input
-                label="Currency *"
-                type="text"
-                name="currency"
-                value={formData.currency}
-                onChange={handleChange}
-                disabled={isReadOnly}
                 required
               />
-            </div>
 
-            <div className="form-group">
-              <label className="form-label">Required Departments *</label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
-                {allDepartments.map(dept => {
-                  const checked = formData.requiredDepartmentIds.includes(dept.id);
-                  return (
-                    <label key={dept.id} className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-gray-50">
-                      <input
-                        type="checkbox"
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Input
+                  label="Expected Budget"
+                  type="number"
+                  name="expectedBudget"
+                  value={formData.expectedBudget}
+                  onChange={handleChange}
+                  disabled={isReadOnly}
+                  required
+                  min="0"
+                />
+                <Input
+                  label="Currency"
+                  type="text"
+                  name="currency"
+                  value={formData.currency}
+                  onChange={handleChange}
+                  disabled={isReadOnly}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="form-label mb-2 block">Required Departments <span className="form-required">*</span></label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 p-4 border border-border rounded-md bg-surface-secondary">
+                  {allDepartments.map(dept => {
+                    const checked = formData.requiredDepartmentIds.includes(dept.id);
+                    return (
+                      <Checkbox
+                        key={dept.id}
+                        label={dept.name}
                         checked={checked}
                         onChange={() => !isReadOnly && handleDepartmentToggle(dept.id)}
                         disabled={isReadOnly}
                       />
-                      <span className="text-sm text-gray-700">{dept.name}</span>
-                    </label>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          </div>
-        </Card>
-      )}
+          </Card>
+        )}
 
-      {activeTab === 'versions' && (
-        <Card>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <History size={20} /> Version History
-          </h3>
-          {versions.length === 0 ? (
-            <p className="text-gray-500 py-4">No historical versions saved yet.</p>
-          ) : (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableHeader>Version</TableHeader>
-                  <TableHeader>Type</TableHeader>
-                  <TableHeader>Summary</TableHeader>
-                  <TableHeader>Saved By</TableHeader>
-                  <TableHeader align="right">Date</TableHeader>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {versions.map(ver => (
-                  <TableRow key={ver.id}>
-                    <TableCell className="font-semibold text-gray-900">v{ver.versionNumber}</TableCell>
-                    <TableCell>
-                      <StatusBadge 
-                        status={ver.submittedVersion ? 'Submitted' : 'Draft'} 
-                        variant={ver.submittedVersion ? 'success' : 'neutral'} 
-                      />
-                    </TableCell>
-                    <TableCell>{ver.changeSummary || 'Version snapshot'}</TableCell>
-                    <TableCell>{ver.createdByName || 'System'}</TableCell>
-                    <TableCell align="right">{new Date(ver.createdAt).toLocaleString()}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </Card>
-      )}
-
-      {activeTab === 'attachments' && (
-        <Card>
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <Paperclip size={20} /> Project Brief Attachments
+        {activeTab === 'versions' && (
+          <Card>
+            <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2 border-b border-border pb-4">
+              <History className="text-primary" /> Version History
             </h3>
-          </div>
+            {versions.length === 0 ? (
+              <div className="text-center py-8 text-text-muted">
+                No historical versions saved yet.
+              </div>
+            ) : (
+              <div className="table-container">
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeader>Version</TableHeader>
+                      <TableHeader>Type</TableHeader>
+                      <TableHeader>Summary</TableHeader>
+                      <TableHeader>Saved By</TableHeader>
+                      <TableHeader align="right">Date</TableHeader>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {versions.map(ver => (
+                      <TableRow key={ver.id}>
+                        <TableCell className="font-semibold text-text-primary">v{ver.versionNumber}</TableCell>
+                        <TableCell>
+                          <StatusBadge 
+                            status={ver.submittedVersion ? 'Submitted' : 'Draft'} 
+                            variant={ver.submittedVersion ? 'success' : 'neutral'} 
+                          />
+                        </TableCell>
+                        <TableCell className="text-text-secondary">{ver.changeSummary || 'Version snapshot'}</TableCell>
+                        <TableCell className="text-text-secondary">{ver.createdByName || 'System'}</TableCell>
+                        <TableCell align="right" className="text-text-muted whitespace-nowrap">{new Date(ver.createdAt).toLocaleString()}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </Card>
+        )}
 
-          {!isReadOnly && (
-            <div className="mb-6 p-4 border border-dashed border-gray-300 rounded-lg flex items-center justify-between gap-4">
-              <input
-                type="file"
-                onChange={e => setSelectedFile(e.target.files?.[0] || null)}
-                className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-              />
-              <Button 
-                variant="primary" 
-                onClick={handleUploadFile} 
-                disabled={!selectedFile} 
-                isLoading={uploading}
-                icon={<Upload size={16} />}
-              >
-                Upload File
-              </Button>
+        {activeTab === 'attachments' && (
+          <Card>
+            <div className="flex justify-between items-center mb-6 border-b border-border pb-4">
+              <h3 className="text-lg font-semibold text-text-primary flex items-center gap-2">
+                <Paperclip className="text-primary" /> Project Brief Attachments
+              </h3>
             </div>
-          )}
 
-          {attachments.length === 0 ? (
-            <p className="text-gray-500 py-4">No attachments uploaded yet.</p>
-          ) : (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableHeader>File Name</TableHeader>
-                  <TableHeader>Type</TableHeader>
-                  <TableHeader>Size</TableHeader>
-                  <TableHeader>Uploaded By</TableHeader>
-                  <TableHeader align="right">Actions</TableHeader>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {attachments.map(att => (
-                  <TableRow key={att.id}>
-                    <TableCell className="font-medium text-gray-900">{att.fileName}</TableCell>
-                    <TableCell>{att.fileType || '-'}</TableCell>
-                    <TableCell>{att.fileSize ? `${(att.fileSize / 1024).toFixed(1)} KB` : '-'}</TableCell>
-                    <TableCell>{att.createdByName || 'System'}</TableCell>
-                    <TableCell align="right">
-                      <div className="flex justify-end gap-2">
-                        <a 
-                          href={att.fileUrl} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="btn btn-ghost text-blue-600 inline-flex items-center gap-1 text-sm p-1.5"
-                        >
-                          <Download size={16} /> Download
-                        </a>
-                        {!isReadOnly && (
-                          <button 
-                            onClick={() => handleDeleteAttachment(att.id)}
-                            className="btn btn-ghost text-red-600 p-1.5"
-                            title="Delete attachment"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </Card>
-      )}
+            {!isReadOnly && (
+              <div className="mb-8 p-6 border-2 border-dashed border-border rounded-lg bg-surface-secondary flex flex-col items-center justify-center text-center">
+                <Upload className="text-text-muted mb-3" />
+                <p className="text-body font-medium mb-1">Upload a new attachment</p>
+                <p className="text-body-small text-text-muted mb-4">Supported files: PDF, DOCX, XLSX, Images (Max 10MB)</p>
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-sm">
+                  <input
+                    type="file"
+                    onChange={e => setSelectedFile(e.target.files?.[0] || null)}
+                    className="block w-full text-sm text-text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
+                  />
+                  <Button 
+                    variant="primary" 
+                    onClick={handleUploadFile} 
+                    disabled={!selectedFile} 
+                    isLoading={uploading}
+                    icon={<Upload />}
+                  >
+                    Upload
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {attachments.length === 0 ? (
+              <div className="text-center py-8 text-text-muted">
+                No attachments uploaded yet.
+              </div>
+            ) : (
+              <div className="table-container">
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeader>File Name</TableHeader>
+                      <TableHeader>Type</TableHeader>
+                      <TableHeader>Size</TableHeader>
+                      <TableHeader>Uploaded By</TableHeader>
+                      <TableHeader align="right">Actions</TableHeader>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {attachments.map(att => (
+                      <TableRow key={att.id}>
+                        <TableCell className="font-medium text-text-primary">
+                          <div className="flex items-center gap-2">
+                            <FileText className="text-text-muted" />
+                            {att.fileName}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-text-secondary">{att.fileType || '-'}</TableCell>
+                        <TableCell className="text-text-secondary">{att.fileSize ? `${(att.fileSize / 1024).toFixed(1)} KB` : '-'}</TableCell>
+                        <TableCell className="text-text-secondary">{att.createdByName || 'System'}</TableCell>
+                        <TableCell align="right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              icon={<Download />}
+                              onClick={() => window.open(att.fileUrl, '_blank')}
+                            >
+                              Download
+                            </Button>
+                            {!isReadOnly && (
+                              <Button
+                                variant="outline"
+                                className="text-danger border-danger/30 hover:bg-danger-bg hover:text-danger hover:border-danger"
+                                icon={<Trash2 />}
+                                onClick={() => handleDeleteAttachment(att.id)}
+                                aria-label="Delete attachment"
+                              >
+                                Delete
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </Card>
+        )}
+      </div>
     </div>
   );
 };

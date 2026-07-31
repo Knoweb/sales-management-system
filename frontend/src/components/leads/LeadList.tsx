@@ -8,11 +8,11 @@ import { Search, Eye, Edit, ShieldAlert, ShieldCheck, ArrowRightCircle } from 'l
 import { Button } from '../Button';
 import { IconButton } from '../IconButton';
 import { PermissionGuard } from '../PermissionGuard';
-import { Card } from '../Card';
 import { Input, Select } from '../Forms';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../Table';
 import { StatusBadge } from '../StatusBadge';
 import { ErrorState, EmptyState, LoadingState } from '../FeedbackStates';
+import { FilterBar } from '../FilterBar';
 import LeadConversionModal from './../LeadConversionModal';
 
 export const LeadList: React.FC = () => {
@@ -76,60 +76,58 @@ export const LeadList: React.FC = () => {
 
   return (
     <div>
-      <Card className="mb-6">
-        <div className="flex flex-col md:flex-row gap-4 items-end">
-          <div className="flex-1 w-full">
-            <Input 
-              type="text" 
-              placeholder="Search leads..." 
-              value={searchTerm}
-              onChange={e => { setSearchTerm(e.target.value); setPage(0); }}
-              label="Search"
-            />
-          </div>
-          
-          <div className="w-full md:w-48">
-            <Select 
-              value={clientFilter} 
-              onChange={e => { setClientFilter(e.target.value); setPage(0); }}
-              label="Client"
-            >
-              <option value="all">All Clients</option>
-              {clients.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </Select>
-          </div>
-          
-          <div className="w-full md:w-48">
-            <Select 
-              value={statusFilter} 
-              onChange={e => { setStatusFilter(e.target.value); setPage(0); }}
-              label="Status"
-            >
-              <option value="all">All Status</option>
-              <option value="NEW">New</option>
-              <option value="CONTACTED">Contacted</option>
-              <option value="QUALIFIED">Qualified</option>
-              <option value="PROPOSAL_SENT">Proposal Sent</option>
-              <option value="CLOSED_WON">Closed Won</option>
-              <option value="CLOSED_LOST">Closed Lost</option>
-            </Select>
-          </div>
-          
-          <div className="w-full md:w-48">
-            <Select 
-              value={activeFilter} 
-              onChange={e => { setActiveFilter(e.target.value); setPage(0); }}
-              label="Active State"
-            >
-              <option value="all">All Active State</option>
-              <option value="active">Active Only</option>
-              <option value="inactive">Inactive Only</option>
-            </Select>
-          </div>
+      <FilterBar>
+        <div className="flex-1 min-w-[200px]">
+          <Input 
+            type="text" 
+            placeholder="Search leads..." 
+            value={searchTerm}
+            onChange={e => { setSearchTerm(e.target.value); setPage(0); }}
+            label="Search"
+          />
         </div>
-      </Card>
+        
+        <div className="w-full md:w-48">
+          <Select 
+            value={clientFilter} 
+            onChange={e => { setClientFilter(e.target.value); setPage(0); }}
+            label="Client"
+          >
+            <option value="all">All Clients</option>
+            {clients.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </Select>
+        </div>
+        
+        <div className="w-full md:w-48">
+          <Select 
+            value={statusFilter} 
+            onChange={e => { setStatusFilter(e.target.value); setPage(0); }}
+            label="Status"
+          >
+            <option value="all">All Status</option>
+            <option value="NEW">New</option>
+            <option value="CONTACTED">Contacted</option>
+            <option value="QUALIFIED">Qualified</option>
+            <option value="PROPOSAL_SENT">Proposal Sent</option>
+            <option value="CLOSED_WON">Closed Won</option>
+            <option value="CLOSED_LOST">Closed Lost</option>
+          </Select>
+        </div>
+        
+        <div className="w-full md:w-48">
+          <Select 
+            value={activeFilter} 
+            onChange={e => { setActiveFilter(e.target.value); setPage(0); }}
+            label="Active State"
+          >
+            <option value="all">All Active State</option>
+            <option value="active">Active Only</option>
+            <option value="inactive">Inactive Only</option>
+          </Select>
+        </div>
+      </FilterBar>
 
       {error ? (
         <ErrorState message={error} onRetry={loadLeads} />

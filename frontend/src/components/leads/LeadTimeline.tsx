@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { LeadApi } from '../../services/LeadApi';
 import type { LeadActivity, ActivityType } from '../../types/lead';
-import { Phone, Mail, Users, FileText, Settings, Plus } from 'lucide-react';
+import { Phone, Mail, Users, FileText, Settings, Plus, Activity } from 'lucide-react';
 import { Button } from '../Button';
+import { Card } from '../Card';
+import { FormField, Select, Input, Textarea } from '../Forms';
+import { LoadingState, ErrorState, EmptyState } from '../FeedbackStates';
 
 interface LeadTimelineProps {
   leadId: string;
@@ -69,52 +72,57 @@ export const LeadTimeline: React.FC<LeadTimelineProps> = ({ leadId }) => {
   };
 
   return (
-    <div className="card">
-      <div className="card-header flex-between">
-        <h3 className="card-title">Activity Timeline</h3>
+    <Card>
+      <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900 m-0">Activity Timeline</h3>
         <Button variant="primary" onClick={() => setShowForm(!showForm)}>
-          <Plus size={16} /> Add Activity
+          <Plus size={16} className="mr-2" /> Add Activity
         </Button>
       </div>
-      <div className="card-body">
+
+      <div>
         {showForm && (
-          <form onSubmit={handleSubmit} className="card" style={{ marginBottom: '2rem', padding: '1rem', backgroundColor: 'var(--bg-light)' }}>
-            <div className="form-grid">
-              <div className="form-group">
-                <label className="form-label">Type</label>
-                <select
-                  className="form-control"
+          <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-8">
+            <h4 className="text-md font-medium text-gray-900 mb-4 m-0">New Activity</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField label="Type" required>
+                <Select
+                  name="activityType"
                   value={newActivity.activityType}
                   onChange={e => setNewActivity(prev => ({ ...prev, activityType: e.target.value as ActivityType }))}
+                  required
                 >
                   <option value="CALL">Call</option>
                   <option value="EMAIL">Email</option>
                   <option value="MEETING">Meeting</option>
                   <option value="NOTE">Note</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Date & Time</label>
-                <input
+                </Select>
+              </FormField>
+              
+              <FormField label="Date & Time" required>
+                <Input
                   type="datetime-local"
-                  className="form-control"
+                  name="activityDate"
                   required
                   value={newActivity.activityDate}
                   onChange={e => setNewActivity(prev => ({ ...prev, activityDate: e.target.value }))}
                 />
+              </FormField>
+              
+              <div className="md:col-span-2">
+                <FormField label="Description" required>
+                  <Textarea
+                    name="description"
+                    rows={3}
+                    required
+                    value={newActivity.description}
+                    onChange={e => setNewActivity(prev => ({ ...prev, description: e.target.value }))}
+                  />
+                </FormField>
               </div>
-              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                <label className="form-label">Description</label>
-                <textarea
-                  className="form-control"
-                  rows={3}
-                  required
-                  value={newActivity.description}
-                  onChange={e => setNewActivity(prev => ({ ...prev, description: e.target.value }))}
-                />
-              </div>
-              <div className="form-actions" style={{ gridColumn: '1 / -1' }}>
-                <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>Cancel</Button>
+              
+              <div className="md:col-span-2 flex justify-end gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
                 <Button type="submit" variant="primary">Save Activity</Button>
               </div>
             </div>
@@ -122,43 +130,34 @@ export const LeadTimeline: React.FC<LeadTimelineProps> = ({ leadId }) => {
         )}
 
         {loading ? (
-          <p>Loading timeline...</p>
+          <LoadingState message="Loading timeline..." />
         ) : error ? (
-          <p className="error-message">{error}</p>
+          <ErrorState message={error} onRetry={loadActivities} />
         ) : activities.length === 0 ? (
-          <p>No activities logged yet.</p>
+          <EmptyState 
+            icon={<Activity size={48} />}
+            title="No activities"
+            message="No activities logged yet."
+          />
         ) : (
-          <div className="timeline" style={{ position: 'relative', paddingLeft: '2rem' }}>
-            <div style={{ position: 'absolute', left: '0.75rem', top: 0, bottom: 0, width: '2px', backgroundColor: 'var(--border)' }}></div>
+          <div className="relative pl-8 mt-2">
+            <div className="absolute left-3.5 top-0 bottom-0 w-0.5 bg-gray-200 rounded-full"></div>
             {activities.map(activity => (
-              <div key={activity.id} style={{ position: 'relative', marginBottom: '1.5rem' }}>
-                <div style={{
-                  position: 'absolute',
-                  left: '-2rem',
-                  top: '0',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  backgroundColor: activity.activityType === 'SYSTEM_EVENT' ? 'var(--bg-secondary)' : 'var(--primary-bg)',
-                  color: activity.activityType === 'SYSTEM_EVENT' ? 'var(--text-light)' : 'var(--primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 1,
-                  boxShadow: '0 0 0 4px var(--bg-main)'
-                }}>
+              <div key={activity.id} className="relative mb-6">
+                <div className={`absolute -left-8 top-0 w-8 h-8 rounded-full flex items-center justify-center z-10 ring-4 ring-white
+                  ${activity.activityType === 'SYSTEM_EVENT' ? 'bg-gray-100 text-gray-500' : 'bg-blue-100 text-blue-600'}`}>
                   {getActivityIcon(activity.activityType)}
                 </div>
-                <div className="card" style={{ padding: '1rem' }}>
-                  <div className="flex-between" style={{ marginBottom: '0.5rem' }}>
-                    <h4 style={{ margin: 0, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm ml-2">
+                  <div className="flex justify-between items-start sm:items-center mb-2 flex-col sm:flex-row gap-2 sm:gap-0">
+                    <h4 className="m-0 text-base font-medium text-gray-900 flex items-center gap-2">
                       {activity.activityType.replace('_', ' ')}
                     </h4>
-                    <span style={{ fontSize: '0.875rem', color: 'var(--text-light)' }}>
+                    <span className="text-sm text-gray-500 font-medium">
                       {new Date(activity.activityDate).toLocaleString()}
                     </span>
                   </div>
-                  <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+                  <p className="m-0 text-gray-700 whitespace-pre-wrap mt-2">
                     {activity.description}
                   </p>
                 </div>
@@ -167,6 +166,6 @@ export const LeadTimeline: React.FC<LeadTimelineProps> = ({ leadId }) => {
           </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 };

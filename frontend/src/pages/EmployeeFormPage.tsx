@@ -4,8 +4,14 @@ import { EmployeeApi } from '../services/EmployeeApi';
 import { DepartmentApi } from '../services/DepartmentApi';
 import { PageHeader } from '../components/PageHeader';
 import { Button } from '../components/Button';
+import { Card } from '../components/Card';
+import { FormField, Input, Select } from '../components/Forms';
+import { SectionHeader } from '../components/SectionHeader';
+import { Alert } from '../components/Alert';
 import type { CreateEmployeeRequest } from '../types/employee';
 import type { Department } from '../types/department';
+
+import { ContactRound } from 'lucide-react';
 
 export const EmployeeFormPage: React.FC = () => {
   const navigate = useNavigate();
@@ -68,154 +74,159 @@ export const EmployeeFormPage: React.FC = () => {
   };
 
   return (
-    <div className="page-container">
+    <div className="p-6 max-w-7xl mx-auto w-full">
       <PageHeader 
         title="Create Employee"
         description="Add a new employee record."
+        icon={<ContactRound size={24} />}
       />
 
-      <div className="card" style={{ maxWidth: '800px' }}>
-        <div className="card-body">
-          {error && <div className="error-message" style={{ color: 'var(--error)', marginBottom: '1rem', padding: '0.75rem', backgroundColor: 'var(--error-bg)', borderRadius: 'var(--radius-md)' }}>{error}</div>}
+      <div style={{ maxWidth: '800px' }}>
+        <Card>
+          {error && (
+            <Alert variant="error" style={{ marginBottom: '1.5rem' }}>
+              {error}
+            </Alert>
+          )}
           
           <form onSubmit={handleSubmit}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>Employee Number *</label>
-                <input
+            <SectionHeader title="Personal Information" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+              <FormField label="First Name" required id="firstName">
+                <Input
                   type="text"
-                  name="employeeNumber"
-                  value={formData.employeeNumber}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                  style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}
-                />
-              </div>
-              
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>Department *</label>
-                <select
-                  name="departmentId"
-                  value={formData.departmentId}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                  style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}
-                >
-                  <option value="">Select Department</option>
-                  {departments.map(d => (
-                    <option key={d.id} value={d.id}>{d.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>First Name *</label>
-                <input
-                  type="text"
+                  id="firstName"
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleChange}
                   required
                   disabled={loading}
-                  style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}
                 />
-              </div>
+              </FormField>
 
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>Last Name *</label>
-                <input
+              <FormField label="Last Name" required id="lastName">
+                <Input
                   type="text"
+                  id="lastName"
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleChange}
                   required
                   disabled={loading}
-                  style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}
                 />
-              </div>
+              </FormField>
+            </div>
 
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>Work Email</label>
-                <input
-                  type="email"
-                  name="workEmail"
-                  value={formData.workEmail}
-                  onChange={handleChange}
-                  disabled={loading}
-                  style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>Contact Number</label>
-                <input
+            <SectionHeader title="Employment Information" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+              <FormField label="Employee Number" required id="employeeNumber">
+                <Input
                   type="text"
-                  name="contactNumber"
-                  value={formData.contactNumber}
+                  id="employeeNumber"
+                  name="employeeNumber"
+                  value={formData.employeeNumber}
                   onChange={handleChange}
+                  required
                   disabled={loading}
-                  style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}
                 />
-              </div>
+              </FormField>
 
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>Job Title *</label>
-                <input
+              <FormField label="Department" required id="departmentId">
+                <Select
+                  id="departmentId"
+                  name="departmentId"
+                  value={formData.departmentId}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                >
+                  <option value="">Select Department</option>
+                  {departments.map(d => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
+                  ))}
+                </Select>
+              </FormField>
+
+              <FormField label="Job Title" required id="jobTitle">
+                <Input
                   type="text"
+                  id="jobTitle"
                   name="jobTitle"
                   value={formData.jobTitle}
                   onChange={handleChange}
                   required
                   disabled={loading}
-                  style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}
                 />
-              </div>
+              </FormField>
 
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>Employment Type *</label>
-                <select
+              <FormField label="Employment Type" required id="employmentType">
+                <Select
+                  id="employmentType"
                   name="employmentType"
                   value={formData.employmentType}
                   onChange={handleChange}
                   required
                   disabled={loading}
-                  style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}
                 >
                   <option value="FULL_TIME">Full Time</option>
                   <option value="PART_TIME">Part Time</option>
                   <option value="CONTRACT">Contract</option>
                   <option value="INTERN">Intern</option>
-                </select>
-              </div>
+                </Select>
+              </FormField>
 
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>Hire Date</label>
-                <input
+              <FormField label="Hire Date" id="hireDate">
+                <Input
                   type="date"
+                  id="hireDate"
                   name="hireDate"
                   value={formData.hireDate}
                   onChange={handleChange}
                   disabled={loading}
-                  style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}
                 />
-              </div>
+              </FormField>
+            </div>
 
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500, fontSize: '0.875rem' }}>Weekly Capacity (Hours)</label>
-                <input
+            <SectionHeader title="Contact Information" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+              <FormField label="Work Email" id="workEmail">
+                <Input
+                  type="email"
+                  id="workEmail"
+                  name="workEmail"
+                  value={formData.workEmail}
+                  onChange={handleChange}
+                  disabled={loading}
+                />
+              </FormField>
+
+              <FormField label="Contact Number" id="contactNumber">
+                <Input
+                  type="text"
+                  id="contactNumber"
+                  name="contactNumber"
+                  value={formData.contactNumber}
+                  onChange={handleChange}
+                  disabled={loading}
+                />
+              </FormField>
+            </div>
+
+            <SectionHeader title="Capacity and Notes" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+              <FormField label="Weekly Capacity (Hours)" id="weeklyCapacityHours">
+                <Input
                   type="number"
+                  id="weeklyCapacityHours"
                   name="weeklyCapacityHours"
                   value={formData.weeklyCapacityHours}
                   onChange={handleChange}
                   disabled={loading}
-                  style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="flex-between" style={{ justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
               <Button type="button" variant="ghost" onClick={() => navigate('/employees')} disabled={loading}>
                 Cancel
               </Button>
@@ -224,7 +235,7 @@ export const EmployeeFormPage: React.FC = () => {
               </Button>
             </div>
           </form>
-        </div>
+        </Card>
       </div>
     </div>
   );

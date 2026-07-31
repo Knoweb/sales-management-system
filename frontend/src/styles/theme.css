@@ -1,0 +1,246 @@
+/* theme.css - Design Tokens & Theme Architecture */
+
+/* ----------------------------------
+   LIGHT THEME (Royal Blue) & BASE
+----------------------------------- */
+:root, [data-theme="light"] {
+  /* Colors */
+  --app-background: #EEF3FA;
+  --color-background: #F4F7FC;
+  --color-surface: #FFFFFF;
+  --color-surface-secondary: #F7F9FD;
+  --color-surface-elevated: #FFFFFF;
+  --color-surface-accent: #EFF5FF;
+  --color-surface-accent-strong: #E3EDFF;
+
+  --color-primary: #356DF3;
+  --color-primary-hover: #2458D8;
+  --color-primary-active: #1D4ED8;
+  --color-primary-soft: #E8F0FF;
+  --color-accent: #625BF6;
+
+  --color-border: #E2E8F2;
+  --color-border-strong: #C9D5E6;
+
+  --color-text-primary: #101828;
+  --color-text-secondary: #52637A;
+  --color-text-muted: #7B8BA1;
+  --color-text-inverse: #FFFFFF;
+
+  --color-success: #10B981;
+  --color-success-bg: #D1FAE5;
+  --color-warning: #F59E0B;
+  --color-warning-bg: #FEF3C7;
+  --color-danger: #EF4444;
+  --color-danger-bg: #FEE2E2;
+  --color-info: #0EA5E9;
+  --color-info-bg: #E0F2FE;
+
+  --sidebar-start: #244FCF;
+  --sidebar-mid: #2D5FE8;
+  --sidebar-end: #2A56D8;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+  
+  --focus-ring: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-primary-soft);
+  --focus-ring-danger: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-danger-bg);
+
+  /* Typography */
+  --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-md: 1rem;       /* 16px */
+  --font-size-lg: 1.125rem;   /* 18px */
+  --font-size-xl: 1.25rem;    /* 20px */
+  --font-size-2xl: 1.5rem;    /* 24px */
+  --font-size-3xl: 1.875rem;  /* 30px */
+
+  /* Sizing / Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Control Heights */
+  --control-height-sm: 36px;
+  --control-height-md: 42px;
+  --control-height-lg: 48px;
+
+  /* Layout */
+  --page-max-width: 1280px;
+
+  /* Z-Index Layers */
+  --z-index-base: 0;
+  --z-index-dropdown: 100;
+  --z-index-sticky: 200;
+  --z-index-modal-overlay: 1000;
+  --z-index-modal: 1010;
+  --z-index-toast: 2000;
+
+  /* Transitions */
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 250ms ease-in-out;
+}
+
+/* ----------------------------------
+   DARK THEME (Navy Corporate)
+----------------------------------- */
+[data-theme="dark"] {
+  /* Colors */
+  --app-background: #06111F;
+  --color-background: #08172A;
+  --color-surface: #0D2038;
+  --color-surface-secondary: #112943;
+  --color-surface-elevated: #16324F;
+  --color-surface-accent: #102D52;
+  --color-surface-accent-strong: #1A3E6B;
+
+  --color-primary: #4A7DFF;
+  --color-primary-hover: #6A96FF;
+  --color-primary-active: #8CB0FF;
+  --color-primary-soft: rgba(74, 125, 255, 0.16);
+  --color-accent: #36B8FF;
+
+  --color-border: #1D3B5E;
+  --color-border-strong: #2D5078;
+
+  --color-text-primary: #EFF6FF;
+  --color-text-secondary: #B6C8DE;
+  --color-text-muted: #8398B4;
+  --color-text-inverse: #0F172A;
+
+  --color-success: #10B981;
+  --color-success-bg: rgba(16, 185, 129, 0.15);
+  --color-warning: #F59E0B;
+  --color-warning-bg: rgba(245, 158, 11, 0.15);
+  --color-danger: #F87171;
+  --color-danger-bg: rgba(248, 113, 113, 0.15);
+  --color-info: #38BDF8;
+  --color-info-bg: rgba(56, 189, 248, 0.15);
+
+  --sidebar-start: #08172A;
+  --sidebar-mid: #0B1D32;
+  --sidebar-end: #0D2038;
+
+  /* Shadows for Dark Mode */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+}
+
+/* ----------------------------------
+   TYPOGRAPHY CLASSES
+----------------------------------- */
+body {
+  font-family: var(--font-family);
+  color: var(--color-text-primary);
+  background-color: var(--app-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.text-page-title {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.text-page-description {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.text-section-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.text-card-title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.text-body {
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+  line-height: 1.5;
+}
+
+.text-body-small {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.text-label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.text-table-heading {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.text-caption {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+/* ----------------------------------
+   UTILITIES & MICRO-INTERACTIONS
+----------------------------------- */
+::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+::-webkit-input-placeholder {
+  color: var(--color-text-muted);
+}
+
+::-moz-placeholder {
+  color: var(--color-text-muted);
+}
+
+:-ms-input-placeholder {
+  color: var(--color-text-muted);
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: 2px;
+}
+
+/* Custom Scrollbar for a premium feel */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-background); 
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong); 
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted); 
+}

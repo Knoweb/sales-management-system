@@ -4,6 +4,7 @@ export interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEl
   icon?: React.ReactNode;
   'aria-label'?: string;
   title?: string;
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline';
 }
 
 export const IconButton: React.FC<IconButtonProps> = ({

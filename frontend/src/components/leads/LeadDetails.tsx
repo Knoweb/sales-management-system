@@ -10,6 +10,10 @@ import type { FollowUp } from '../../types/lead';
 import LeadConversionModal from '../LeadConversionModal';
 import { useNavigate } from 'react-router-dom';
 import { PermissionGuard } from '../PermissionGuard';
+import { Card } from '../Card';
+import { Button } from '../Button';
+import { StatusBadge } from '../StatusBadge';
+import { LoadingState, ErrorState } from '../FeedbackStates';
 
 interface LeadDetailsProps {
   leadId: string;
@@ -47,56 +51,40 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
     void loadLead();
   }, [leadId]);
 
-  if (loading) return <div className="card"><div className="card-body">Loading...</div></div>;
-  if (error || !lead) return <div className="error-message">{error || 'Lead not found'}</div>;
+  if (loading) return <LoadingState message="Loading lead details..." />;
+  if (error || !lead) return <ErrorState message={error || 'Lead not found'} />;
 
   return (
-    <div className="lead-details-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <div className="card">
-        <div className="card-header flex-between">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div className="avatar-circle" style={{ width: '48px', height: '48px', backgroundColor: 'var(--primary-light)', color: 'var(--primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 'bold' }}>
+    <div className="space-y-6">
+      <Card>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xl font-bold">
               {lead.title.charAt(0).toUpperCase()}
             </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: '1.5rem', color: 'var(--text-main)' }}>{lead.title}</h2>
-              <p style={{ margin: 0, color: 'var(--text-light)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <h2 className="text-2xl font-bold text-gray-900 m-0">{lead.title}</h2>
+              <p className="text-gray-500 m-0 flex items-center gap-1 mt-1">
                 <Building size={14} /> {lead.clientName}
               </p>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className="flex items-center gap-3">
             {lead.status === 'QUALIFIED' && lead.active && (
               <PermissionGuard permission="OPPORTUNITY_CREATE">
-                <button
+                <Button
+                  variant="primary"
                   onClick={() => setIsConversionModalOpen(true)}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    backgroundColor: '#10B981',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '0.375rem',
-                    cursor: 'pointer',
-                    fontWeight: 500
-                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white border-none"
                 >
                   Convert to Opportunity
-                </button>
+                </Button>
               </PermissionGuard>
             )}
-            <span style={{ 
-              padding: '0.25rem 0.75rem', 
-              borderRadius: '1rem', 
-              fontSize: '0.875rem',
-              backgroundColor: 'var(--primary-bg)',
-              color: 'var(--primary)',
-              fontWeight: 500
-            }}>
-              {lead.status.replace('_', ' ')}
-            </span>
+            <StatusBadge status={lead.status} />
           </div>
         </div>
-      </div>
+      </Card>
 
       <LeadConversionModal
         isOpen={isConversionModalOpen}
@@ -122,44 +110,64 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
         onChange={(id) => setActiveTab(id as typeof activeTab)}
       />
 
-      <div className="tab-content">
+      <div className="mt-6">
         {activeTab === 'info' && (
-          <div className="card">
-            <div className="card-body" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
-              <div>
-                <h3 style={{ fontSize: '1rem', marginBottom: '1rem', color: 'var(--text-main)' }}>Lead Details</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <div style={{ display: 'flex', gap: '0.5rem', color: 'var(--text-light)' }}>
-                    <Tag size={16} /> <span><strong>Source:</strong> {lead.inquirySource.replace('_', ' ')}</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Lead Details</h3>
+              <div className="space-y-3">
+                <div className="flex items-start gap-2 text-gray-600">
+                  <Tag size={18} className="mt-0.5 text-gray-400" /> 
+                  <div>
+                    <span className="font-medium text-gray-900 block text-sm">Source</span>
+                    <span>{lead.inquirySource.replace('_', ' ')}</span>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', color: 'var(--text-light)' }}>
-                    <Contact size={16} /> <span><strong>Contact:</strong> {lead.contactName || 'N/A'}</span>
+                </div>
+                <div className="flex items-start gap-2 text-gray-600">
+                  <Contact size={18} className="mt-0.5 text-gray-400" /> 
+                  <div>
+                    <span className="font-medium text-gray-900 block text-sm">Contact</span>
+                    <span>{lead.contactName || 'N/A'}</span>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', color: 'var(--text-light)' }}>
-                    <Briefcase size={16} /> <span><strong>Product:</strong> {lead.interestedProduct || 'N/A'}</span>
+                </div>
+                <div className="flex items-start gap-2 text-gray-600">
+                  <Briefcase size={18} className="mt-0.5 text-gray-400" /> 
+                  <div>
+                    <span className="font-medium text-gray-900 block text-sm">Product</span>
+                    <span>{lead.interestedProduct || 'N/A'}</span>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', color: 'var(--text-light)' }}>
-                    <User size={16} /> <span><strong>Assigned To:</strong> {lead.assignedToName || 'Unassigned'}</span>
+                </div>
+                <div className="flex items-start gap-2 text-gray-600">
+                  <User size={18} className="mt-0.5 text-gray-400" /> 
+                  <div>
+                    <span className="font-medium text-gray-900 block text-sm">Assigned To</span>
+                    <span>{lead.assignedToName || 'Unassigned'}</span>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', color: 'var(--text-light)' }}>
-                    <Calendar size={16} /> <span><strong>Next Follow-up:</strong> {nextFollowUp ? new Date(nextFollowUp.followUpDate).toLocaleString() : 'None Scheduled'}</span>
+                </div>
+                <div className="flex items-start gap-2 text-gray-600">
+                  <Calendar size={18} className="mt-0.5 text-gray-400" /> 
+                  <div>
+                    <span className="font-medium text-gray-900 block text-sm">Next Follow-up</span>
+                    <span>{nextFollowUp ? new Date(nextFollowUp.followUpDate).toLocaleString() : 'None Scheduled'}</span>
                   </div>
                 </div>
               </div>
-              
-              <div style={{ gridColumn: '1 / -1' }}>
-                <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem', color: 'var(--text-main)' }}>Initial Request</h3>
-                <p style={{ color: 'var(--text-light)', backgroundColor: 'var(--bg-light)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
+            </Card>
+            
+            <div className="space-y-6">
+              <Card>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Initial Request</h3>
+                <p className="text-gray-700 whitespace-pre-line bg-gray-50 p-4 rounded-md">
                   {lead.initialRequest || 'No initial request details provided.'}
                 </p>
-              </div>
+              </Card>
 
-              <div style={{ gridColumn: '1 / -1' }}>
-                <h3 style={{ fontSize: '1rem', marginBottom: '0.5rem', color: 'var(--text-main)' }}>Notes</h3>
-                <p style={{ color: 'var(--text-light)', backgroundColor: 'var(--bg-light)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
+              <Card>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Notes</h3>
+                <p className="text-gray-700 whitespace-pre-line bg-gray-50 p-4 rounded-md">
                   {lead.notes || 'No additional notes.'}
                 </p>
-              </div>
+              </Card>
             </div>
           </div>
         )}

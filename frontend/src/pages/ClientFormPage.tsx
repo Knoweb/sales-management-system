@@ -3,7 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { PageHeader } from '../components/PageHeader';
 import { ClientForm } from '../components/clients/ClientForm';
 import { ClientApi } from '../services/ClientApi';
+import { Card } from '../components/Card';
 import type { Client } from '../types/client';
+
+import { Handshake } from 'lucide-react';
 
 export const ClientFormPage: React.FC = () => {
   const navigate = useNavigate();
@@ -32,29 +35,28 @@ export const ClientFormPage: React.FC = () => {
   }, [id, isEditMode]);
 
   return (
-    <div className="page-container">
+    <div className="p-6 max-w-4xl mx-auto w-full">
       <PageHeader 
         title={isEditMode ? 'Edit Client' : 'Create Client'}
         description={isEditMode ? 'Update existing client information.' : 'Add a new client to the system.'}
+        icon={<Handshake size={24} />}
       />
 
-      <div className="card" style={{ maxWidth: '800px' }}>
-        <div className="card-body">
-          {error ? (
-            <div className="error-message" style={{ color: 'var(--error)' }}>
-              {error}
-            </div>
-          ) : loading ? (
-            <p>Loading client details...</p>
-          ) : (
-            <ClientForm 
-              initialData={client}
-              onSuccess={(savedClient) => navigate(`/clients/${savedClient.id}`)}
-              onCancel={() => navigate('/clients')}
-            />
-          )}
-        </div>
-      </div>
+      <Card>
+        {error ? (
+          <div className="text-red-600 mb-4 bg-red-50 p-4 rounded-md">
+            {error}
+          </div>
+        ) : loading ? (
+          <div className="p-4 text-gray-500">Loading client details...</div>
+        ) : (
+          <ClientForm 
+            initialData={client}
+            onSuccess={(savedClient) => navigate(`/clients/${savedClient.id}`)}
+            onCancel={() => navigate('/clients')}
+          />
+        )}
+      </Card>
     </div>
   );
 };

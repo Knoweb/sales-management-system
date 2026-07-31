@@ -1,32 +1,54 @@
-import React, { useState, useEffect } from 'react';
-import { Bell } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Bell, CheckCheck } from 'lucide-react';
 import type { NotificationDTO } from '../api/notificationApi';
 import { getMyNotifications, markNotificationAsRead } from '../api/notificationApi';
 import { Link } from 'react-router-dom';
 import { IconButton } from './IconButton';
+import { Button } from './Button';
+import { EmptyState, LoadingState } from './FeedbackStates';
 
 const NotificationsDropdown: React.FC = () => {
   const [notifications, setNotifications] = useState<NotificationDTO[]>([]);
+  const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const loadNotifications = async (showLoading = false) => {
+    try {
+      if (showLoading) setLoading(true);
+      const data = await getMyNotifications();
+      setNotifications(data);
+    } catch (err) {
+      console.error('Failed to load notifications', err);
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadNotifications = async () => {
-      try {
-        const data = await getMyNotifications();
-        setNotifications(data);
-      } catch (err) {
-        console.error('Failed to load notifications', err);
-      }
-    };
-
-    void loadNotifications();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadNotifications(true);
     const interval = setInterval(() => void loadNotifications(), 60000);
     return () => clearInterval(interval);
   }, []);
 
-  const handleMarkAsRead = async (id: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleMarkAsRead = async (id: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     try {
       await markNotificationAsRead(id);
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
@@ -35,70 +57,117 @@ const NotificationsDropdown: React.FC = () => {
     }
   };
 
+  const handleMarkAllAsRead = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
+    if (unreadIds.length === 0) return;
+
+    try {
+      await Promise.all(unreadIds.map(id => markNotificationAsRead(id)));
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (err) {
+      console.error('Failed to mark all as read', err);
+    }
+  };
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <div className="relative inline-block text-left">
-      <div>
-        <div className="relative">
-          <IconButton
-            icon={<Bell size={20} />}
-            aria-label="View notifications"
-            onClick={() => setIsOpen(!isOpen)}
-          />
-          {unreadCount > 0 && (
-            <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full">
-              {unreadCount}
-            </span>
-          )}
-        </div>
+    <div ref={dropdownRef} className="relative inline-block text-left">
+      <div className="relative">
+        <IconButton
+          icon={<Bell size={20} />}
+          aria-label="View notifications"
+          onClick={() => setIsOpen(!isOpen)}
+          variant="ghost"
+          className={unreadCount > 0 ? "text-primary" : "text-gray-500"}
+        />
+        {unreadCount > 0 && (
+          <span className="absolute top-0 right-0 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white transform translate-x-1/4 -translate-y-1/4 bg-danger rounded-full">
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
       </div>
 
       {isOpen && (
-        <div className="origin-top-right absolute right-0 mt-2 w-80 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
-          <div className="py-1 max-h-96 overflow-y-auto">
-            <div className="px-4 py-2 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-              <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
-            </div>
-            
-            {notifications.length === 0 ? (
-              <div className="px-4 py-3 text-sm text-gray-500 text-center">No notifications</div>
+        <div className="absolute right-0 mt-2 w-80 md:w-96 bg-surface border border-border rounded-lg shadow-lg z-dropdown overflow-hidden flex flex-col max-h-[85vh]">
+          <div className="p-4 border-b border-border bg-surface-secondary flex justify-between items-center sticky top-0 z-10">
+            <h3 className="text-label font-semibold m-0">Notifications</h3>
+            {unreadCount > 0 && (
+              <Button 
+                variant="ghost" 
+                onClick={handleMarkAllAsRead} 
+                className="text-xs"
+                style={{ padding: '4px 8px', height: 'auto' }}
+              >
+                <CheckCheck size={14} className="mr-1" /> Mark all as read
+              </Button>
+            )}
+          </div>
+          
+          <div className="overflow-y-auto flex-1">
+            {loading && notifications.length === 0 ? (
+              <div className="p-8">
+                <LoadingState message="Loading notifications..." />
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="p-8">
+                <EmptyState 
+                  icon={<Bell size={32} />} 
+                  title="All caught up!" 
+                  message="You don't have any notifications right now."
+                />
+              </div>
             ) : (
-              notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`block px-4 py-3 border-b border-gray-100 hover:bg-gray-50 ${!notification.read ? 'bg-blue-50' : ''}`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <p className={`text-sm font-medium ${!notification.read ? 'text-gray-900' : 'text-gray-600'}`}>
-                        {notification.title}
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">{notification.message}</p>
-                      <p className="text-xs text-gray-400 mt-1">{new Date(notification.createdAt).toLocaleString()}</p>
+              <div className="divide-y divide-border">
+                {notifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    className={`p-4 transition-colors duration-200 ${!notification.read ? 'bg-info-bg' : 'bg-transparent hover:bg-surface-secondary'}`}
+                  >
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-body-small mb-1 truncate ${!notification.read ? 'font-semibold text-text-primary' : 'font-medium text-text-secondary'}`}>
+                          {notification.title}
+                        </p>
+                        <p className={`text-body-small line-clamp-2 ${!notification.read ? 'text-text-primary' : 'text-text-secondary'}`}>
+                          {notification.message}
+                        </p>
+                        <p className="text-xs text-text-muted mt-2">
+                          {new Date(notification.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                      
+                      {!notification.read && (
+                        <button
+                          onClick={(e) => handleMarkAsRead(notification.id, e)}
+                          className="flex-shrink-0 text-primary hover:text-primary-dark transition-colors p-1"
+                          title="Mark as read"
+                          aria-label="Mark as read"
+                        >
+                          <div className="h-2.5 w-2.5 bg-primary rounded-full"></div>
+                        </button>
+                      )}
                     </div>
-                    {!notification.read && (
-                      <button
-                        onClick={(e) => handleMarkAsRead(notification.id, e)}
-                        className="ml-2 flex-shrink-0 text-xs text-blue-600 hover:text-blue-800"
-                        title="Mark as read"
-                        aria-label="Mark as read"
+                    
+                    {notification.entityType === 'PROJECT_BRIEF' && notification.entityId && (
+                      <Link
+                        to={`/project-briefs/${notification.entityId}`}
+                        onClick={() => {
+                          if (!notification.read) {
+                            handleMarkAsRead(notification.id).catch(console.error);
+                          }
+                          setIsOpen(false);
+                        }}
+                        className="inline-flex items-center text-xs font-medium text-primary hover:text-primary-dark hover:underline mt-3"
                       >
-                        <div className="h-2 w-2 bg-blue-600 rounded-full"></div>
-                      </button>
+                        View Project Brief &rarr;
+                      </Link>
                     )}
                   </div>
-                  {notification.entityType === 'PROJECT_BRIEF' && notification.entityId && (
-                    <Link
-                      to={`/project-briefs/${notification.entityId}`}
-                      onClick={() => setIsOpen(false)}
-                      className="mt-2 text-xs font-medium text-blue-600 hover:text-blue-500 block"
-                    >
-                      View Project Brief &rarr;
-                    </Link>
-                  )}
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </div>
         </div>

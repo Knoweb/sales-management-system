@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
-import { ErrorState } from './FeedbackStates';
 import { Button } from './Button';
-import { Input } from './Forms';
+import { FormField, Input, Textarea, Checkbox } from './Forms';
+import { Modal } from './Modal';
+import { Alert } from './Alert';
 
 interface EmployeeQualificationFormProps {
   onClose: () => void;
@@ -59,96 +59,123 @@ export const EmployeeQualificationForm: React.FC<EmployeeQualificationFormProps>
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-gray-900">{isEdit ? 'Edit Qualification' : 'Add Qualification'}</h2>
-          <button className="icon-btn" onClick={onClose} aria-label="Close"><X size={20} /></button>
-        </div>
-        
-        {error && <ErrorState message={error} />}
-        
-        <form onSubmit={handleSubmit}>
-          <Input 
-            label="Qualification Name *"
-            value={qualificationName}
-            onChange={(e) => setQualificationName(e.target.value)}
-            required
-          />
-
-          <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+    <Modal 
+      isOpen={true} 
+      onClose={() => !loading && onClose()} 
+      title={isEdit ? 'Edit Qualification' : 'Add Qualification'}
+    >
+      {error && (
+        <Alert variant="error" style={{ marginBottom: '1.5rem' }}>
+          {error}
+        </Alert>
+      )}
+      
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: '1.5rem' }}>
+          <FormField label="Qualification Name" required id="qualificationName">
             <Input 
-              label="Institution"
+              id="qualificationName"
+              value={qualificationName}
+              onChange={(e) => setQualificationName(e.target.value)}
+              required
+              disabled={loading}
+            />
+          </FormField>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+          <FormField label="Institution" id="institution">
+            <Input 
+              id="institution"
               value={institution}
               onChange={(e) => setInstitution(e.target.value)}
+              disabled={loading}
             />
-            
+          </FormField>
+          
+          <FormField label="Field of Study" id="fieldOfStudy">
             <Input 
-              label="Field of Study"
+              id="fieldOfStudy"
               value={fieldOfStudy}
               onChange={(e) => setFieldOfStudy(e.target.value)}
+              disabled={loading}
             />
-          </div>
+          </FormField>
+        </div>
 
-          <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+          <FormField label="Level (e.g. BSc, MSc)" id="qualificationLevel">
             <Input 
-              label="Level (e.g. BSc, MSc)"
+              id="qualificationLevel"
               value={qualificationLevel}
               onChange={(e) => setQualificationLevel(e.target.value)}
+              disabled={loading}
             />
-            
+          </FormField>
+          
+          <FormField label="Credential Number" id="credentialNumber">
             <Input 
-              label="Credential Number"
+              id="credentialNumber"
               value={credentialNumber}
               onChange={(e) => setCredentialNumber(e.target.value)}
+              disabled={loading}
             />
-          </div>
+          </FormField>
+        </div>
 
-          <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+          <FormField label="Issue Date" id="issueDate">
             <Input 
-              label="Issue Date"
+              id="issueDate"
               type="date"
               value={issueDate}
               onChange={(e) => setIssueDate(e.target.value)}
+              disabled={loading}
             />
-            
+          </FormField>
+          
+          <FormField label="Expiry Date" id="expiryDate">
             <Input 
-              label="Expiry Date"
+              id="expiryDate"
               type="date"
               value={expiryDate}
               onChange={(e) => setExpiryDate(e.target.value)}
+              disabled={loading}
             />
-          </div>
-          
-          <div className="form-group">
-            <label className="flex items-center gap-2" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <input 
-                type="checkbox" 
-                checked={verified}
-                onChange={(e) => setVerified(e.target.checked)}
-              />
-              <span className="form-label" style={{ marginBottom: 0 }}>Verified</span>
-            </label>
-          </div>
-          
-          <div className="form-group">
-            <label className="form-label">Notes</label>
-            <textarea 
-              className="form-textarea"
+          </FormField>
+        </div>
+        
+        <div style={{ marginBottom: '1.5rem' }}>
+          <Checkbox 
+            id="verified"
+            label="Verified"
+            checked={verified}
+            onChange={(e) => setVerified(e.target.checked)}
+            disabled={loading}
+          />
+        </div>
+        
+        <div style={{ marginBottom: '2rem' }}>
+          <FormField label="Notes" id="notes">
+            <Textarea 
+              id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
+              disabled={loading}
             />
-          </div>
-          
-          <div className="flex justify-end gap-3 mt-6">
-            <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>Cancel</Button>
-            <Button type="submit" variant="primary" disabled={loading}>
-              {loading ? 'Saving...' : 'Save Qualification'}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+          </FormField>
+        </div>
+        
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button type="submit" variant="primary" isLoading={loading}>
+            {isEdit ? 'Save Changes' : 'Add Qualification'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 };

@@ -4,9 +4,13 @@ import { ClientApi } from '../services/ClientApi';
 import type { Client } from '../types/client';
 import { PageHeader } from '../components/PageHeader';
 import { Button } from '../components/Button';
-import { Briefcase, Building, Mail, Phone, MapPin, Edit, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Handshake, Briefcase, Building, Mail, Phone, MapPin, Edit, ShieldAlert, ShieldCheck, Users, Activity, FileText, Target } from 'lucide-react';
 import { PermissionGuard } from '../components/PermissionGuard';
 import { ContactList } from '../components/clients/ContactList';
+import { Tabs, type TabItem } from '../components/Tabs';
+import { Card } from '../components/Card';
+import { StatusBadge } from '../components/StatusBadge';
+import { EmptyState } from '../components/FeedbackStates';
 
 export const ClientDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,6 +18,7 @@ export const ClientDetailsPage: React.FC = () => {
   const [client, setClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('overview');
 
   const loadClientDetails = useCallback(async () => {
     if (!id) return;
@@ -60,106 +65,154 @@ export const ClientDetailsPage: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="page-container"><p>Loading client details...</p></div>;
-  if (error || !client) return <div className="page-container"><div className="error-message">{error || 'Client not found'}</div></div>;
+  if (loading) return <div className="p-6 max-w-7xl mx-auto"><p>Loading client details...</p></div>;
+  if (error || !client) return <div className="p-6 max-w-7xl mx-auto"><div className="text-red-600">{error || 'Client not found'}</div></div>;
+
+  const tabs: TabItem[] = [
+    { id: 'overview', label: 'Overview', icon: <Briefcase size={16} /> },
+    { id: 'contacts', label: 'Contacts', icon: <Users size={16} /> },
+    { id: 'leads', label: 'Leads', icon: <Target size={16} /> },
+    { id: 'attachments', label: 'Attachments', icon: <FileText size={16} /> },
+    { id: 'activity', label: 'Activity', icon: <Activity size={16} /> }
+  ];
 
   return (
-    <div className="page-container">
+    <div className="p-6 max-w-7xl mx-auto w-full">
       <PageHeader 
         title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Briefcase size={24} className="inline-icon" />
+          <div className="flex items-center gap-2">
             {client.name}
-            <span style={{ 
-              padding: '0.25rem 0.5rem', 
-              borderRadius: '1rem', 
-              fontSize: '0.75rem',
-              backgroundColor: client.active ? 'var(--success-bg)' : 'var(--error-bg)',
-              color: client.active ? 'var(--success)' : 'var(--error)',
-              marginLeft: '1rem',
-              verticalAlign: 'middle'
-            }}>
-              {client.active ? 'Active' : 'Inactive'}
-            </span>
+            <div className="ml-4">
+              <StatusBadge 
+                status={client.active ? 'Active' : 'Inactive'} 
+                variant={client.active ? 'success' : 'error'} 
+              />
+            </div>
           </div>
         }
+        icon={<Handshake size={24} />}
         description={`Client Type: ${client.clientType.replace('_', ' ')}`}
       />
-      {/* Workaround to inject guarded buttons into header area since PageHeader only takes one simplistic action button */}
-      <div style={{ display: 'flex', gap: '1rem', marginTop: '-3rem', justifyContent: 'flex-end', marginBottom: '2rem', position: 'relative', zIndex: 10 }}>
+      
+      {/* Action Buttons */}
+      <div className="flex gap-4 justify-end mb-6 -mt-16 relative z-10">
         <PermissionGuard permission="CLIENT_UPDATE">
           <Button variant="secondary" onClick={() => navigate(`/clients/${client.id}/edit`)}>
-            <Edit size={16} style={{ marginRight: '0.5rem' }} /> Edit Details
+            <Edit size={16} className="mr-2" /> Edit Details
           </Button>
         </PermissionGuard>
         
         {client.active ? (
           <PermissionGuard permission="CLIENT_DELETE">
-            <Button variant="secondary" onClick={handleActivateDeactivate} style={{ color: 'var(--error)', borderColor: 'var(--error)' }}>
-              <ShieldAlert size={16} style={{ marginRight: '0.5rem' }} /> Deactivate
+            <Button variant="danger" onClick={handleActivateDeactivate}>
+              <ShieldAlert size={16} className="mr-2" /> Deactivate
             </Button>
           </PermissionGuard>
         ) : (
           <PermissionGuard permission="CLIENT_UPDATE">
-            <Button variant="secondary" onClick={handleActivateDeactivate} style={{ color: 'var(--success)', borderColor: 'var(--success)' }}>
-              <ShieldCheck size={16} style={{ marginRight: '0.5rem' }} /> Activate
+            <Button variant="primary" onClick={handleActivateDeactivate} style={{ backgroundColor: 'var(--color-success)', borderColor: 'var(--color-success)' }}>
+              <ShieldCheck size={16} className="mr-2" /> Activate
             </Button>
           </PermissionGuard>
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
-        <div className="card">
-          <div className="card-header">
-            <h2 className="card-title">Client Information</h2>
+      <div className="mb-6">
+        <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+      </div>
+
+      <div className="mt-6">
+        {activeTab === 'overview' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Company Information</h2>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Registration Number</p>
+                  <div className="flex items-center gap-2 font-medium text-gray-900">
+                    <Building size={16} className="text-gray-400" />
+                    {client.registrationNumber || '-'}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Industry</p>
+                  <div className="font-medium text-gray-900">
+                    {client.industry || '-'}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Status</p>
+                  <div className="font-medium text-gray-900">
+                    {client.active ? 'Active' : 'Inactive'}
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            <Card>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Contact Details</h2>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Email</p>
+                  <div className="flex items-center gap-2 font-medium text-gray-900">
+                    <Mail size={16} className="text-gray-400" />
+                    {client.email || '-'}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Phone</p>
+                  <div className="flex items-center gap-2 font-medium text-gray-900">
+                    <Phone size={16} className="text-gray-400" />
+                    {client.phone || '-'}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Address</p>
+                  <div className="flex items-start gap-2 font-medium text-gray-900">
+                    <MapPin size={16} className="text-gray-400 mt-1" />
+                    <span className="whitespace-pre-line">{client.address || '-'}</span>
+                  </div>
+                </div>
+              </div>
+            </Card>
           </div>
-          <div className="card-body" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
-            <div>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginBottom: '0.25rem' }}>Registration Number</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}>
-                <Building size={16} style={{ color: 'var(--text-light)' }} />
-                {client.registrationNumber || '-'}
-              </div>
-            </div>
-            
-            <div>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginBottom: '0.25rem' }}>Industry</p>
-              <div style={{ fontWeight: 500 }}>
-                {client.industry || '-'}
-              </div>
-            </div>
+        )}
 
-            <div>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginBottom: '0.25rem' }}>Email</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}>
-                <Mail size={16} style={{ color: 'var(--text-light)' }} />
-                {client.email || '-'}
-              </div>
-            </div>
-
-            <div>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginBottom: '0.25rem' }}>Phone</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}>
-                <Phone size={16} style={{ color: 'var(--text-light)' }} />
-                {client.phone || '-'}
-              </div>
-            </div>
-
-            <div style={{ gridColumn: '1 / -1' }}>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginBottom: '0.25rem' }}>Address</p>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontWeight: 500 }}>
-                <MapPin size={16} style={{ color: 'var(--text-light)', marginTop: '0.125rem' }} />
-                <span style={{ whiteSpace: 'pre-line' }}>{client.address || '-'}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="card-body">
+        {activeTab === 'contacts' && (
+          <Card>
             <ContactList clientId={client.id} contacts={client.contacts} onRefresh={loadClientDetails} />
-          </div>
-        </div>
+          </Card>
+        )}
+
+        {activeTab === 'leads' && (
+          <Card>
+            <EmptyState 
+              icon={<Target size={48} />}
+              title="Leads Module" 
+              message="Client leads will be displayed here." 
+            />
+          </Card>
+        )}
+
+        {activeTab === 'attachments' && (
+          <Card>
+            <EmptyState 
+              icon={<FileText size={48} />}
+              title="Attachments Module" 
+              message="Client attachments will be displayed here." 
+            />
+          </Card>
+        )}
+
+        {activeTab === 'activity' && (
+          <Card>
+            <EmptyState 
+              icon={<Activity size={48} />}
+              title="Activity Module" 
+              message="Client activity timeline will be displayed here." 
+            />
+          </Card>
+        )}
       </div>
     </div>
   );

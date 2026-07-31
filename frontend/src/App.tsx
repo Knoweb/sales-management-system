@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { UserManagement } from './pages/UserManagement';
@@ -17,6 +18,7 @@ import { EmployeeDetailsPage } from './pages/EmployeeDetailsPage';
 import SalesOpportunitiesPage from './pages/SalesOpportunitiesPage';
 import SalesOpportunityDetailsPage from './pages/SalesOpportunityDetailsPage';
 import ProjectBriefEditor from './pages/ProjectBriefEditor';
+import ProductCategoriesPage from './pages/ProductCategoriesPage';
 import { EmployeeFormPage } from './pages/EmployeeFormPage';
 import { ClientsPage } from './pages/ClientsPage';
 import { ClientFormPage } from './pages/ClientFormPage';
@@ -32,9 +34,10 @@ import './styles/dashboard.css';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <Routes>
           <Route path="/login" element={<LoginPage />} />
           {/* Removed from here */}
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
@@ -149,13 +152,19 @@ function App() {
                 <ProjectBriefEditor />
               </ProtectedRoute>
             } />
+            <Route path="/product-categories" element={
+              <ProtectedRoute requiredPermission="PRODUCT_CATEGORY_READ">
+                <ProductCategoriesPage />
+              </ProtectedRoute>
+            } />
           </Route>
 
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
-      </Router>
-    </AuthProvider>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

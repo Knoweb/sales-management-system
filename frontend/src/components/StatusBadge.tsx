@@ -16,10 +16,23 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, variant = 'neu
 };
 
 export const getStatusVariant = (status: string): StatusBadgeProps['variant'] => {
-  const s = status.toUpperCase();
-  if (['ACTIVE', 'WON', 'COMPLETED', 'APPROVED', 'FULL_TIME'].includes(s)) return 'success';
-  if (['OPPORTUNITY', 'NEGOTIATION', 'BRIEF_IN_PROGRESS', 'PENDING', 'PART_TIME'].includes(s)) return 'warning';
-  if (['LOST', 'INACTIVE', 'TERMINATED', 'CANCELLED', 'REJECTED'].includes(s)) return 'error';
-  if (['PROPOSAL', 'BRIEF_SUBMITTED', 'CONTRACT'].includes(s)) return 'info';
+  if (!status) return 'neutral';
+  const s = status.toUpperCase().replace(/\s+/g, '_'); // Handle spaces like 'Brief In Progress' -> 'BRIEF_IN_PROGRESS'
+  
+  // Success states
+  if (['ACTIVE', 'WON', 'COMPLETED', 'APPROVED', 'VERIFIED', 'EXPERT', 'BRIEF_SUBMITTED', 'SUBMITTED', 'SUBMITTED_ON_TIME'].includes(s)) return 'success';
+  
+  // Warning states
+  if (['OPPORTUNITY', 'NEGOTIATION', 'BRIEF_IN_PROGRESS', 'PENDING', 'UNVERIFIED', 'INTERMEDIATE', 'TEMPORARY', 'PART_TIME', 'PART-TIME', 'ON_HOLD', 'DUE_SOON', 'SUBMITTED_LATE'].includes(s)) return 'warning';
+  
+  // Info states (Neutral/Blueish depending on theme)
+  if (['PROPOSAL', 'CONTRACT', 'FULL_TIME', 'FULL-TIME', 'ADVANCED', 'QUALIFIED'].includes(s)) return 'info';
+  
+  // Error states
+  if (['LOST', 'INACTIVE', 'TERMINATED', 'CANCELLED', 'REJECTED', 'OVERDUE'].includes(s)) return 'error';
+  
+  // Fallback (e.g., Draft, Novice, Intern)
+  if (['DRAFT'].includes(s)) return 'neutral';
+  
   return 'neutral';
 };

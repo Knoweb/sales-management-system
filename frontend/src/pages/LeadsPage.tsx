@@ -1,7 +1,7 @@
 import React from 'react';
 import { PageHeader } from '../components/PageHeader';
 import { LeadList } from '../components/leads/LeadList';
-import { Briefcase } from 'lucide-react';
+import { Target } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const LeadsPage: React.FC = () => {
@@ -11,7 +11,8 @@ export const LeadsPage: React.FC = () => {
   return (
     <div className="page-container">
       <PageHeader 
-        title={<><Briefcase className="page-icon" style={{ display: 'inline', marginRight: '0.5rem' }} /> Leads</>}
+        title="Leads"
+        icon={<Target size={24} />}
         actionButton={
           canCreate ? {
             label: 'Create Lead',

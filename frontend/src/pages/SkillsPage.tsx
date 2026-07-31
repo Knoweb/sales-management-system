@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { SkillApi } from '../services/SkillApi';
 import type { Skill } from '../types/skill';
-import { BookOpen, Plus, Search, Edit2, CheckCircle, XCircle } from 'lucide-react';
+import { BadgeCheck, Plus, Search, Edit2, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 import { useAuth } from '../context/AuthContext';
 import { Card } from '../components/Card';
@@ -10,6 +10,10 @@ import { LoadingState, EmptyState } from '../components/FeedbackStates';
 import { StatusBadge } from '../components/StatusBadge';
 import { SkillModal } from '../components/SkillModal';
 import { IconButton } from '../components/IconButton';
+import { FilterBar } from '../components/FilterBar';
+import { Input, Select } from '../components/Forms';
+import { Button } from '../components/Button';
+import { Alert } from '../components/Alert';
 
 export const SkillsPage: React.FC = () => {
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -17,6 +21,8 @@ export const SkillsPage: React.FC = () => {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  
   const [page, setPage] = useState(0);
   const size = 20;
 
@@ -52,12 +58,6 @@ export const SkillsPage: React.FC = () => {
     loadSkills(debouncedSearch, page, size);
   }, [debouncedSearch, page, size]);
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setDebouncedSearch(searchTerm);
-    setPage(0);
-  };
-
   const handleAddSkill = () => {
     setSelectedSkill(null);
     setIsModalOpen(true);
@@ -90,11 +90,19 @@ export const SkillsPage: React.FC = () => {
     loadSkills(debouncedSearch, page, size);
   };
 
+  const filteredSkills = skills.filter(skill => {
+    if (statusFilter === 'ALL') return true;
+    if (statusFilter === 'ACTIVE') return skill.active;
+    if (statusFilter === 'INACTIVE') return !skill.active;
+    return true;
+  });
+
   return (
     <div className="p-6 max-w-7xl mx-auto w-full">
       <PageHeader 
-        title={<><BookOpen size={24} className="inline-icon text-blue-600" /> Skills Directory</>}
+        title="Skills Directory"
         description="Manage the global list of employee skills."
+        icon={<BadgeCheck size={24} />}
         actionButton={{
           label: 'Add Skill',
           show: canManage,
@@ -104,30 +112,35 @@ export const SkillsPage: React.FC = () => {
       />
 
       {successMessage && (
-        <div className="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded-md flex items-center gap-2">
-          <CheckCircle size={20} />
-          <span>{successMessage}</span>
-        </div>
+        <Alert variant="success" style={{ marginBottom: '1.5rem' }}>
+          {successMessage}
+        </Alert>
       )}
 
-      <Card>
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
-          <h2 className="text-lg font-semibold text-gray-900">Skill List</h2>
-          
-          <form onSubmit={handleSearchSubmit} className="w-full md:w-64 relative">
-            <input
-              type="text"
-              placeholder="Search by skill code or name..."
-              value={searchTerm}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-              className="form-input w-full"
-            />
-          </form>
+      <FilterBar>
+        <div style={{ flex: 1, minWidth: '250px' }}>
+          <Input 
+            placeholder="Search by skill code or name..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-        
+        <div style={{ width: '200px' }}>
+          <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <option value="ALL">All Statuses</option>
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+          </Select>
+        </div>
+        <Button variant="ghost" onClick={() => loadSkills(debouncedSearch, page, size)} isLoading={loading}>
+          <RefreshCw size={16} style={{ marginRight: '8px' }} /> Refresh
+        </Button>
+      </FilterBar>
+
+      <Card>
         {loading ? (
           <LoadingState message="Loading skills..." />
-        ) : skills.length === 0 ? (
+        ) : filteredSkills.length === 0 ? (
           <EmptyState 
             icon={<Search size={48} />}
             title="No skills found" 
@@ -145,7 +158,7 @@ export const SkillsPage: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {skills.map(skill => (
+                {filteredSkills.map(skill => (
                   <TableRow key={skill.id}>
                     <TableCell className="font-medium text-gray-900">{skill.code}</TableCell>
                     <TableCell>{skill.name}</TableCell>
@@ -179,12 +192,14 @@ export const SkillsPage: React.FC = () => {
         )}
       </Card>
 
-      <SkillModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        skill={selectedSkill}
-        onSuccess={handleModalSuccess}
-      />
+      {isModalOpen && (
+        <SkillModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          skill={selectedSkill}
+          onSuccess={handleModalSuccess}
+        />
+      )}
     </div>
   );
 };

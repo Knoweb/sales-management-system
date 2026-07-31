@@ -6,7 +6,7 @@ import type { EmployeeSkill } from '../types/skill';
 import type { EmployeeQualification } from '../types/qualification';
 import type { EmployeeLeave, LeaveStatus } from '../types/leave';
 import type { AvailabilityResponse } from '../types/availability';
-import { User, CheckCircle, BookOpen, Calendar, Clock, ArrowLeft } from 'lucide-react';
+import { ContactRound, CheckCircle, BookOpen, Calendar, Clock, ArrowLeft } from 'lucide-react';
 import { PermissionGuard } from '../components/PermissionGuard';
 import { EmployeeSkillForm } from '../components/EmployeeSkillForm';
 import { EmployeeQualificationForm } from '../components/EmployeeQualificationForm';
@@ -284,14 +284,8 @@ export const EmployeeDetailsPage: React.FC = () => {
       </div>
 
       <PageHeader 
-        title={
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-100 text-blue-600 p-2 rounded-full">
-              <User size={24} />
-            </div>
-            {employee.firstName} {employee.lastName}
-          </div>
-        }
+        title={`${employee.firstName} ${employee.lastName}`}
+        icon={<ContactRound size={24} />}
         description={`${employee.jobTitle} • ${employee.department?.name || 'No Department'}`}
       />
 

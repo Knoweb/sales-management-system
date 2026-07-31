@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from './Button';
-import { Input, Select } from './Forms';
-import { ErrorState } from './FeedbackStates';
-import { X } from 'lucide-react';
+import { FormField, Input, Select, Textarea, Checkbox } from './Forms';
+import { Modal } from './Modal';
+import { Alert } from './Alert';
 
 interface EmployeeLeaveFormProps {
   onClose: () => void;
@@ -61,92 +61,109 @@ export const EmployeeLeaveForm: React.FC<EmployeeLeaveFormProps> = ({ onClose, o
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-gray-900">{isNew ? 'Request Leave' : 'Edit Leave Request'}</h2>
-          <button className="icon-btn" onClick={onClose} aria-label="Close"><X size={20} /></button>
+    <Modal 
+      isOpen={true} 
+      onClose={() => !loading && onClose()} 
+      title={isNew ? 'Request Leave' : 'Edit Leave Request'}
+    >
+      {error && (
+        <Alert variant="error" style={{ marginBottom: '1.5rem' }}>
+          {error}
+        </Alert>
+      )}
+      
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: '1.5rem' }}>
+          <FormField label="Leave Type" required id="leaveType">
+            <Select
+              id="leaveType"
+              value={formData.leaveType}
+              onChange={(e) => setFormData({ ...formData, leaveType: e.target.value })}
+              required
+              disabled={!isNew || loading}
+            >
+              <option value="ANNUAL">Annual Leave</option>
+              <option value="SICK">Sick Leave</option>
+              <option value="UNPAID">Unpaid Leave</option>
+              <option value="MATERNITY">Maternity Leave</option>
+              <option value="PATERNITY">Paternity Leave</option>
+              <option value="OTHER">Other</option>
+            </Select>
+          </FormField>
         </div>
-        
-        {error && <ErrorState message={error} />}
-        
-        <form onSubmit={handleSubmit}>
-          <Select
-            label="Leave Type"
-            value={formData.leaveType}
-            onChange={(e) => setFormData({ ...formData, leaveType: e.target.value })}
-            required
-            disabled={!isNew}
-          >
-            <option value="ANNUAL">Annual Leave</option>
-            <option value="SICK">Sick Leave</option>
-            <option value="UNPAID">Unpaid Leave</option>
-            <option value="MATERNITY">Maternity Leave</option>
-            <option value="PATERNITY">Paternity Leave</option>
-            <option value="OTHER">Other</option>
-          </Select>
 
-          <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+          <FormField label="Start Date" required id="startDate">
             <Input 
-              label="Start Date *"
+              id="startDate"
               type="date"
               value={formData.startDate}
               onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
               required
+              disabled={loading}
             />
-            
+          </FormField>
+          
+          <FormField label="End Date" required id="endDate">
             <Input 
-              label="End Date *"
+              id="endDate"
               type="date"
               value={formData.endDate}
               onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
               required
+              disabled={loading}
+            />
+          </FormField>
+        </div>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem', alignItems: 'center' }}>
+          <div style={{ marginTop: formData.partialDay ? '28px' : '0' }}>
+            <Checkbox 
+              id="partialDay"
+              label="Partial Day"
+              checked={formData.partialDay}
+              onChange={(e) => setFormData({ ...formData, partialDay: e.target.checked })}
+              disabled={loading}
             />
           </div>
           
-          <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <div className="form-group flex items-center" style={{ display: 'flex', alignItems: 'center', marginTop: '24px' }}>
-              <label className="flex items-center gap-2" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <input 
-                  type="checkbox" 
-                  checked={formData.partialDay}
-                  onChange={(e) => setFormData({ ...formData, partialDay: e.target.checked })}
-                />
-                <span className="form-label" style={{ marginBottom: 0 }}>Partial Day</span>
-              </label>
-            </div>
-            
-            {formData.partialDay && (
+          {formData.partialDay && (
+            <FormField label="Leave Hours" required={formData.partialDay} id="leaveHours">
               <Input 
-                label="Leave Hours"
+                id="leaveHours"
                 type="number"
                 value={formData.leaveHours}
                 onChange={(e) => setFormData({ ...formData, leaveHours: e.target.value })}
                 min="0.5"
                 step="0.5"
                 required={formData.partialDay}
+                disabled={loading}
               />
-            )}
-          </div>
-          
-          <div className="form-group">
-            <label className="form-label">Reason</label>
-            <textarea 
-              className="form-textarea"
+            </FormField>
+          )}
+        </div>
+        
+        <div style={{ marginBottom: '2rem' }}>
+          <FormField label="Reason" id="reason">
+            <Textarea 
+              id="reason"
               value={formData.reason}
               onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
               rows={3}
+              disabled={loading}
             />
-          </div>
-          
-          <div className="flex justify-end gap-3 mt-6">
-            <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>Cancel</Button>
-            <Button type="submit" variant="primary" disabled={loading}>
-              {loading ? 'Saving...' : 'Submit Request'}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+          </FormField>
+        </div>
+        
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button type="submit" variant="primary" isLoading={loading}>
+            Submit Request
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 };
