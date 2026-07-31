@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
 import java.util.UUID;
 
@@ -26,6 +27,7 @@ public class SalesOpportunityController {
 
     @PostMapping("/leads/{leadId}/convert-to-opportunity")
     @PreAuthorize("hasAuthority('OPPORTUNITY_CREATE')")
+    @ResponseStatus(HttpStatus.CREATED)
     public SalesOpportunityDTO convertLeadToOpportunity(
             @PathVariable UUID leadId,
             @Valid @RequestBody ConvertLeadRequest request) {

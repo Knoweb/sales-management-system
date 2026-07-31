@@ -123,8 +123,8 @@ class SalesOpportunityServiceTest {
 
     @Test
     void testConvertLeadToOpportunity_RejectsDuplicateConversion() {
-        lead.setStatus(LeadStatus.QUALIFIED);
         when(leadRepository.findById(leadId)).thenReturn(Optional.of(lead));
+        when(opportunityRepository.existsByLeadId(leadId)).thenReturn(true);
 
         ConvertLeadRequest request = new ConvertLeadRequest();
         request.setTitle("Duplicate Conversion");

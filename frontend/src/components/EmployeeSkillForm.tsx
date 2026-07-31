@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from './Button';
 import { Select } from './Forms';
-import { X } from 'lucide-react';
 import type { Skill } from '../types/skill';
 import { SkillApi } from '../services/SkillApi';
 
@@ -34,7 +33,7 @@ export const EmployeeSkillForm: React.FC<EmployeeSkillFormProps> = ({ onClose, o
         setSkills(data.content);
       }).catch(err => console.error('Failed to load skills', err));
     }
-  }, [isEdit]);
+  }, [isNew]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +67,6 @@ export const EmployeeSkillForm: React.FC<EmployeeSkillFormProps> = ({ onClose, o
       <div className="modal-content">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-gray-900">{isNew ? 'Add Skill' : 'Edit Skill'}</h2>
-          <button className="icon-btn" onClick={onClose} aria-label="Close"><X size={20} /></button>
         </div>
         
         {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded" style={{ backgroundColor: 'var(--error-bg)', color: 'var(--error)' }}>{error}</div>}

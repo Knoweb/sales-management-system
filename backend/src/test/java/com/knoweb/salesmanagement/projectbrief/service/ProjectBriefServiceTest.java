@@ -22,6 +22,7 @@ import com.knoweb.salesmanagement.projectbrief.repository.ProjectBriefRepository
 import com.knoweb.salesmanagement.projectbrief.repository.ProjectBriefVersionRepository;
 import com.knoweb.salesmanagement.user.entity.User;
 import com.knoweb.salesmanagement.user.repository.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -64,6 +65,8 @@ class ProjectBriefServiceTest {
     private SalesOpportunityService opportunityService;
     @Mock
     private NotificationService notificationService;
+    @Mock
+    private ObjectMapper objectMapper;
 
     @InjectMocks
     private ProjectBriefService projectBriefService;
@@ -105,7 +108,7 @@ class ProjectBriefServiceTest {
     }
 
     @Test
-    void testSaveDraft_DoesNotSendSubmissionNotification() {
+    void testSaveDraft_DoesNotSendSubmissionNotification() throws Exception {
         when(projectBriefRepository.findById(briefId)).thenReturn(Optional.of(draftBrief));
         when(projectBriefRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -119,10 +122,11 @@ class ProjectBriefServiceTest {
     }
 
     @Test
-    void testSaveVersion_DoesNotSendSubmissionNotification() {
+    void testSaveVersion_DoesNotSendSubmissionNotification() throws Exception {
         when(projectBriefRepository.findById(briefId)).thenReturn(Optional.of(draftBrief));
         when(projectBriefRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(adminUser));
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
 
         ProjectBriefUpdateDraftRequest request = new ProjectBriefUpdateDraftRequest();
         request.setProjectTitle("Version Title");
@@ -136,7 +140,7 @@ class ProjectBriefServiceTest {
     }
 
     @Test
-    void testSubmitProjectBrief_SendsNotificationToBDMWithDeduplicationKey() {
+    void testSubmitProjectBrief_SendsNotificationToBDMWithDeduplicationKey() throws Exception {
         draftBrief.setProjectTitle("Complete Brief");
         draftBrief.setBusinessProblem("Problem statement");
         draftBrief.setRequiredSolution("Solution description");
@@ -154,6 +158,7 @@ class ProjectBriefServiceTest {
         when(projectBriefRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(adminUser));
         when(userRepository.findByRolesCode("BDM")).thenReturn(Collections.singletonList(bdmUser));
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
 
         ProjectBriefSubmitRequest request = new ProjectBriefSubmitRequest();
         request.setVersionNumber(1);

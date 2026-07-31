@@ -133,7 +133,7 @@ public class SalesOpportunityService {
             }
         }
 
-        if (opportunityRepository.existsByLeadId(leadId) || lead.getStatus() == LeadStatus.QUALIFIED) {
+        if (opportunityRepository.existsByLeadId(leadId)) {
             throw new ResourceConflictException("Lead has already been converted to an opportunity");
         }
 
@@ -308,7 +308,31 @@ public class SalesOpportunityService {
             dto.setAssignedSalesOfficerName(entity.getAssignedSalesOfficer().getFirstName() + " " + entity.getAssignedSalesOfficer().getLastName());
         }
 
-        // we would map full DTOs for client, contact, lead, category in a real mapper
+        if (entity.getClient() != null) {
+            dto.setClientId(entity.getClient().getId());
+            dto.setClientName(entity.getClient().getName());
+        }
+        if (entity.getPrimaryContact() != null) {
+            dto.setPrimaryContactId(entity.getPrimaryContact().getId());
+            dto.setPrimaryContactName(entity.getPrimaryContact().getFirstName() + " " + entity.getPrimaryContact().getLastName());
+        }
+        if (entity.getProductCategory() != null) {
+            dto.setProductCategoryId(entity.getProductCategory().getId());
+            dto.setProductCategoryName(entity.getProductCategory().getName());
+        }
+        
+        List<OpportunityActivityDTO> activityDTOs = activityRepository.findByOpportunityIdOrderByActivityDateDesc(entity.getId())
+            .stream()
+            .map(a -> {
+                OpportunityActivityDTO actDto = new OpportunityActivityDTO();
+                actDto.setId(a.getId());
+                actDto.setActivityType(a.getActivityType());
+                actDto.setDescription(a.getDescription());
+                actDto.setCreatedAt(a.getActivityDate());
+                actDto.setCreatedByName("System");
+                return actDto;
+            }).collect(java.util.stream.Collectors.toList());
+        dto.setActivities(activityDTOs);
         
         Optional<ProjectBrief> brief = projectBriefRepository.findByOpportunityId(entity.getId());
         if (brief.isPresent()) {

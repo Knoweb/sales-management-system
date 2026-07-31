@@ -161,7 +161,6 @@ export const LeadForm: React.FC = () => {
         interestedProduct: lead.interestedProduct ?? '',
         initialRequest: lead.initialRequest ?? '',
         notes: lead.notes ?? '',
-        // @ts-expect-error — backend may return initialMeetingAt in Lead shape once added
         initialMeetingAt: toLocalDatetimeValue((lead as { initialMeetingAt?: string }).initialMeetingAt ?? ''),
       });
     } catch {
@@ -173,6 +172,7 @@ export const LeadForm: React.FC = () => {
 
   useEffect(() => {
     if (isEditing) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       void loadLead();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -183,7 +183,9 @@ export const LeadForm: React.FC = () => {
     const clientId = formData.clientId;
     let active = true;
     if (!clientId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setContacts([]);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoadingContacts(false);
       return;
     }

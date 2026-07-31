@@ -51,6 +51,7 @@ export interface ConvertLeadRequest {
   currency: string;
   expectedCloseDate: string;
   productCategoryId: string;
+  assignedSalesOfficerId: string;
 }
 
 export const convertLeadToOpportunity = async (leadId: string, data: ConvertLeadRequest): Promise<SalesOpportunityDTO> => {

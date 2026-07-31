@@ -59,7 +59,8 @@ public class ProjectBriefService {
                                UserRepository userRepository,
                                EmployeeRepository employeeRepository,
                                SalesOpportunityService opportunityService,
-                               NotificationService notificationService) {
+                               NotificationService notificationService,
+                               @org.springframework.beans.factory.annotation.Autowired(required = false) ObjectMapper objectMapper) {
         this.projectBriefRepository = projectBriefRepository;
         this.versionRepository = versionRepository;
         this.attachmentRepository = attachmentRepository;
@@ -69,7 +70,13 @@ public class ProjectBriefService {
         this.employeeRepository = employeeRepository;
         this.opportunityService = opportunityService;
         this.notificationService = notificationService;
-        this.objectMapper = new ObjectMapper();
+        if (objectMapper == null) {
+            this.objectMapper = new ObjectMapper();
+            this.objectMapper.findAndRegisterModules();
+            this.objectMapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        } else {
+            this.objectMapper = objectMapper;
+        }
     }
 
     private User getAuthenticatedUser() {
@@ -225,6 +232,7 @@ public class ProjectBriefService {
             version.setSnapshot(jsonSnapshot);
         } catch (Exception e) {
             System.err.println("Failed to serialize snapshot: " + e.getMessage());
+            throw new IllegalStateException("Failed to serialize project brief snapshot", e);
         }
 
         versionRepository.save(version);
@@ -272,6 +280,7 @@ public class ProjectBriefService {
             version.setSnapshot(jsonSnapshot);
         } catch (Exception e) {
             System.err.println("Failed to serialize snapshot: " + e.getMessage());
+            throw new IllegalStateException("Failed to serialize project brief snapshot", e);
         }
 
         versionRepository.save(version);

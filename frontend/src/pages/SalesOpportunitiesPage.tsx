@@ -10,7 +10,8 @@ import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '.
 import { StatusBadge } from '../components/StatusBadge';
 import { ErrorState, EmptyState, LoadingState } from '../components/FeedbackStates';
 import { Button } from '../components/Button';
-import { Search } from 'lucide-react';
+import { IconButton } from '../components/IconButton';
+import { Search, Eye } from 'lucide-react';
 
 const SalesOpportunitiesPage: React.FC = () => {
   const [opportunities, setOpportunities] = useState<SalesOpportunitySummaryDTO[]>([]);
@@ -132,7 +133,9 @@ const SalesOpportunitiesPage: React.FC = () => {
                     {opp.expectedCloseDate ? format(new Date(opp.expectedCloseDate), 'MMM d, yyyy') : 'N/A'}
                   </TableCell>
                   <TableCell>
-                    <Link to={`/opportunities/${opp.id}`} className="text-blue-600 hover:text-blue-900 font-medium">View</Link>
+                    <Link to={`/opportunities/${opp.id}`}>
+                      <IconButton icon={<Eye size={18} />} aria-label={`View opportunity ${opp.opportunityNumber}`} />
+                    </Link>
                   </TableCell>
                 </TableRow>
               ))}

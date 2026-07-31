@@ -9,6 +9,7 @@ import { Briefcase, Building, Tag, User, Contact, Calendar } from 'lucide-react'
 import type { FollowUp } from '../../types/lead';
 import LeadConversionModal from '../LeadConversionModal';
 import { useNavigate } from 'react-router-dom';
+import { PermissionGuard } from '../PermissionGuard';
 
 interface LeadDetailsProps {
   leadId: string;
@@ -65,21 +66,23 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            {lead.status === 'QUALIFIED' && (
-              <button
-                onClick={() => setIsConversionModalOpen(true)}
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#10B981',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '0.375rem',
-                  cursor: 'pointer',
-                  fontWeight: 500
-                }}
-              >
-                Convert to Opportunity
-              </button>
+            {lead.status === 'QUALIFIED' && lead.active && (
+              <PermissionGuard permission="OPPORTUNITY_CREATE">
+                <button
+                  onClick={() => setIsConversionModalOpen(true)}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: '#10B981',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.375rem',
+                    cursor: 'pointer',
+                    fontWeight: 500
+                  }}
+                >
+                  Convert to Opportunity
+                </button>
+              </PermissionGuard>
             )}
             <span style={{ 
               padding: '0.25rem 0.75rem', 
@@ -99,9 +102,11 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
         isOpen={isConversionModalOpen}
         onClose={() => setIsConversionModalOpen(false)}
         leadId={lead.id}
-        leadTitle={`${lead.clientName} - New Opportunity`}
+        leadTitle={lead.title}
+        assignedTo={lead.assignedTo}
         onSuccess={(oppId) => {
           setIsConversionModalOpen(false);
+          alert('Lead converted successfully!');
           navigate(`/opportunities/${oppId}`);
         }}
       />

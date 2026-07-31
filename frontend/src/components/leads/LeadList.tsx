@@ -4,7 +4,7 @@ import { ClientApi } from '../../services/ClientApi';
 import type { Lead } from '../../types/lead';
 import type { Client } from '../../types/client';
 import { useNavigate } from 'react-router-dom';
-import { Search, Eye, Edit, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Search, Eye, Edit, ShieldAlert, ShieldCheck, ArrowRightCircle } from 'lucide-react';
 import { Button } from '../Button';
 import { IconButton } from '../IconButton';
 import { PermissionGuard } from '../PermissionGuard';
@@ -13,11 +13,14 @@ import { Input, Select } from '../Forms';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../Table';
 import { StatusBadge } from '../StatusBadge';
 import { ErrorState, EmptyState, LoadingState } from '../FeedbackStates';
+import LeadConversionModal from './../LeadConversionModal';
 
 export const LeadList: React.FC = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const [convertingLead, setConvertingLead] = useState<Lead | null>(null);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<string>('active');
@@ -185,6 +188,14 @@ export const LeadList: React.FC = () => {
                           </IconButton>
                         </PermissionGuard>
                       )}
+                      
+                      {lead.status === 'QUALIFIED' && lead.active && (
+                        <PermissionGuard permission="OPPORTUNITY_CREATE">
+                          <IconButton onClick={() => setConvertingLead(lead)} title="Convert to Opportunity" aria-label="Convert to Opportunity" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50">
+                            <ArrowRightCircle size={16} />
+                          </IconButton>
+                        </PermissionGuard>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -214,6 +225,21 @@ export const LeadList: React.FC = () => {
             </div>
           )}
         </>
+      )}
+
+      {convertingLead && (
+        <LeadConversionModal
+          isOpen={true}
+          onClose={() => setConvertingLead(null)}
+          leadId={convertingLead.id}
+          leadTitle={convertingLead.title}
+          assignedTo={convertingLead.assignedTo}
+          onSuccess={(oppId) => {
+            setConvertingLead(null);
+            alert('Lead converted successfully!');
+            navigate(`/opportunities/${oppId}`);
+          }}
+        />
       )}
     </div>
   );
