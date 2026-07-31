@@ -25,7 +25,7 @@ public class SkillController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('SKILL_CATALOG_MANAGE')")
     public SkillDTO createSkill(@Valid @RequestBody CreateSkillRequest request) {
         return skillService.createSkill(request);
     }
@@ -44,14 +44,14 @@ public class SkillController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('SKILL_CATALOG_MANAGE')")
     public SkillDTO updateSkill(@PathVariable UUID id, @Valid @RequestBody UpdateSkillRequest request) {
         return skillService.updateSkill(id, request);
     }
 
     @PatchMapping("/{id}/status")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('SKILL_CATALOG_MANAGE')")
     public void updateSkillStatus(@PathVariable UUID id) {
         skillService.updateSkillStatus(id);
     }

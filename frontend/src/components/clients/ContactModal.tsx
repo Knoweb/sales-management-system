@@ -29,6 +29,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({ clientId, isOpen, on
 
   useEffect(() => {
     if (initialData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         firstName: initialData.firstName,
         lastName: initialData.lastName,

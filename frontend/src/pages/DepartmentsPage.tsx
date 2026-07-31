@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { DepartmentApi } from '../services/DepartmentApi';
 import type { Department } from '../types/department';
-import { Building, Plus, Search } from 'lucide-react';
+import { Building, Plus } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Card } from '../components/Card';
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/Table';
-import { LoadingState, EmptyState } from '../components/FeedbackStates';
-import { StatusBadge } from '../components/StatusBadge';
 
 export const DepartmentsPage: React.FC = () => {
   const [departments, setDepartments] = useState<Department[]>([]);

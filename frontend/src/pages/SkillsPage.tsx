@@ -1,27 +1,44 @@
 import React, { useEffect, useState } from 'react';
 import { SkillApi } from '../services/SkillApi';
 import type { Skill } from '../types/skill';
-import { BookOpen, Plus, Search } from 'lucide-react';
+import { BookOpen, Plus, Search, Edit2, CheckCircle, XCircle } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Card } from '../components/Card';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/Table';
 import { LoadingState, EmptyState } from '../components/FeedbackStates';
 import { StatusBadge } from '../components/StatusBadge';
+import { SkillModal } from '../components/SkillModal';
+import { IconButton } from '../components/IconButton';
 
 export const SkillsPage: React.FC = () => {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(0);
+  const size = 20;
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const { user } = useAuth();
 
-  const canCreate = user?.permissions.includes('SYSTEM_ADMIN'); // Skills are managed by SYSTEM_ADMIN
+  const canManage = user?.permissions.includes('SKILL_CATALOG_MANAGE');
 
-  const loadSkills = async () => {
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(0);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  const loadSkills = async (currentSearch = '', currentPage = 0, currentSize = 20) => {
     try {
       setLoading(true);
-      const data = await SkillApi.search();
+      const data = await SkillApi.search(currentSearch, undefined, currentPage, currentSize);
       setSkills(data.content || []);
     } catch (error) {
       console.error('Failed to load skills', error);
@@ -32,8 +49,46 @@ export const SkillsPage: React.FC = () => {
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadSkills();
-  }, []);
+    loadSkills(debouncedSearch, page, size);
+  }, [debouncedSearch, page, size]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setDebouncedSearch(searchTerm);
+    setPage(0);
+  };
+
+  const handleAddSkill = () => {
+    setSelectedSkill(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEditSkill = (skill: Skill) => {
+    setSelectedSkill(skill);
+    setIsModalOpen(true);
+  };
+
+  const handleToggleStatus = async (id: string) => {
+    try {
+      await SkillApi.toggleStatus(id);
+      showSuccess('Skill status updated successfully');
+      loadSkills(debouncedSearch, page, size);
+    } catch (error) {
+      console.error('Failed to toggle status', error);
+      alert('Failed to update skill status');
+    }
+  };
+
+  const showSuccess = (message: string) => {
+    setSuccessMessage(message);
+    setTimeout(() => setSuccessMessage(null), 3000);
+  };
+
+  const handleModalSuccess = () => {
+    setIsModalOpen(false);
+    showSuccess(selectedSkill ? 'Skill updated successfully' : 'Skill created successfully');
+    loadSkills(debouncedSearch, page, size);
+  };
 
   return (
     <div className="p-6 max-w-7xl mx-auto w-full">
@@ -42,15 +97,32 @@ export const SkillsPage: React.FC = () => {
         description="Manage the global list of employee skills."
         actionButton={{
           label: 'Add Skill',
-          show: canCreate,
-          onClick: () => navigate('/skills/new'),
+          show: canManage,
+          onClick: handleAddSkill,
           icon: <Plus size={16} />
         }}
       />
 
+      {successMessage && (
+        <div className="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded-md flex items-center gap-2">
+          <CheckCircle size={20} />
+          <span>{successMessage}</span>
+        </div>
+      )}
+
       <Card>
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
           <h2 className="text-lg font-semibold text-gray-900">Skill List</h2>
+          
+          <form onSubmit={handleSearchSubmit} className="w-full md:w-64 relative">
+            <input
+              type="text"
+              placeholder="Search by skill code or name..."
+              value={searchTerm}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+              className="form-input w-full"
+            />
+          </form>
         </div>
         
         {loading ? (
@@ -62,31 +134,57 @@ export const SkillsPage: React.FC = () => {
             message="No skills match your criteria." 
           />
         ) : (
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableHeader>Code</TableHeader>
-                <TableHeader>Name</TableHeader>
-                <TableHeader>Status</TableHeader>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {skills.map(skill => (
-                <TableRow key={skill.id}>
-                  <TableCell className="font-medium text-gray-900">{skill.code}</TableCell>
-                  <TableCell>{skill.name}</TableCell>
-                  <TableCell>
-                    <StatusBadge 
-                      status={skill.active ? 'Active' : 'Inactive'} 
-                      variant={skill.active ? 'success' : 'neutral'} 
-                    />
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableHeader>Code</TableHeader>
+                  <TableHeader>Name</TableHeader>
+                  <TableHeader>Status</TableHeader>
+                  {canManage && <TableHeader align="right">Actions</TableHeader>}
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHead>
+              <TableBody>
+                {skills.map(skill => (
+                  <TableRow key={skill.id}>
+                    <TableCell className="font-medium text-gray-900">{skill.code}</TableCell>
+                    <TableCell>{skill.name}</TableCell>
+                    <TableCell>
+                      <StatusBadge 
+                        status={skill.active ? 'Active' : 'Inactive'} 
+                        variant={skill.active ? 'success' : 'neutral'} 
+                      />
+                    </TableCell>
+                    {canManage && (
+                      <TableCell align="right">
+                        <div className="flex justify-end gap-2">
+                          <IconButton 
+                            icon={<Edit2 size={16} />} 
+                            title="Edit Skill"
+                            onClick={() => handleEditSkill(skill)}
+                          />
+                          <IconButton 
+                            icon={skill.active ? <XCircle size={16} /> : <CheckCircle size={16} />} 
+                            title={skill.active ? "Deactivate" : "Activate"}
+                            onClick={() => handleToggleStatus(skill.id)}
+                          />
+                        </div>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </Card>
+
+      <SkillModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        skill={selectedSkill}
+        onSuccess={handleModalSuccess}
+      />
     </div>
   );
 };
