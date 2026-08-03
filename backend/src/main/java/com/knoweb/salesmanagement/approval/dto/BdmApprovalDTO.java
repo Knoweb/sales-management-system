@@ -1,6 +1,7 @@
 package com.knoweb.salesmanagement.approval.dto;
 
 import com.knoweb.salesmanagement.approval.enums.BdmApprovalStatus;
+import com.knoweb.salesmanagement.projectbrief.enums.ProjectBriefStatus;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -11,6 +12,7 @@ public class BdmApprovalDTO {
     private UUID projectBriefId;
     private Integer projectBriefVersionNumber;
     private BdmApprovalStatus status;
+    private ProjectBriefStatus projectBriefStatus;
     private UUID decisionMakerId;
     private String decisionMakerName;
     private OffsetDateTime decisionDate;
@@ -34,6 +36,8 @@ public class BdmApprovalDTO {
     public void setProjectBriefVersionNumber(Integer projectBriefVersionNumber) { this.projectBriefVersionNumber = projectBriefVersionNumber; }
     public BdmApprovalStatus getStatus() { return status; }
     public void setStatus(BdmApprovalStatus status) { this.status = status; }
+    public ProjectBriefStatus getProjectBriefStatus() { return projectBriefStatus; }
+    public void setProjectBriefStatus(ProjectBriefStatus projectBriefStatus) { this.projectBriefStatus = projectBriefStatus; }
     public UUID getDecisionMakerId() { return decisionMakerId; }
     public void setDecisionMakerId(UUID decisionMakerId) { this.decisionMakerId = decisionMakerId; }
     public String getDecisionMakerName() { return decisionMakerName; }

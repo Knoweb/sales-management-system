@@ -10,7 +10,6 @@ import {
   getProjectBriefVersion, 
   getProjectBriefAttachments, 
   getWorkflowHistory,
-  createClientVerification,
   getClientVerifications,
   type BdmApprovalDTO, 
   type WorkflowHistoryDTO, 

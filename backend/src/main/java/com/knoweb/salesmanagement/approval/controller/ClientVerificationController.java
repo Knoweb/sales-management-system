@@ -32,24 +32,25 @@ public class ClientVerificationController {
         return ResponseEntity.ok(Map.of("token", token));
     }
 
-    @GetMapping("/client-verifications/{token}")
-    public ResponseEntity<ClientVerificationDTO> getVerificationByToken(@PathVariable String token) {
-        return ResponseEntity.ok(clientVerificationService.getVerificationByToken(token));
+    @PreAuthorize("hasAuthority('CLIENT_VERIFICATION_CREATE')")
+    @PostMapping("/client-verifications/{id}/regenerate")
+    public ResponseEntity<Map<String, String>> regenerateVerification(@PathVariable UUID id) {
+        String token = clientVerificationService.regenerateVerificationLink(id);
+        return ResponseEntity.ok(Map.of("token", token));
     }
 
-    @PostMapping("/client-verifications/{token}/confirm")
-    public ResponseEntity<ClientVerificationDTO> confirmVerification(@PathVariable String token, @Valid @RequestBody ClientDecisionRequest request) {
-        return ResponseEntity.ok(clientVerificationService.confirmVerification(token, request));
+    @PreAuthorize("hasAuthority('CLIENT_VERIFICATION_CREATE')")
+    @PostMapping("/client-verifications/{id}/revoke")
+    public ResponseEntity<Void> revokeVerification(@PathVariable UUID id) {
+        clientVerificationService.revokeVerificationLink(id);
+        return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/client-verifications/{token}/request-changes")
-    public ResponseEntity<ClientVerificationDTO> requestChanges(@PathVariable String token, @Valid @RequestBody ClientDecisionRequest request) {
-        return ResponseEntity.ok(clientVerificationService.requestChanges(token, request));
-    }
-
-    @PostMapping("/client-verifications/{token}/reject")
-    public ResponseEntity<ClientVerificationDTO> rejectVerification(@PathVariable String token, @Valid @RequestBody ClientDecisionRequest request) {
-        return ResponseEntity.ok(clientVerificationService.rejectVerification(token, request));
+    @PreAuthorize("hasAuthority('CLIENT_VERIFICATION_READ_LINK')")
+    @GetMapping("/client-verifications/{id}/link")
+    public ResponseEntity<Map<String, String>> getVerificationLink(@PathVariable UUID id) {
+        String token = clientVerificationService.getVerificationLink(id);
+        return ResponseEntity.ok(Map.of("token", token));
     }
 
     @GetMapping("/opportunities/{opportunityId}/client-verifications")

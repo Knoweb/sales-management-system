@@ -11,6 +11,11 @@ import com.knoweb.salesmanagement.projectbrief.repository.ProjectBriefRepository
 import com.knoweb.salesmanagement.user.entity.User;
 import com.knoweb.salesmanagement.user.repository.UserRepository;
 import com.knoweb.salesmanagement.notification.service.NotificationService;
+import com.knoweb.salesmanagement.approval.entity.WorkflowHistory;
+import com.knoweb.salesmanagement.approval.repository.BdmApprovalRepository;
+import com.knoweb.salesmanagement.approval.enums.BdmApprovalStatus;
+import com.knoweb.salesmanagement.approval.repository.WorkflowHistoryRepository;
+import com.knoweb.salesmanagement.security.crypto.EncryptionService;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -37,17 +42,26 @@ public class ClientVerificationService {
     private final UserRepository userRepository;
     private final WorkflowTransitionService transitionService;
     private final NotificationService notificationService;
+    private final EncryptionService encryptionService;
+    private final WorkflowHistoryRepository workflowHistoryRepository;
+    private final BdmApprovalRepository bdmApprovalRepository;
 
     public ClientVerificationService(ClientVerificationRepository clientVerificationRepository,
                                      ProjectBriefRepository projectBriefRepository,
                                      UserRepository userRepository,
                                      WorkflowTransitionService transitionService,
-                                     NotificationService notificationService) {
+                                     NotificationService notificationService,
+                                     EncryptionService encryptionService,
+                                     WorkflowHistoryRepository workflowHistoryRepository,
+                                     BdmApprovalRepository bdmApprovalRepository) {
         this.clientVerificationRepository = clientVerificationRepository;
         this.projectBriefRepository = projectBriefRepository;
         this.userRepository = userRepository;
         this.transitionService = transitionService;
         this.notificationService = notificationService;
+        this.encryptionService = encryptionService;
+        this.workflowHistoryRepository = workflowHistoryRepository;
+        this.bdmApprovalRepository = bdmApprovalRepository;
     }
 
     private User getAuthenticatedUser() {
@@ -72,6 +86,17 @@ public class ClientVerificationService {
         ProjectBrief brief = projectBriefRepository.findById(briefId).orElseThrow(() -> new ResourceNotFoundException("Brief not found"));
         User user = getAuthenticatedUser();
         
+        List<com.knoweb.salesmanagement.approval.entity.BdmApproval> approvals = bdmApprovalRepository.findByOpportunityIdOrderByCreatedAtDesc(brief.getOpportunity().getId());
+        com.knoweb.salesmanagement.approval.entity.BdmApproval latestApproval = approvals.stream()
+            .filter(a -> a.getProjectBrief().getId().equals(brief.getId()))
+            .findFirst()
+            .orElseThrow(() -> new com.knoweb.salesmanagement.common.exception.ResourceConflictException("No BDM approval found for this brief."));
+            
+        if (latestApproval.getStatus() != BdmApprovalStatus.APPROVED) {
+            throw new com.knoweb.salesmanagement.common.exception.ResourceConflictException("Cannot create client verification. Exact brief version must be BDM_APPROVED.");
+        }
+        
+        
         transitionService.createClientVerification(brief, user);
 
         String plainToken = UUID.randomUUID().toString() + "-" + UUID.randomUUID().toString();
@@ -82,6 +107,7 @@ public class ClientVerificationService {
         verification.setProjectBrief(brief);
         verification.setProjectBriefVersionNumber(brief.getCurrentVersionNumber());
         verification.setTokenHash(tokenHash);
+        verification.setEncryptedToken(encryptionService.encrypt(plainToken));
         verification.setStatus(ClientVerificationStatus.PENDING);
         
         if (request != null && request.getExpiresAt() != null) {
@@ -112,6 +138,73 @@ public class ClientVerificationService {
         }
         
         return mapToDTO(verification);
+    }
+
+    @PreAuthorize("hasAuthority('CLIENT_VERIFICATION_CREATE')")
+    @Transactional
+    public String regenerateVerificationLink(UUID id) {
+        ClientVerification verification = clientVerificationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Verification not found"));
+        
+        if (verification.getStatus() != ClientVerificationStatus.PENDING) {
+            throw new IllegalArgumentException("Only PENDING verifications can be regenerated");
+        }
+        
+        String plainToken = UUID.randomUUID().toString() + "-" + UUID.randomUUID().toString();
+        String tokenHash = hashToken(plainToken);
+        
+        verification.setTokenHash(tokenHash);
+        verification.setEncryptedToken(encryptionService.encrypt(plainToken));
+        verification.setExpiresAt(OffsetDateTime.now().plusDays(7));
+        
+        clientVerificationRepository.save(verification);
+        return plainToken;
+    }
+
+    @PreAuthorize("hasAuthority('CLIENT_VERIFICATION_READ_LINK')")
+    @Transactional
+    public String getVerificationLink(UUID id) {
+        ClientVerification verification = clientVerificationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Verification not found"));
+        
+        if (verification.getStatus() != ClientVerificationStatus.PENDING) {
+            throw new IllegalArgumentException("Only PENDING verifications have an active link");
+        }
+        
+        String plainToken = encryptionService.decrypt(verification.getEncryptedToken());
+        User user = getAuthenticatedUser();
+        
+        WorkflowHistory history = new WorkflowHistory();
+        history.setOpportunity(verification.getOpportunity());
+        history.setProjectBrief(verification.getProjectBrief());
+        history.setProjectBriefVersionNumber(verification.getProjectBriefVersionNumber());
+        history.setActor(user);
+        if (user != null) {
+            history.setActorName(user.getFirstName() + " " + user.getLastName());
+        }
+        history.setAction("VIEW_VERIFICATION_LINK");
+        history.setPreviousState(verification.getStatus().name());
+        history.setNewState(verification.getStatus().name());
+        history.setComments("User viewed or copied the active verification link.");
+        workflowHistoryRepository.save(history);
+        
+        return plainToken;
+    }
+
+    @PreAuthorize("hasAuthority('CLIENT_VERIFICATION_CREATE')")
+    @Transactional
+    public void revokeVerificationLink(UUID id) {
+        ClientVerification verification = clientVerificationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Verification not found"));
+        
+        if (verification.getStatus() != ClientVerificationStatus.PENDING) {
+            throw new IllegalArgumentException("Only PENDING verifications can be revoked");
+        }
+        
+        verification.setStatus(ClientVerificationStatus.REVOKED);
+        verification.setDecisionDate(OffsetDateTime.now());
+        
+        clientVerificationRepository.save(verification);
     }
 
     @Transactional

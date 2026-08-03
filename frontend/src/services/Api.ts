@@ -10,6 +10,13 @@ export const apiClient = axios.create({
   withCredentials: true,
 });
 
+export const publicApiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 export interface HealthResponse {
   status: string;
   application: string;

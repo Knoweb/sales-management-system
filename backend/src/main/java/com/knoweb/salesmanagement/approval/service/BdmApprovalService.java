@@ -112,6 +112,7 @@ public class BdmApprovalService {
         approval.setDecisionMaker(user);
         approval.setDecisionDate(OffsetDateTime.now());
         bdmApprovalRepository.save(approval);
+        projectBriefRepository.save(brief);
 
         if (request.getComments() != null && !request.getComments().isBlank()) {
             addComment(approval, user, request.getComments());
@@ -139,6 +140,7 @@ public class BdmApprovalService {
         approval.setDecisionMaker(user);
         approval.setDecisionDate(OffsetDateTime.now());
         bdmApprovalRepository.save(approval);
+        projectBriefRepository.save(brief);
         addComment(approval, user, request.getComments());
         
         notifyDecisionRecipient(approval, "REJECT", "Project Brief Rejected", "Your project brief has been rejected by BDM.");
@@ -163,6 +165,7 @@ public class BdmApprovalService {
         approval.setDecisionMaker(user);
         approval.setDecisionDate(OffsetDateTime.now());
         bdmApprovalRepository.save(approval);
+        projectBriefRepository.save(brief);
         addComment(approval, user, request.getComments());
         
         notifyDecisionRecipient(approval, "RETURN_FOR_REVISION", "Project Brief Returned for Revision", "Your project brief has been returned for revision by BDM.");
@@ -187,6 +190,7 @@ public class BdmApprovalService {
         approval.setDecisionMaker(user);
         approval.setDecisionDate(OffsetDateTime.now());
         bdmApprovalRepository.save(approval);
+        projectBriefRepository.save(brief);
         addComment(approval, user, request.getComments());
         
         notifyDecisionRecipient(approval, "REQUEST_INFORMATION", "Information Requested for Project Brief", "Additional information has been requested for your project brief by BDM.");
@@ -245,6 +249,7 @@ public class BdmApprovalService {
         dto.setProjectBriefId(entity.getProjectBrief().getId());
         dto.setProjectBriefVersionNumber(entity.getProjectBriefVersionNumber());
         dto.setStatus(entity.getStatus());
+        dto.setProjectBriefStatus(entity.getProjectBrief().getStatus());
         dto.setDecisionDate(entity.getDecisionDate());
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setOpportunityNumber(entity.getOpportunity().getOpportunityNumber());

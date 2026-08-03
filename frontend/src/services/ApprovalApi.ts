@@ -1,4 +1,4 @@
-import { apiClient } from './Api';
+import { apiClient, publicApiClient } from './Api';
 
 export interface BdmApprovalDTO {
   id: string;
@@ -139,26 +139,40 @@ export const getClientVerifications = async (opportunityId: string): Promise<Cli
 };
 
 export const getVerificationByToken = async (token: string): Promise<ClientVerificationDTO> => {
-  const response = await apiClient.get(`/client-verifications/${token}`);
+  const response = await publicApiClient.get(`/public/client-verifications/${token}`);
   return response.data;
 };
 
 export const confirmVerification = async (token: string, data: { verifierName: string; verifierEmail?: string; comments?: string; digitalConfirmation: boolean }): Promise<ClientVerificationDTO> => {
-  const response = await apiClient.post(`/client-verifications/${token}/confirm`, data);
+  const response = await publicApiClient.post(`/public/client-verifications/${token}/confirm`, data);
   return response.data;
 };
 
 export const requestChangesVerification = async (token: string, data: { verifierName: string; verifierEmail?: string; comments: string; digitalConfirmation: boolean }): Promise<ClientVerificationDTO> => {
-  const response = await apiClient.post(`/client-verifications/${token}/request-changes`, data);
+  const response = await publicApiClient.post(`/public/client-verifications/${token}/request-changes`, data);
   return response.data;
 };
 
 export const rejectVerification = async (token: string, data: { verifierName: string; verifierEmail?: string; comments: string; digitalConfirmation: boolean }): Promise<ClientVerificationDTO> => {
-  const response = await apiClient.post(`/client-verifications/${token}/reject`, data);
+  const response = await publicApiClient.post(`/public/client-verifications/${token}/reject`, data);
   return response.data;
 };
 
 export const getWorkflowHistory = async (opportunityId: string): Promise<WorkflowHistoryDTO[]> => {
   const response = await apiClient.get(`/opportunities/${opportunityId}/approval-history`);
+  return response.data;
+};
+
+export const regenerateClientVerification = async (id: string): Promise<{ token: string }> => {
+  const response = await apiClient.post(`/client-verifications/${id}/regenerate`);
+  return response.data;
+};
+
+export const revokeClientVerification = async (id: string): Promise<void> => {
+  await apiClient.post(`/client-verifications/${id}/revoke`);
+};
+
+export const getVerificationLink = async (id: string): Promise<{ token: string }> => {
+  const response = await apiClient.get(`/client-verifications/${id}/link`);
   return response.data;
 };

@@ -4,7 +4,7 @@ import { createClientVerification } from '../services/ApprovalApi';
 
 interface GenerateClientVerificationModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose: (token?: string) => void;
   projectBriefId: string;
   opportunityId?: string;
 }
@@ -29,7 +29,7 @@ export const GenerateClientVerificationModal: React.FC<GenerateClientVerificatio
     try {
       setLoading(true);
       setError(null);
-      const data: any = {};
+      const data: Record<string, string> = {};
       if (verifierName) data.verifierName = verifierName;
       if (verifierEmail) data.verifierEmail = verifierEmail;
       if (expiresAt) {
@@ -60,10 +60,11 @@ export const GenerateClientVerificationModal: React.FC<GenerateClientVerificatio
     setVerifierName('');
     setVerifierEmail('');
     setExpiresAt('');
+    const tokenToReturn = generatedLink ? generatedLink.split('/').pop() : undefined;
     setGeneratedLink(null);
     setCopySuccess(false);
     setError(null);
-    onClose();
+    onClose(tokenToReturn);
   };
 
   return (

@@ -62,6 +62,8 @@ public class BdmApprovalIntegrationTest {
     @Autowired
     private SalesOpportunityRepository opportunityRepository;
     @Autowired
+    private com.knoweb.salesmanagement.approval.service.ClientVerificationService clientVerificationService;
+    @Autowired
     private DepartmentRepository departmentRepository;
     @Autowired
     private UserRepository userRepository;
@@ -147,7 +149,7 @@ public class BdmApprovalIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin@test.com", authorities = {"PROJECT_BRIEF_UPDATE", "BDM_APPROVAL_READ", "BDM_APPROVAL_DECIDE"})
+    @WithMockUser(username = "admin@test.com", authorities = {"PROJECT_BRIEF_UPDATE", "BDM_APPROVAL_READ", "BDM_APPROVAL_DECIDE", "CLIENT_VERIFICATION_CREATE"})
     public void testProjectBriefSubmissionCreatesApprovalRequest() {
         ProjectBriefSubmitRequest req = new ProjectBriefSubmitRequest();
         projectBriefService.submitProjectBrief(brief.getId(), req);
@@ -185,7 +187,54 @@ public class BdmApprovalIntegrationTest {
         decisionReq.setComments("Looks good");
         bdmApprovalService.approve(brief.getId(), decisionReq);
 
-        pendingQueue = bdmApprovalService.getPendingApprovals();
-        assertFalse(pendingQueue.stream().anyMatch(a -> a.getId().equals(approval.getId())));
+
+        // test approval updates the Brief to BDM_APPROVED
+        ProjectBrief updatedBrief = projectBriefRepository.findById(brief.getId()).orElseThrow();
+        assertEquals(ProjectBriefStatus.BDM_APPROVED, updatedBrief.getStatus());
+
+        // Test Client Verification can be created after approval (and exact version is referenced)
+        com.knoweb.salesmanagement.approval.dto.ClientVerificationRequest cvReq = new com.knoweb.salesmanagement.approval.dto.ClientVerificationRequest();
+        cvReq.setVerifierName("Test Client");
+        cvReq.setVerifierEmail("test@client.com");
+        String token = clientVerificationService.createVerification(brief.getId(), cvReq);
+        assertNotNull(token);
+    }
+
+    @Test
+    @WithMockUser(username = "admin@test.com", authorities = {"PROJECT_BRIEF_UPDATE", "BDM_APPROVAL_READ", "BDM_APPROVAL_DECIDE", "CLIENT_VERIFICATION_CREATE"})
+    public void testClientVerificationFailsIfBriefNotApproved() {
+        ProjectBriefSubmitRequest req = new ProjectBriefSubmitRequest();
+        projectBriefService.submitProjectBrief(brief.getId(), req);
+
+        com.knoweb.salesmanagement.approval.dto.ClientVerificationRequest cvReq = new com.knoweb.salesmanagement.approval.dto.ClientVerificationRequest();
+        cvReq.setVerifierName("Test Client");
+        
+        // unapproved Brief still returns 409 (since the brief is AWAITING_BDM_REVIEW, not BDM_APPROVED)
+        assertThrows(com.knoweb.salesmanagement.common.exception.ResourceConflictException.class, () -> {
+            clientVerificationService.createVerification(brief.getId(), cvReq);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = "admin@test.com", authorities = {"PROJECT_BRIEF_UPDATE", "BDM_APPROVAL_READ", "BDM_APPROVAL_DECIDE"})
+    public void testTransactionRollsBackFullyOnFailure() {
+        ProjectBriefSubmitRequest req = new ProjectBriefSubmitRequest();
+        projectBriefService.submitProjectBrief(brief.getId(), req);
+        
+        BdmDecisionRequest decisionReq = new BdmDecisionRequest();
+        // Missing comments for rejection throws exception
+        assertThrows(IllegalArgumentException.class, () -> {
+            bdmApprovalService.reject(brief.getId(), decisionReq);
+        });
+        
+        // Ensure brief state did not change
+        ProjectBrief unchangedBrief = projectBriefRepository.findById(brief.getId()).orElseThrow();
+        assertEquals(ProjectBriefStatus.AWAITING_BDM_REVIEW, unchangedBrief.getStatus());
+        
+        // Ensure approval status did not change
+        BdmApproval approval = bdmApprovalRepository.findByProjectBriefIdAndProjectBriefVersionNumberAndStatus(
+                brief.getId(), brief.getCurrentVersionNumber(), BdmApprovalStatus.PENDING).orElse(null);
+        assertNotNull(approval);
+        assertEquals(BdmApprovalStatus.PENDING, approval.getStatus());
     }
 }

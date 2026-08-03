@@ -32,6 +32,9 @@ public class ClientVerification {
     @Column(name = "token_hash", nullable = false, length = 255)
     private String tokenHash;
 
+    @Column(name = "encrypted_token", length = 255)
+    private String encryptedToken;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private ClientVerificationStatus status;
@@ -81,6 +84,8 @@ public class ClientVerification {
     public void setProjectBriefVersionNumber(Integer projectBriefVersionNumber) { this.projectBriefVersionNumber = projectBriefVersionNumber; }
     public String getTokenHash() { return tokenHash; }
     public void setTokenHash(String tokenHash) { this.tokenHash = tokenHash; }
+    public String getEncryptedToken() { return encryptedToken; }
+    public void setEncryptedToken(String encryptedToken) { this.encryptedToken = encryptedToken; }
     public ClientVerificationStatus getStatus() { return status; }
     public void setStatus(ClientVerificationStatus status) { this.status = status; }
     public String getVerifierName() { return verifierName; }
