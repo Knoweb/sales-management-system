@@ -72,7 +72,11 @@ public class DatabaseCreationInitializer implements ApplicationContextInitialize
             }
 
         } catch (Exception e) {
-            logger.error("Failed to check or create database '{}'. Ensure the configured user has CREATEDB permissions.", dbName);
+            if (e.getMessage() != null && e.getMessage().contains("too many clients")) {
+                logger.error("Failed to check or create database '{}'. PostgreSQL connection limit reached (too many clients).", dbName);
+            } else {
+                logger.error("Failed to check or create database '{}'. Ensure the configured user has CREATEDB permissions.", dbName);
+            }
             throw new IllegalStateException("Failed to initialize database: " + dbName, e);
         }
     }

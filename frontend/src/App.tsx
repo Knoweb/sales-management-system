@@ -17,6 +17,9 @@ import { EmployeesPage } from './pages/EmployeesPage';
 import { EmployeeDetailsPage } from './pages/EmployeeDetailsPage';
 import SalesOpportunitiesPage from './pages/SalesOpportunitiesPage';
 import SalesOpportunityDetailsPage from './pages/SalesOpportunityDetailsPage';
+import { BdmApprovalsPage } from './pages/BdmApprovalsPage';
+import { BdmReviewPage } from './pages/BdmReviewPage';
+import { ClientVerificationPage } from './pages/ClientVerificationPage';
 import ProjectBriefEditor from './pages/ProjectBriefEditor';
 import ProductCategoriesPage from './pages/ProductCategoriesPage';
 import { EmployeeFormPage } from './pages/EmployeeFormPage';
@@ -41,9 +44,22 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           {/* Removed from here */}
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
+          <Route path="/client-verification/:token" element={<ClientVerificationPage />} />
           
           <Route element={<ProtectedRoute><AuthenticatedLayout /></ProtectedRoute>}>
             <Route path="/dashboard" element={<DashboardPage />} />
+            
+            <Route path="/bdm-approvals" element={
+              <ProtectedRoute requiredPermission="BDM_APPROVAL_READ">
+                <BdmApprovalsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/bdm-approvals/:id" element={
+              <ProtectedRoute requiredPermission="BDM_APPROVAL_DECIDE">
+                <BdmReviewPage />
+              </ProtectedRoute>
+            } />
+
             
             <Route path="/users" element={
               <ProtectedRoute requiredPermission="USER_READ">
@@ -145,6 +161,11 @@ function App() {
             <Route path="/opportunities/:id" element={
               <ProtectedRoute requiredPermission="OPPORTUNITY_READ">
                 <SalesOpportunityDetailsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/opportunities/:opportunityId/project-brief" element={
+              <ProtectedRoute requiredPermission="PROJECT_BRIEF_READ">
+                <ProjectBriefEditor />
               </ProtectedRoute>
             } />
             <Route path="/project-briefs/:id" element={

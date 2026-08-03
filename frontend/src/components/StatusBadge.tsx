@@ -7,10 +7,22 @@ export interface StatusBadgeProps {
   className?: string;
 }
 
+const formatStatus = (s: string) => {
+  return s
+    .toLowerCase()
+    .replace(/_/g, ' ')
+    .split(' ')
+    .map(word => {
+      if (word === 'bdm') return 'BDM';
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(' ');
+};
+
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, variant = 'neutral', className = '' }) => {
   return (
     <span className={`badge badge-${variant} ${className}`.trim()}>
-      {status.replace(/_/g, ' ')}
+      {formatStatus(status)}
     </span>
   );
 };

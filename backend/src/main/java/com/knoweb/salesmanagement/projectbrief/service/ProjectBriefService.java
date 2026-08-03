@@ -1,7 +1,7 @@
 package com.knoweb.salesmanagement.projectbrief.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import com.knoweb.salesmanagement.common.exception.ProjectBriefSnapshotException;
 import com.knoweb.salesmanagement.common.exception.ResourceNotFoundException;
 import com.knoweb.salesmanagement.common.exception.ResourceConflictException;
 import com.knoweb.salesmanagement.department.entity.Department;
@@ -24,6 +24,7 @@ import com.knoweb.salesmanagement.projectbrief.util.ProjectBriefDeadlineUtil;
 import com.knoweb.salesmanagement.user.entity.User;
 import com.knoweb.salesmanagement.user.repository.UserRepository;
 import com.knoweb.salesmanagement.notification.service.NotificationService;
+import com.knoweb.salesmanagement.approval.service.WorkflowTransitionService;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -37,6 +38,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.knoweb.salesmanagement.approval.repository.BdmApprovalRepository;
+import com.knoweb.salesmanagement.approval.entity.BdmApproval;
+import com.knoweb.salesmanagement.approval.enums.BdmApprovalStatus;
+
 @Service
 public class ProjectBriefService {
 
@@ -49,7 +54,9 @@ public class ProjectBriefService {
     private final EmployeeRepository employeeRepository;
     private final SalesOpportunityService opportunityService;
     private final NotificationService notificationService;
-    private final ObjectMapper objectMapper;
+    private final WorkflowTransitionService workflowTransitionService;
+    private final JsonMapper jsonMapper;
+    private final BdmApprovalRepository bdmApprovalRepository;
 
     public ProjectBriefService(ProjectBriefRepository projectBriefRepository,
                                ProjectBriefVersionRepository versionRepository,
@@ -60,7 +67,9 @@ public class ProjectBriefService {
                                EmployeeRepository employeeRepository,
                                SalesOpportunityService opportunityService,
                                NotificationService notificationService,
-                               @org.springframework.beans.factory.annotation.Autowired(required = false) ObjectMapper objectMapper) {
+                               WorkflowTransitionService workflowTransitionService,
+                               JsonMapper jsonMapper,
+                               BdmApprovalRepository bdmApprovalRepository) {
         this.projectBriefRepository = projectBriefRepository;
         this.versionRepository = versionRepository;
         this.attachmentRepository = attachmentRepository;
@@ -70,13 +79,9 @@ public class ProjectBriefService {
         this.employeeRepository = employeeRepository;
         this.opportunityService = opportunityService;
         this.notificationService = notificationService;
-        if (objectMapper == null) {
-            this.objectMapper = new ObjectMapper();
-            this.objectMapper.findAndRegisterModules();
-            this.objectMapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        } else {
-            this.objectMapper = objectMapper;
-        }
+        this.workflowTransitionService = workflowTransitionService;
+        this.jsonMapper = jsonMapper;
+        this.bdmApprovalRepository = bdmApprovalRepository;
     }
 
     private User getAuthenticatedUser() {
@@ -100,7 +105,7 @@ public class ProjectBriefService {
     }
 
     private void validateWriteAccess(SalesOpportunity opportunity) {
-        if (hasAuthority("ROLE_SYSTEM_ADMIN")) return;
+        if (hasAuthority("PROJECT_BRIEF_UPDATE")) return;
         Employee currentEmployee = getCurrentEmployee();
         if (currentEmployee == null || opportunity.getAssignedSalesOfficer() == null || 
             !opportunity.getAssignedSalesOfficer().getId().equals(currentEmployee.getId())) {
@@ -109,7 +114,7 @@ public class ProjectBriefService {
     }
 
     private void validateReadAccess(SalesOpportunity opportunity) {
-        if (hasAuthority("ROLE_SYSTEM_ADMIN") || hasAuthority("ROLE_BDM") || hasAuthority("ROLE_TOP_MANAGEMENT")) return;
+        if (hasAuthority("PROJECT_BRIEF_READ")) return;
         Employee currentEmployee = getCurrentEmployee();
         if (currentEmployee == null || opportunity.getAssignedSalesOfficer() == null || 
             !opportunity.getAssignedSalesOfficer().getId().equals(currentEmployee.getId())) {
@@ -171,8 +176,11 @@ public class ProjectBriefService {
         
         validateWriteAccess(brief.getOpportunity());
 
-        if (brief.getStatus() != ProjectBriefStatus.DRAFT) {
-            throw new ResourceConflictException("Cannot update a submitted project brief directly");
+        if (brief.getStatus() != ProjectBriefStatus.DRAFT && 
+            brief.getStatus() != ProjectBriefStatus.BDM_RETURNED_FOR_REVISION && 
+            brief.getStatus() != ProjectBriefStatus.BDM_INFORMATION_REQUESTED && 
+            brief.getStatus() != ProjectBriefStatus.CLIENT_CHANGES_REQUESTED) {
+            throw new ResourceConflictException("Cannot update project brief in its current status: " + brief.getStatus());
         }
 
         if (request.getVersionNumber() != null && !request.getVersionNumber().equals(brief.getCurrentVersionNumber())) {
@@ -208,8 +216,11 @@ public class ProjectBriefService {
     public ProjectBriefDTO saveVersion(UUID briefId, ProjectBriefUpdateDraftRequest request) {
         ProjectBrief briefCheck = projectBriefRepository.findById(briefId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project brief not found"));
-        if (briefCheck.getStatus() != ProjectBriefStatus.DRAFT) {
-            throw new ResourceConflictException("Cannot create a new version for a submitted project brief");
+        if (briefCheck.getStatus() != ProjectBriefStatus.DRAFT && 
+            briefCheck.getStatus() != ProjectBriefStatus.BDM_RETURNED_FOR_REVISION && 
+            briefCheck.getStatus() != ProjectBriefStatus.BDM_INFORMATION_REQUESTED && 
+            briefCheck.getStatus() != ProjectBriefStatus.CLIENT_CHANGES_REQUESTED) {
+            throw new ResourceConflictException("Cannot create a new version for project brief in its current status: " + briefCheck.getStatus());
         }
 
         ProjectBriefDTO dto = updateDraft(briefId, request);
@@ -228,14 +239,18 @@ public class ProjectBriefService {
         ProjectBriefDTO snapshotDto = null;
         try {
             snapshotDto = mapToDTO(brief);
-            String jsonSnapshot = objectMapper.writeValueAsString(snapshotDto);
+            String jsonSnapshot = jsonMapper.writeValueAsString(snapshotDto);
             version.setSnapshot(jsonSnapshot);
         } catch (Exception e) {
             System.err.println("Failed to serialize snapshot: " + e.getMessage());
-            throw new IllegalStateException("Failed to serialize project brief snapshot", e);
+            throw new ProjectBriefSnapshotException("Failed to serialize project brief snapshot", e);
         }
 
-        versionRepository.save(version);
+        try {
+            versionRepository.saveAndFlush(version);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new ResourceConflictException("Version conflict! This version number was already created by another request. Please refresh and try again.");
+        }
         
         return snapshotDto != null ? snapshotDto : mapToDTO(brief);
     }
@@ -247,13 +262,17 @@ public class ProjectBriefService {
         
         validateWriteAccess(brief.getOpportunity());
 
-        if (brief.getStatus() == ProjectBriefStatus.SUBMITTED) {
-            throw new ResourceConflictException("Project brief is already submitted");
+        if (brief.getStatus() != ProjectBriefStatus.DRAFT && 
+            brief.getStatus() != ProjectBriefStatus.BDM_RETURNED_FOR_REVISION && 
+            brief.getStatus() != ProjectBriefStatus.BDM_INFORMATION_REQUESTED && 
+            brief.getStatus() != ProjectBriefStatus.CLIENT_CHANGES_REQUESTED) {
+            throw new ResourceConflictException("Project brief cannot be submitted from current status: " + brief.getStatus());
         }
 
         validateMandatorySubmissionFields(brief);
 
-        brief.setStatus(ProjectBriefStatus.SUBMITTED);
+        workflowTransitionService.submitProjectBrief(brief, getAuthenticatedUser());
+        
         brief.setSubmittedAt(OffsetDateTime.now());
         brief.setSubmittedBy(getAuthenticatedUser());
         
@@ -262,10 +281,9 @@ public class ProjectBriefService {
         brief = projectBriefRepository.save(brief);
 
         SalesOpportunity opp = brief.getOpportunity();
-        opp.setStage(OpportunityStage.BRIEF_SUBMITTED);
         opportunityRepository.save(opp);
 
-        opportunityService.logActivity(opp, "BRIEF_SUBMITTED", "Project Brief submitted");
+        opportunityService.logActivity(opp, "BRIEF_SUBMITTED", "Project Brief submitted for BDM Review");
 
         ProjectBriefVersion version = new ProjectBriefVersion();
         version.setProjectBrief(brief);
@@ -276,14 +294,29 @@ public class ProjectBriefService {
         ProjectBriefDTO snapshotDto = null;
         try {
             snapshotDto = mapToDTO(brief);
-            String jsonSnapshot = objectMapper.writeValueAsString(snapshotDto);
+            String jsonSnapshot = jsonMapper.writeValueAsString(snapshotDto);
             version.setSnapshot(jsonSnapshot);
         } catch (Exception e) {
             System.err.println("Failed to serialize snapshot: " + e.getMessage());
-            throw new IllegalStateException("Failed to serialize project brief snapshot", e);
+            throw new ProjectBriefSnapshotException("Failed to serialize project brief snapshot", e);
         }
 
-        versionRepository.save(version);
+        try {
+            versionRepository.saveAndFlush(version);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new ResourceConflictException("Version conflict! This version number was already created by another request. Please refresh and try again.");
+        }
+
+        if (bdmApprovalRepository.findByProjectBriefIdAndProjectBriefVersionNumberAndStatus(brief.getId(), brief.getCurrentVersionNumber(), BdmApprovalStatus.PENDING).isPresent()) {
+            throw new ResourceConflictException("An active BDM approval request already exists for this version.");
+        }
+
+        BdmApproval approval = new BdmApproval();
+        approval.setOpportunity(opp);
+        approval.setProjectBrief(brief);
+        approval.setProjectBriefVersionNumber(brief.getCurrentVersionNumber());
+        approval.setStatus(BdmApprovalStatus.PENDING);
+        bdmApprovalRepository.save(approval);
 
         List<User> bdms = userRepository.findByRolesCode("BDM");
         for (User bdm : bdms) {
@@ -349,8 +382,11 @@ public class ProjectBriefService {
                 .orElseThrow(() -> new ResourceNotFoundException("Project brief not found"));
         validateWriteAccess(brief.getOpportunity());
 
-        if (brief.getStatus() == ProjectBriefStatus.SUBMITTED) {
-            throw new ResourceConflictException("Cannot add attachments to a submitted project brief");
+        if (brief.getStatus() != ProjectBriefStatus.DRAFT && 
+            brief.getStatus() != ProjectBriefStatus.BDM_RETURNED_FOR_REVISION && 
+            brief.getStatus() != ProjectBriefStatus.BDM_INFORMATION_REQUESTED && 
+            brief.getStatus() != ProjectBriefStatus.CLIENT_CHANGES_REQUESTED) {
+            throw new ResourceConflictException("Cannot add attachments to project brief in its current status");
         }
         
         ProjectBriefAttachment attachment = new ProjectBriefAttachment();
@@ -371,8 +407,11 @@ public class ProjectBriefService {
                 .orElseThrow(() -> new ResourceNotFoundException("Project brief not found"));
         validateWriteAccess(brief.getOpportunity());
 
-        if (brief.getStatus() == ProjectBriefStatus.SUBMITTED) {
-            throw new ResourceConflictException("Cannot add attachments to a submitted project brief");
+        if (brief.getStatus() != ProjectBriefStatus.DRAFT && 
+            brief.getStatus() != ProjectBriefStatus.BDM_RETURNED_FOR_REVISION && 
+            brief.getStatus() != ProjectBriefStatus.BDM_INFORMATION_REQUESTED && 
+            brief.getStatus() != ProjectBriefStatus.CLIENT_CHANGES_REQUESTED) {
+            throw new ResourceConflictException("Cannot add attachments to project brief in its current status");
         }
 
         String originalFileName = org.springframework.util.StringUtils.cleanPath(java.util.Objects.requireNonNull(file.getOriginalFilename()));
@@ -458,8 +497,11 @@ public class ProjectBriefService {
                 .orElseThrow(() -> new ResourceNotFoundException("Project brief not found"));
         validateWriteAccess(brief.getOpportunity());
 
-        if (brief.getStatus() == ProjectBriefStatus.SUBMITTED) {
-            throw new ResourceConflictException("Cannot delete attachments from a submitted project brief");
+        if (brief.getStatus() != ProjectBriefStatus.DRAFT && 
+            brief.getStatus() != ProjectBriefStatus.BDM_RETURNED_FOR_REVISION && 
+            brief.getStatus() != ProjectBriefStatus.BDM_INFORMATION_REQUESTED && 
+            brief.getStatus() != ProjectBriefStatus.CLIENT_CHANGES_REQUESTED) {
+            throw new ResourceConflictException("Cannot delete attachments from project brief in its current status");
         }
 
         ProjectBriefAttachment attachment = attachmentRepository.findById(attachmentId)

@@ -13,6 +13,7 @@ import {
   type ProjectBriefVersionDTO,
   type ProjectBriefAttachmentDTO
 } from '../api/projectBriefApi';
+import { getOpportunity } from '../api/opportunityApi';
 import { DepartmentApi } from '../services/DepartmentApi';
 import type { Department } from '../types/department';
 import { PageHeader } from '../components/PageHeader';
@@ -23,10 +24,10 @@ import { ErrorState, LoadingState } from '../components/FeedbackStates';
 import { StatusBadge } from '../components/StatusBadge';
 import { Tabs, type TabItem } from '../components/Tabs';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/Table';
-import { FileText, Save, Send, History, Paperclip, Upload, Trash2, Download, AlertTriangle } from 'lucide-react';
+import { FileText, Save, Send, History, Paperclip, Upload, Trash2, Download, AlertTriangle, X } from 'lucide-react';
 
 const ProjectBriefEditor: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id, opportunityId } = useParams<{ id?: string, opportunityId?: string }>();
   const navigate = useNavigate();
   const [brief, setBrief] = useState<ProjectBriefDTO | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,6 +36,9 @@ const ProjectBriefEditor: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [conflictError, setConflictError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState('edit');
 
   const [allDepartments, setAllDepartments] = useState<Department[]>([]);
@@ -60,12 +64,25 @@ const ProjectBriefEditor: React.FC = () => {
     requiredDepartmentIds: [] as string[]
   });
 
-  const loadBrief = useCallback(async (briefId: string) => {
+  const loadBrief = useCallback(async (briefIdToLoad?: string, oppIdToLoad?: string) => {
     try {
       setLoading(true);
       setError(null);
       setConflictError(null);
-      const data = await getProjectBrief(briefId);
+      let data: ProjectBriefDTO;
+      if (briefIdToLoad) {
+        data = await getProjectBrief(briefIdToLoad);
+      } else if (oppIdToLoad) {
+        const opp = await getOpportunity(oppIdToLoad);
+        if (!opp.projectBrief?.id) {
+          setError('Project Brief not found for this opportunity');
+          setLoading(false);
+          return;
+        }
+        data = await getProjectBrief(opp.projectBrief.id);
+      } else {
+        return;
+      }
       setBrief(data);
       setFormData({
         projectTitle: data.projectTitle || '',
@@ -86,8 +103,8 @@ const ProjectBriefEditor: React.FC = () => {
 
       // Load auxiliary data asynchronously
       DepartmentApi.search().then(res => setAllDepartments(res.content || [])).catch(() => {});
-      getProjectBriefVersions(briefId).then(setVersions).catch(() => {});
-      getProjectBriefAttachments(briefId).then(setAttachments).catch(() => {});
+      getProjectBriefVersions(data.id).then(setVersions).catch(() => {});
+      getProjectBriefAttachments(data.id).then(setAttachments).catch(() => {});
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
       setError(e.response?.data?.message || 'Failed to load project brief');
@@ -97,11 +114,11 @@ const ProjectBriefEditor: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (id) {
+    if (id || opportunityId) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      loadBrief(id);
+      loadBrief(id, opportunityId);
     }
-  }, [id, loadBrief]);
+  }, [id, opportunityId, loadBrief]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -124,20 +141,25 @@ const ProjectBriefEditor: React.FC = () => {
   };
 
   const handleSaveDraft = async () => {
-    if (!id || !brief) return;
+    if (!brief?.id) return;
+    const currentId = brief.id;
     try {
       setSaving(true);
       setError(null);
       setConflictError(null);
-      const updated = await updateProjectBriefDraft(id, {
+      setSuccessMessage(null);
+      const updated = await updateProjectBriefDraft(currentId, {
         ...formData,
         expectedDeadline: formData.expectedDeadline ? new Date(formData.expectedDeadline).toISOString() : undefined,
       });
       setBrief(updated);
+      setLastSaved(new Date());
+      setSuccessMessage('Draft saved successfully');
+      setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: unknown) {
       const e = err as { response?: { status?: number, data?: { message?: string } } };
       if (e.response?.status === 409) {
-        setConflictError(e.response?.data?.message || 'Version conflict! Someone else updated this brief.');
+        setConflictError(e.response?.data?.message ?? 'This action is not allowed in the current workflow state.');
       } else {
         setError(e.response?.data?.message || 'Failed to save draft');
       }
@@ -147,22 +169,26 @@ const ProjectBriefEditor: React.FC = () => {
   };
 
   const handleSaveVersion = async () => {
-    if (!id || !brief) return;
+    if (!brief?.id) return;
+    const currentId = brief.id;
     try {
       setSaving(true);
       setError(null);
       setConflictError(null);
-      const updated = await saveProjectBriefVersion(id, {
+      setSuccessMessage(null);
+      const updated = await saveProjectBriefVersion(currentId, {
         ...formData,
         expectedDeadline: formData.expectedDeadline ? new Date(formData.expectedDeadline).toISOString() : undefined,
       });
       setBrief(updated);
-      const vers = await getProjectBriefVersions(id);
+      const vers = await getProjectBriefVersions(currentId);
       setVersions(vers);
+      setSuccessMessage(`Version ${updated.currentVersionNumber} created successfully`);
+      setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: unknown) {
       const e = err as { response?: { status?: number, data?: { message?: string } } };
       if (e.response?.status === 409) {
-        setConflictError(e.response?.data?.message || 'Version conflict! Someone else updated this brief.');
+        setConflictError(e.response?.data?.message ?? 'This action is not allowed in the current workflow state.');
       } else {
         setError(e.response?.data?.message || 'Failed to save version');
       }
@@ -171,8 +197,31 @@ const ProjectBriefEditor: React.FC = () => {
     }
   };
 
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    if (!formData.projectTitle) errors.projectTitle = 'Project Title is required';
+    if (!formData.expectedDeadline) errors.expectedDeadline = 'Expected Deadline is required';
+    if (!formData.businessProblem) errors.businessProblem = 'Business Problem is required';
+    if (!formData.requiredSolution) errors.requiredSolution = 'Required Solution is required';
+    if (!formData.projectScope) errors.projectScope = 'Project Scope is required';
+    if (!formData.technicalRequirements) errors.technicalRequirements = 'Technical Requirements is required';
+    if (formData.expectedBudget <= 0) errors.expectedBudget = 'Expected Budget must be greater than 0';
+    if (!formData.currency) errors.currency = 'Currency is required';
+    if (formData.requiredDepartmentIds.length === 0) errors.requiredDepartmentIds = 'At least one department is required';
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async () => {
-    if (!id || !brief) return;
+    if (!brief?.id) return;
+    const currentId = brief.id;
+    
+    if (!validateForm()) {
+      setError('Please fill in all required fields before submitting.');
+      return;
+    }
+
     if (!window.confirm('Are you sure you want to submit this Project Brief? Submitted briefs become read-only.')) {
       return;
     }
@@ -180,20 +229,21 @@ const ProjectBriefEditor: React.FC = () => {
       setSubmitting(true);
       setError(null);
       setConflictError(null);
+      setSuccessMessage(null);
       
       // Save draft first
-      await updateProjectBriefDraft(id, {
+      await updateProjectBriefDraft(currentId, {
         ...formData,
         expectedDeadline: formData.expectedDeadline ? new Date(formData.expectedDeadline).toISOString() : undefined,
       });
 
       // Submit
-      await submitProjectBrief(id, { confirmation: true });
+      await submitProjectBrief(currentId, { confirmation: true });
       navigate(`/opportunities/${brief.opportunityId}`);
     } catch (err: unknown) {
       const e = err as { response?: { status?: number, data?: { message?: string } } };
       if (e.response?.status === 409) {
-        setConflictError(e.response?.data?.message || 'Conflict! Cannot submit brief.');
+        setConflictError(e.response?.data?.message ?? 'This action is not allowed in the current workflow state.');
       } else {
         setError(e.response?.data?.message || 'Failed to submit brief');
       }
@@ -203,13 +253,14 @@ const ProjectBriefEditor: React.FC = () => {
   };
 
   const handleUploadFile = async () => {
-    if (!id || !selectedFile) return;
+    if (!brief?.id || !selectedFile) return;
+    const currentId = brief.id;
     try {
       setUploading(true);
       setError(null);
-      await uploadProjectBriefAttachment(id, selectedFile);
+      await uploadProjectBriefAttachment(currentId, selectedFile);
       setSelectedFile(null);
-      const atts = await getProjectBriefAttachments(id);
+      const atts = await getProjectBriefAttachments(currentId);
       setAttachments(atts);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
@@ -220,9 +271,10 @@ const ProjectBriefEditor: React.FC = () => {
   };
 
   const handleDeleteAttachment = async (attId: string) => {
-    if (!id || !window.confirm('Are you sure you want to delete this attachment?')) return;
+    if (!brief?.id || !window.confirm('Are you sure you want to delete this attachment?')) return;
+    const currentId = brief.id;
     try {
-      await deleteProjectBriefAttachment(id, attId);
+      await deleteProjectBriefAttachment(currentId, attId);
       setAttachments(prev => prev.filter(a => a.id !== attId));
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
@@ -231,10 +283,11 @@ const ProjectBriefEditor: React.FC = () => {
   };
 
   if (loading) return <div className="p-6 max-w-7xl mx-auto"><LoadingState message="Loading project brief..." /></div>;
-  if (error && !brief) return <div className="p-6 max-w-7xl mx-auto"><ErrorState message={error} onRetry={() => id && loadBrief(id)} /></div>;
+  if (error && !brief) return <div className="p-6 max-w-7xl mx-auto"><ErrorState message={error} onRetry={() => (id || opportunityId) && loadBrief(id, opportunityId)} /></div>;
   if (!brief) return <div className="p-6 max-w-7xl mx-auto"><ErrorState message="Brief not found" /></div>;
 
-  const isReadOnly = brief.status === 'SUBMITTED';
+  const isEditableStatus = ['DRAFT', 'BDM_RETURNED_FOR_REVISION', 'BDM_INFORMATION_REQUESTED', 'CLIENT_CHANGES_REQUESTED'].includes(brief.status);
+  const isReadOnly = !isEditableStatus;
 
   const tabs: TabItem[] = [
     { id: 'edit', label: 'Brief Details', icon: <FileText size={18} /> },
@@ -261,7 +314,7 @@ const ProjectBriefEditor: React.FC = () => {
             <AlertTriangle />
             <span>{conflictError}</span>
           </div>
-          <Button variant="outline" onClick={() => id && loadBrief(id)}>Reload Latest</Button>
+          <Button variant="outline" onClick={() => (id || opportunityId) && loadBrief(id, opportunityId)}>Reload Latest</Button>
         </div>
       )}
 
@@ -274,131 +327,171 @@ const ProjectBriefEditor: React.FC = () => {
           onChange={setActiveTab}
         />
 
-        {!isReadOnly && activeTab === 'edit' && (
-          <div className="flex gap-2 shrink-0">
-            <Button variant="outline" onClick={handleSaveDraft} isLoading={saving} icon={<Save />}>
-              Save Draft
-            </Button>
-            <Button variant="secondary" onClick={handleSaveVersion} isLoading={saving} icon={<History />}>
-              Save Version
-            </Button>
-            <Button variant="primary" onClick={handleSubmit} isLoading={submitting} icon={<Send />}>
-              Submit Brief
-            </Button>
-          </div>
-        )}
+
       </div>
 
       <div className="mt-6">
         {activeTab === 'edit' && (
-          <Card>
-            <div className="flex flex-col gap-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Input
-                  label="Project Title"
-                  type="text"
-                  name="projectTitle"
-                  value={formData.projectTitle}
+          <>
+            <Card>
+              <div className="flex flex-col gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Input
+                    label="Project Title"
+                    type="text"
+                    name="projectTitle"
+                    value={formData.projectTitle}
+                    onChange={handleChange}
+                    disabled={isReadOnly}
+                    error={validationErrors.projectTitle}
+                    required
+                  />
+                  <Input
+                    label="Expected Deadline"
+                    type="date"
+                    name="expectedDeadline"
+                    value={formData.expectedDeadline}
+                    onChange={handleChange}
+                    disabled={isReadOnly}
+                    error={validationErrors.expectedDeadline}
+                    required
+                  />
+                </div>
+
+                <Textarea
+                  label="Business Problem"
+                  name="businessProblem"
+                  value={formData.businessProblem}
                   onChange={handleChange}
                   disabled={isReadOnly}
+                  error={validationErrors.businessProblem}
+                  rows={3}
+                  placeholder="Describe the business problem..."
                   required
                 />
-                <Input
-                  label="Expected Deadline"
-                  type="date"
-                  name="expectedDeadline"
-                  value={formData.expectedDeadline}
+
+                <Textarea
+                  label="Required Solution"
+                  name="requiredSolution"
+                  value={formData.requiredSolution}
                   onChange={handleChange}
                   disabled={isReadOnly}
+                  error={validationErrors.requiredSolution}
+                  rows={3}
+                  placeholder="Describe the required solution..."
                   required
                 />
-              </div>
 
-              <Textarea
-                label="Business Problem"
-                name="businessProblem"
-                value={formData.businessProblem}
-                onChange={handleChange}
-                disabled={isReadOnly}
-                rows={3}
-                placeholder="Describe the business problem..."
-                required
-              />
-
-              <Textarea
-                label="Required Solution"
-                name="requiredSolution"
-                value={formData.requiredSolution}
-                onChange={handleChange}
-                disabled={isReadOnly}
-                rows={3}
-                placeholder="Describe the required solution..."
-                required
-              />
-
-              <Textarea
-                label="Project Scope"
-                name="projectScope"
-                value={formData.projectScope}
-                onChange={handleChange}
-                disabled={isReadOnly}
-                rows={3}
-                placeholder="Detail the scope of work..."
-                required
-              />
-
-              <Textarea
-                label="Technical Requirements"
-                name="technicalRequirements"
-                value={formData.technicalRequirements}
-                onChange={handleChange}
-                disabled={isReadOnly}
-                rows={3}
-                placeholder="List technical constraints and stack..."
-                required
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Input
-                  label="Expected Budget"
-                  type="number"
-                  name="expectedBudget"
-                  value={formData.expectedBudget}
+                <Textarea
+                  label="Project Scope"
+                  name="projectScope"
+                  value={formData.projectScope}
                   onChange={handleChange}
                   disabled={isReadOnly}
+                  error={validationErrors.projectScope}
+                  rows={3}
+                  placeholder="Detail the scope of work..."
                   required
-                  min="0"
                 />
-                <Input
-                  label="Currency"
-                  type="text"
-                  name="currency"
-                  value={formData.currency}
+
+                <Textarea
+                  label="Technical Requirements"
+                  name="technicalRequirements"
+                  value={formData.technicalRequirements}
                   onChange={handleChange}
                   disabled={isReadOnly}
+                  error={validationErrors.technicalRequirements}
+                  rows={3}
+                  placeholder="List technical constraints and stack..."
                   required
                 />
-              </div>
 
-              <div>
-                <label className="form-label mb-2 block">Required Departments <span className="form-required">*</span></label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 p-4 border border-border rounded-md bg-surface-secondary">
-                  {allDepartments.map(dept => {
-                    const checked = formData.requiredDepartmentIds.includes(dept.id);
-                    return (
-                      <Checkbox
-                        key={dept.id}
-                        label={dept.name}
-                        checked={checked}
-                        onChange={() => !isReadOnly && handleDepartmentToggle(dept.id)}
-                        disabled={isReadOnly}
-                      />
-                    );
-                  })}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Input
+                    label="Expected Budget"
+                    type="number"
+                    name="expectedBudget"
+                    value={formData.expectedBudget}
+                    onChange={handleChange}
+                    disabled={isReadOnly}
+                    error={validationErrors.expectedBudget}
+                    required
+                    min="0"
+                  />
+                  <Input
+                    label="Currency"
+                    type="text"
+                    name="currency"
+                    value={formData.currency}
+                    onChange={handleChange}
+                    disabled={isReadOnly}
+                    error={validationErrors.currency}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="form-label mb-2 block">Required Departments <span className="form-required">*</span></label>
+                  <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 p-4 border rounded-md ${validationErrors.requiredDepartmentIds ? 'border-danger bg-danger-bg' : 'border-border bg-surface-secondary'}`}>
+                    {allDepartments.map(dept => {
+                      const checked = formData.requiredDepartmentIds.includes(dept.id);
+                      return (
+                        <Checkbox
+                          key={dept.id}
+                          label={dept.name}
+                          checked={checked}
+                          onChange={() => !isReadOnly && handleDepartmentToggle(dept.id)}
+                          disabled={isReadOnly}
+                        />
+                      );
+                    })}
+                  </div>
+                  {validationErrors.requiredDepartmentIds && (
+                    <p className="form-error mt-2">
+                      <AlertTriangle size={12} className="inline mr-1" />
+                      {validationErrors.requiredDepartmentIds}
+                    </p>
+                  )}
                 </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+
+            {!isReadOnly && (
+              <div className="mt-8 sticky bottom-0 z-10 bg-surface border-t border-border p-4 flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 shadow-[0_-4px_10px_-4px_rgba(0,0,0,0.05)]">
+                <div className="flex flex-col gap-1 text-sm text-text-secondary">
+                  <div className="flex items-center gap-6">
+                    <span>Status: <strong className="text-text-primary font-semibold">{brief.status}</strong></span>
+                    <span>Current Version: <strong className="text-text-primary font-semibold">{brief.currentVersionNumber}</strong></span>
+                  </div>
+                  <div className="flex items-center gap-4 min-h-[20px]">
+                    {lastSaved && <span className="text-text-muted text-xs">Last saved: {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
+                    {successMessage && <span className="text-success text-xs font-medium">{successMessage}</span>}
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap justify-end gap-3 items-center">
+                  <Button variant="outline" onClick={() => navigate(-1)} disabled={saving || submitting} icon={<X size={18} />}>
+                    Cancel
+                  </Button>
+                  <Button variant="primary" onClick={handleSaveDraft} isLoading={saving} disabled={submitting} icon={<Save size={18} />}>
+                    {saving ? 'Saving Draft...' : 'Save Draft'}
+                  </Button>
+                  <Button variant="outline" onClick={handleSaveVersion} isLoading={saving} disabled={submitting} icon={<History size={18} />}>
+                    {saving ? 'Saving Version...' : 'Save Version'}
+                  </Button>
+                  <Button 
+                    variant="primary"
+                    onClick={handleSubmit} 
+                    isLoading={submitting} 
+                    disabled={saving} 
+                    icon={<Send size={18} />}
+                  >
+                    {submitting ? 'Submitting...' : 'Submit Brief'}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {activeTab === 'versions' && (

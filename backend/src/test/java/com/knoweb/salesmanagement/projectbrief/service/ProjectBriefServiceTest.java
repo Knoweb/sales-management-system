@@ -22,7 +22,9 @@ import com.knoweb.salesmanagement.projectbrief.repository.ProjectBriefRepository
 import com.knoweb.salesmanagement.projectbrief.repository.ProjectBriefVersionRepository;
 import com.knoweb.salesmanagement.user.entity.User;
 import com.knoweb.salesmanagement.user.repository.UserRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.knoweb.salesmanagement.approval.service.WorkflowTransitionService;
+import tools.jackson.databind.json.JsonMapper;
+import com.knoweb.salesmanagement.common.exception.ProjectBriefSnapshotException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -66,7 +68,11 @@ class ProjectBriefServiceTest {
     @Mock
     private NotificationService notificationService;
     @Mock
-    private ObjectMapper objectMapper;
+    private WorkflowTransitionService workflowTransitionService;
+    @Mock
+    private JsonMapper jsonMapper;
+    @Mock
+    private com.knoweb.salesmanagement.approval.repository.BdmApprovalRepository bdmApprovalRepository;
 
     @InjectMocks
     private ProjectBriefService projectBriefService;
@@ -103,7 +109,7 @@ class ProjectBriefServiceTest {
         draftBrief.setDueAt(OffsetDateTime.now().plusHours(24));
 
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken("admin@knoweb.com", "password", Collections.singletonList(new SimpleGrantedAuthority("ROLE_SYSTEM_ADMIN")))
+                new UsernamePasswordAuthenticationToken("admin@knoweb.com", "password", java.util.Arrays.asList(new SimpleGrantedAuthority("ROLE_SYSTEM_ADMIN"), new SimpleGrantedAuthority("PROJECT_BRIEF_UPDATE"), new SimpleGrantedAuthority("PROJECT_BRIEF_READ")))
         );
     }
 
@@ -126,7 +132,7 @@ class ProjectBriefServiceTest {
         when(projectBriefRepository.findById(briefId)).thenReturn(Optional.of(draftBrief));
         when(projectBriefRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(adminUser));
-        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+        when(jsonMapper.writeValueAsString(any())).thenReturn("{\"snapshot\": true}");
 
         ProjectBriefUpdateDraftRequest request = new ProjectBriefUpdateDraftRequest();
         request.setProjectTitle("Version Title");
@@ -135,7 +141,7 @@ class ProjectBriefServiceTest {
         ProjectBriefDTO result = projectBriefService.saveVersion(briefId, request);
 
         assertNotNull(result);
-        verify(versionRepository).save(any());
+        verify(versionRepository).saveAndFlush(any());
         verify(notificationService, never()).createNotification(any(), eq("PROJECT_BRIEF_SUBMITTED"), any(), any(), any(), any(), any());
     }
 
@@ -158,14 +164,20 @@ class ProjectBriefServiceTest {
         when(projectBriefRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(adminUser));
         when(userRepository.findByRolesCode("BDM")).thenReturn(Collections.singletonList(bdmUser));
-        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+        when(jsonMapper.writeValueAsString(any())).thenReturn("{\"snapshot\": true}");
+        
+        doAnswer(inv -> {
+            ProjectBrief b = inv.getArgument(0);
+            b.setStatus(ProjectBriefStatus.AWAITING_BDM_REVIEW);
+            return null;
+        }).when(workflowTransitionService).submitProjectBrief(any(), any());
 
         ProjectBriefSubmitRequest request = new ProjectBriefSubmitRequest();
         request.setVersionNumber(1);
 
         ProjectBriefDTO result = projectBriefService.submitProjectBrief(briefId, request);
 
-        assertEquals(ProjectBriefStatus.SUBMITTED, result.getStatus());
+        assertEquals(ProjectBriefStatus.AWAITING_BDM_REVIEW, result.getStatus());
         verify(notificationService).createNotification(
                 eq(bdmUser),
                 eq("PROJECT_BRIEF_SUBMITTED"),
@@ -230,6 +242,66 @@ class ProjectBriefServiceTest {
         assertThrows(ResourceConflictException.class, () ->
                 projectBriefService.updateDraft(briefId, request)
         );
+    }
+
+    @Test
+    void testSaveVersion_ThrowsConflictOnDuplicateVersion() throws Exception {
+        when(projectBriefRepository.findById(briefId)).thenReturn(Optional.of(draftBrief));
+        when(projectBriefRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(adminUser));
+        when(jsonMapper.writeValueAsString(any())).thenReturn("{\"snapshot\": true}");
+        
+        doThrow(new org.springframework.dao.DataIntegrityViolationException("Constraint violation"))
+            .when(versionRepository).saveAndFlush(any());
+
+        ProjectBriefUpdateDraftRequest request = new ProjectBriefUpdateDraftRequest();
+
+        ResourceConflictException ex = assertThrows(ResourceConflictException.class, () ->
+                projectBriefService.saveVersion(briefId, request)
+        );
+        assertTrue(ex.getMessage().contains("Version conflict"));
+    }
+
+    @Test
+    void testSaveVersion_FailsOnSerialization() throws Exception {
+        when(projectBriefRepository.findById(briefId)).thenReturn(Optional.of(draftBrief));
+        when(projectBriefRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(adminUser));
+        when(jsonMapper.writeValueAsString(any())).thenThrow(new tools.jackson.core.JacksonException("Serialization failed") {});
+
+        ProjectBriefUpdateDraftRequest request = new ProjectBriefUpdateDraftRequest();
+
+        ProjectBriefSnapshotException ex = assertThrows(ProjectBriefSnapshotException.class, () ->
+                projectBriefService.saveVersion(briefId, request)
+        );
+        assertTrue(ex.getMessage().contains("Failed to serialize project brief snapshot"));
+        verify(versionRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void testSubmitProjectBrief_FailsOnSubmittedBrief() {
+        draftBrief.setStatus(ProjectBriefStatus.SUBMITTED);
+        when(projectBriefRepository.findById(briefId)).thenReturn(Optional.of(draftBrief));
+
+        ProjectBriefSubmitRequest request = new ProjectBriefSubmitRequest();
+
+        assertThrows(ResourceConflictException.class, () ->
+                projectBriefService.submitProjectBrief(briefId, request)
+        );
+    }
+
+    @Test
+    void testUpdateDraft_SucceedsWhenReturnedForRevision() {
+        draftBrief.setStatus(ProjectBriefStatus.BDM_RETURNED_FOR_REVISION);
+        when(projectBriefRepository.findById(briefId)).thenReturn(Optional.of(draftBrief));
+        when(projectBriefRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        ProjectBriefUpdateDraftRequest request = new ProjectBriefUpdateDraftRequest();
+        request.setProjectTitle("Revised Title");
+
+        ProjectBriefDTO result = projectBriefService.updateDraft(briefId, request);
+        assertNotNull(result);
+        assertEquals("Revised Title", result.getProjectTitle());
     }
 
     @Test

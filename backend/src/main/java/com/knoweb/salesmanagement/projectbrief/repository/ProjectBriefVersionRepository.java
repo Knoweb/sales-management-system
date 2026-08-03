@@ -12,4 +12,5 @@ import java.util.UUID;
 public interface ProjectBriefVersionRepository extends JpaRepository<ProjectBriefVersion, UUID> {
     List<ProjectBriefVersion> findByProjectBriefIdOrderByVersionNumberDesc(UUID projectBriefId);
     Optional<ProjectBriefVersion> findByProjectBriefIdAndVersionNumber(UUID projectBriefId, Integer versionNumber);
+    List<ProjectBriefVersion> findBySubmittedVersionTrue();
 }

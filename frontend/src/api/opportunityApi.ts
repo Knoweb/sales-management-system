@@ -10,6 +10,12 @@ export interface OpportunityActivityDTO {
   createdByName: string;
 }
 
+export interface ProjectBriefSummaryDTO {
+  id: string;
+  status: string;
+  currentVersionNumber: number;
+}
+
 export interface SalesOpportunityDTO {
   id: string;
   opportunityNumber: string;
@@ -29,6 +35,7 @@ export interface SalesOpportunityDTO {
   assignedSalesOfficerName?: string;
   createdAt: string;
   updatedAt: string;
+  projectBrief?: ProjectBriefSummaryDTO;
   activities: OpportunityActivityDTO[];
 }
 

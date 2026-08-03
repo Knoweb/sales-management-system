@@ -5,7 +5,7 @@ import { useNavigate, Link, useLocation, Outlet } from 'react-router-dom';
 import { 
   LayoutDashboard, UsersRound, Building2, ContactRound, BadgeCheck, 
   Handshake, Target, CalendarClock, TrendingUp,
-  LogOut, Menu, X, Sun, Moon,
+  LogOut, Menu, X, Sun, Moon, ClipboardCheck,
   Briefcase /* keep if needed elsewhere */
 } from 'lucide-react';
 import NotificationsDropdown from './NotificationsDropdown';
@@ -41,6 +41,7 @@ export const AuthenticatedLayout: React.FC = () => {
     { name: 'Leads', path: '/leads', icon: <Target size={20} />, allowed: user?.permissions.includes('LEAD_READ') },
     { name: 'Follow-ups', path: '/follow-ups', icon: <CalendarClock size={20} />, allowed: user?.permissions.includes('LEAD_READ') },
     { name: 'Opportunities', path: '/opportunities', icon: <TrendingUp size={20} />, allowed: user?.permissions.includes('OPPORTUNITY_READ') },
+    { name: 'BDM Approvals', path: '/bdm-approvals', icon: <ClipboardCheck size={20} />, allowed: user?.permissions?.includes('BDM_APPROVAL_READ') || user?.permissions?.includes('BDM_APPROVAL_DECIDE') },
   ];
 
   return (

@@ -2,5 +2,14 @@ package com.knoweb.salesmanagement.projectbrief.enums;
 
 public enum ProjectBriefStatus {
     DRAFT,
-    SUBMITTED
+    SUBMITTED,
+    AWAITING_BDM_REVIEW,
+    BDM_APPROVED,
+    BDM_RETURNED_FOR_REVISION,
+    BDM_INFORMATION_REQUESTED,
+    BDM_REJECTED,
+    AWAITING_CLIENT_VERIFICATION,
+    CLIENT_VERIFIED,
+    CLIENT_CHANGES_REQUESTED,
+    CLIENT_REJECTED
 }
