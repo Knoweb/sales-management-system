@@ -114,10 +114,11 @@ export const DepartmentsPage: React.FC = () => {
                       <StatusBadge status={dept.active ? 'Active' : 'Inactive'} />
                     </TableCell>
                     <TableCell>{dept.employeeCount}</TableCell>
-                    <TableCell><span className="text-gray-500">Not Assigned</span></TableCell>
+                    <TableCell>{dept.activeHod ? `${dept.activeHod.firstName} ${dept.activeHod.lastName}` : <span className="text-gray-500">Not Assigned</span>}</TableCell>
                     <TableCell align="right">
                       <IconButton 
                         icon={<Eye size={16} />} 
+                        onClick={() => navigate(`/departments/${dept.id}`)}
                         title="View Details"
                         aria-label="View Details"
                       />

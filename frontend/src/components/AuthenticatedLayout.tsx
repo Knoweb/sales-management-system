@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate, Link, useLocation, Outlet } from 'react-router-dom';
@@ -6,10 +6,11 @@ import {
   LayoutDashboard, UsersRound, Building2, ContactRound, BadgeCheck, 
   Handshake, Target, CalendarClock, TrendingUp,
   LogOut, Menu, X, Sun, Moon, ClipboardCheck,
-  Briefcase /* keep if needed elsewhere */
+  Briefcase, Waypoints, Users
 } from 'lucide-react';
 import NotificationsDropdown from './NotificationsDropdown';
 import { IconButton } from './IconButton';
+import { EmployeeApi } from '../services/EmployeeApi';
 
 export const AuthenticatedLayout: React.FC = () => {
   const { user, logout } = useAuth();
@@ -17,6 +18,27 @@ export const AuthenticatedLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isDeptHead, setIsDeptHead] = useState(false);
+
+  const fetchedUserEmailRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const checkDeptHead = async () => {
+      if (user && fetchedUserEmailRef.current !== user.email) {
+        fetchedUserEmailRef.current = user.email;
+        try {
+          const profileRes = await EmployeeApi.getMyProfile();
+          setIsDeptHead(profileRes.linked && profileRes.departmentHead);
+        } catch {
+          setIsDeptHead(false);
+        }
+      } else if (!user) {
+        fetchedUserEmailRef.current = null;
+        setIsDeptHead(false);
+      }
+    };
+    checkDeptHead();
+  }, [user]);
 
   const handleLogout = () => {
     logout();
@@ -28,8 +50,6 @@ export const AuthenticatedLayout: React.FC = () => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSidebarOpen(false);
   }, [location.pathname]);
-
-  // Trap focus or handle accessibility when mobile menu opens could be added here
   
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} />, allowed: true },
@@ -42,6 +62,8 @@ export const AuthenticatedLayout: React.FC = () => {
     { name: 'Follow-ups', path: '/follow-ups', icon: <CalendarClock size={20} />, allowed: user?.permissions.includes('LEAD_READ') },
     { name: 'Opportunities', path: '/opportunities', icon: <TrendingUp size={20} />, allowed: user?.permissions.includes('OPPORTUNITY_READ') },
     { name: 'BDM Approvals', path: '/bdm-approvals', icon: <ClipboardCheck size={20} />, allowed: user?.permissions?.includes('BDM_APPROVAL_READ') || user?.permissions?.includes('BDM_APPROVAL_DECIDE') },
+    { name: 'Technical Projects', path: '/technical-projects', icon: <Waypoints size={20} />, allowed: user?.permissions?.includes('TECHNICAL_PROJECT_ROUTE') },
+    { name: 'Dept Projects', path: '/hod/projects', icon: <Users size={20} />, allowed: isDeptHead },
   ];
 
   return (

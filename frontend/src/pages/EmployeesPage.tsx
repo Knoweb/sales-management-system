@@ -3,7 +3,7 @@ import { EmployeeApi } from '../services/EmployeeApi';
 import { DepartmentApi } from '../services/DepartmentApi';
 import type { Employee } from '../types/employee';
 import type { Department } from '../types/department';
-import { ContactRound, Eye, Plus, Search, RefreshCw } from 'lucide-react';
+import { ContactRound, Eye, Plus, Search, RefreshCw, Edit2 } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -164,6 +164,14 @@ export const EmployeesPage: React.FC = () => {
                         aria-label="View Details"
                         icon={<Eye size={16} />}
                       />
+                      {user?.permissions.includes('EMPLOYEE_UPDATE') && (
+                        <IconButton 
+                          onClick={() => navigate(`/employees/${emp.id}/edit`)} 
+                          title="Edit Employee" 
+                          aria-label="Edit Employee"
+                          icon={<Edit2 size={16} />}
+                        />
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

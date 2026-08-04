@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Bell, CheckCheck } from 'lucide-react';
 import type { NotificationDTO } from '../api/notificationApi';
 import { getMyNotifications, markNotificationAsRead } from '../api/notificationApi';
@@ -6,14 +6,19 @@ import { Link } from 'react-router-dom';
 import { IconButton } from './IconButton';
 import { Button } from './Button';
 import { EmptyState, LoadingState } from './FeedbackStates';
+import { useAuth } from '../context/AuthContext';
 
 const NotificationsDropdown: React.FC = () => {
+  const { user } = useAuth();
+  const hasReadPermission = user?.permissions?.includes('NOTIFICATION_SELF_READ') ?? false;
+
   const [notifications, setNotifications] = useState<NotificationDTO[]>([]);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const loadNotifications = async (showLoading = false) => {
+  const loadNotifications = useCallback(async (showLoading = false) => {
+    if (!hasReadPermission) return;
     try {
       if (showLoading) setLoading(true);
       const data = await getMyNotifications();
@@ -23,14 +28,16 @@ const NotificationsDropdown: React.FC = () => {
     } finally {
       if (showLoading) setLoading(false);
     }
-  };
+  }, [hasReadPermission]);
 
   useEffect(() => {
+    if (!hasReadPermission) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadNotifications(true);
     const interval = setInterval(() => void loadNotifications(), 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [hasReadPermission, loadNotifications]);
+
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -43,6 +50,11 @@ const NotificationsDropdown: React.FC = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  if (!hasReadPermission) {
+    return null;
+  }
+
 
   const handleMarkAsRead = async (id: string, e?: React.MouseEvent) => {
     if (e) {

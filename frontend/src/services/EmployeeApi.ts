@@ -1,5 +1,5 @@
 import { apiClient } from './Api';
-import type { Employee, CreateEmployeeRequest, UpdateEmployeeRequest, LinkUserRequest } from '../types/employee';
+import type { Employee, CreateEmployeeRequest, UpdateEmployeeRequest, LinkUserRequest, EmployeeProfileResponse } from '../types/employee';
 import type { AssignEmployeeSkillRequest, EmployeeSkill, UpdateEmployeeSkillRequest } from '../types/skill';
 import type { EmployeeQualification, EmployeeQualificationRequest } from '../types/qualification';
 import type { EmployeeLeave, EmployeeLeaveRequest, LeaveStatus } from '../types/leave';
@@ -18,8 +18,8 @@ export const EmployeeApi = {
         return response.data;
     },
 
-    getMyProfile: async () => {
-        const response = await apiClient.get<Employee>('/employees/me');
+    getMyProfile: async (): Promise<EmployeeProfileResponse> => {
+        const response = await apiClient.get<EmployeeProfileResponse>('/employees/me');
         return response.data;
     },
 
@@ -113,3 +113,7 @@ export const EmployeeApi = {
         return response.data;
     }
 };
+
+
+
+

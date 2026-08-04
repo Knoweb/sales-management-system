@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { EmployeeApi } from '../services/EmployeeApi';
 import type { Employee } from '../types/employee';
 import type { EmployeeSkill } from '../types/skill';
 import type { EmployeeQualification } from '../types/qualification';
 import type { EmployeeLeave, LeaveStatus } from '../types/leave';
 import type { AvailabilityResponse } from '../types/availability';
-import { ContactRound, CheckCircle, BookOpen, Calendar, Clock, ArrowLeft } from 'lucide-react';
+import { ContactRound, CheckCircle, BookOpen, Calendar, Clock, ArrowLeft, Edit2 } from 'lucide-react';
 import { PermissionGuard } from '../components/PermissionGuard';
 import { EmployeeSkillForm } from '../components/EmployeeSkillForm';
 import { EmployeeQualificationForm } from '../components/EmployeeQualificationForm';
 import { EmployeeLeaveForm } from '../components/EmployeeLeaveForm';
 import { Tabs } from '../components/Tabs';
 import { PageHeader } from '../components/PageHeader';
+import { useAuth } from '../context/AuthContext';
 import { Card } from '../components/Card';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/Table';
 import { Button } from '../components/Button';
@@ -22,6 +23,8 @@ import { Input } from '../components/Forms';
 
 export const EmployeeDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [skills, setSkills] = useState<EmployeeSkill[]>([]);
   const [qualifications, setQualifications] = useState<EmployeeQualification[]>([]);
@@ -287,6 +290,12 @@ export const EmployeeDetailsPage: React.FC = () => {
         title={`${employee.firstName} ${employee.lastName}`}
         icon={<ContactRound size={24} />}
         description={`${employee.jobTitle} • ${employee.department?.name || 'No Department'}`}
+        actionButton={{
+          label: 'Edit Employee',
+          show: !!user?.permissions.includes('EMPLOYEE_UPDATE'),
+          onClick: () => navigate(`/employees/${employee.id}/edit`),
+          icon: <Edit2 size={16} />
+        }}
       />
 
       <Tabs tabs={tabItems} activeTab={activeTab} onChange={setActiveTab} />
@@ -337,7 +346,20 @@ export const EmployeeDetailsPage: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <span className="text-gray-500 font-medium">Linked User</span>
-                  <span className="col-span-2 text-gray-900">{employee.user ? employee.user.email : <span className="text-gray-400">None</span>}</span>
+                  <span className="col-span-2 text-gray-900">
+                    {employee.user ? (
+                      <div>
+                        <div>{employee.user.email}</div>
+                        {employee.user.roles && employee.user.roles.length > 0 && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            Role: {employee.user.roles.join(', ')}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">None</span>
+                    )}
+                  </span>
                 </div>
               </div>
             </Card>

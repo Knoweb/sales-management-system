@@ -46,18 +46,6 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
       previousFocusRef.current = document.activeElement as HTMLElement;
       document.body.style.overflow = 'hidden';
       document.addEventListener('keydown', handleKeyDown);
-      
-      // Auto-focus the first element or the modal itself
-      setTimeout(() => {
-        if (modalRef.current) {
-          const focusable = modalRef.current.querySelector<HTMLElement>('input, button:not(.modal-close), select, textarea');
-          if (focusable) {
-            focusable.focus();
-          } else {
-            modalRef.current.focus();
-          }
-        }
-      }, 10);
     } else {
       document.body.style.overflow = 'unset';
       if (previousFocusRef.current) {
@@ -70,6 +58,21 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => {
+        if (modalRef.current) {
+          const focusable = modalRef.current.querySelector<HTMLElement>('input, button:not(.modal-close), select, textarea');
+          if (focusable) {
+            focusable.focus();
+          } else {
+            modalRef.current.focus();
+          }
+        }
+      }, 10);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

@@ -32,7 +32,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/me")
-    public EmployeeDTO getMyProfile() {
+    public com.knoweb.salesmanagement.employee.dto.EmployeeProfileResponse getMyProfile() {
         return employeeService.getMyProfile();
     }
 

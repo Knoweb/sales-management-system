@@ -52,8 +52,15 @@ export interface UpdateEmployeeRequest {
     hireDate?: string;
     weeklyCapacityHours?: number;
     notes?: string;
+    userId?: string;
 }
 
 export interface LinkUserRequest {
     userId: string;
+}
+
+export interface EmployeeProfileResponse {
+    linked: boolean;
+    departmentHead: boolean;
+    employee: Employee | null;
 }

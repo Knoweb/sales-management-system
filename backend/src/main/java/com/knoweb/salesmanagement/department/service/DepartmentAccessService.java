@@ -58,6 +58,10 @@ public class DepartmentAccessService {
                 .anyMatch(role -> role.equals("ROLE_SYSTEM_ADMIN"));
     }
 
+    public boolean isActiveDepartmentHead(UUID employeeId) {
+        return departmentHeadRepository.findByEmployeeIdAndActiveTrue(employeeId).isPresent();
+    }
+
     public boolean isDepartmentHeadFor(UUID departmentId) {
         User currentUser = getAuthenticatedUser();
         if (currentUser == null) return false;
@@ -96,3 +100,4 @@ public class DepartmentAccessService {
         throw new org.springframework.security.access.AccessDeniedException("Access denied: Not authorized for this employee");
     }
 }
+

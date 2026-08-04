@@ -47,6 +47,16 @@ public class UpdateEmployeeRequest {
 
     private String notes;
 
+    private UUID userId;
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
+    }
+
     public UUID getDepartmentId() {
         return departmentId;
     }

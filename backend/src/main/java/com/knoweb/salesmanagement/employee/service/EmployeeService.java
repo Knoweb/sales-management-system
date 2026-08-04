@@ -89,14 +89,17 @@ public class EmployeeService {
     }
 
     @Transactional(readOnly = true)
-    public EmployeeDTO getMyProfile() {
+    public com.knoweb.salesmanagement.employee.dto.EmployeeProfileResponse getMyProfile() {
         User currentUser = accessService.getAuthenticatedUser();
         if (currentUser == null) {
             throw new ResourceNotFoundException("No authenticated user");
         }
-        Employee employee = employeeRepository.findByUserId(currentUser.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("No employee profile linked to your user account"));
-        return mapToDTO(employee);
+        java.util.Optional<Employee> employeeOpt = employeeRepository.findByUserId(currentUser.getId());
+        if (employeeOpt.isEmpty()) {
+            return new com.knoweb.salesmanagement.employee.dto.EmployeeProfileResponse(false, false, null);
+        }
+        EmployeeDTO dto = mapToDTO(employeeOpt.get());
+        return new com.knoweb.salesmanagement.employee.dto.EmployeeProfileResponse(true, dto.isDepartmentHead(), dto);
     }
 
     @Transactional(readOnly = true)
@@ -173,6 +176,19 @@ public class EmployeeService {
         employee.setHireDate(request.getHireDate());
         employee.setWeeklyCapacityHours(request.getWeeklyCapacityHours());
         employee.setNotes(request.getNotes());
+
+        if (request.getUserId() != null) {
+            User user = userRepository.findById(request.getUserId())
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            employeeRepository.findByUserId(request.getUserId()).ifPresent(existing -> {
+                if (!existing.getId().equals(id)) {
+                    throw new IllegalStateException("User is already linked to another employee");
+                }
+            });
+            employee.setUser(user);
+        } else {
+            employee.setUser(null);
+        }
 
         User currentUser = accessService.getAuthenticatedUser();
         if (currentUser != null) {
@@ -272,9 +288,9 @@ public class EmployeeService {
             dto.setUser(userDto);
         }
 
-        // We can check if they are the department head
-        dto.setDepartmentHead(false);
+        dto.setDepartmentHead(accessService.isActiveDepartmentHead(employee.getId()));
 
         return dto;
     }
 }
+

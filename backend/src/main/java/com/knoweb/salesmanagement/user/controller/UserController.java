@@ -43,8 +43,9 @@ public class UserController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Boolean active,
             @RequestParam(required = false) String roleCode,
+            @RequestParam(required = false) Boolean unlinked,
             Pageable pageable) {
-        return userService.searchUsers(search, active, roleCode, pageable);
+        return userService.searchUsers(search, active, roleCode, unlinked, pageable);
     }
 
     @GetMapping("/{id}")

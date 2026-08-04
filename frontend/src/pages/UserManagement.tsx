@@ -34,7 +34,7 @@ export const UserManagement: React.FC = () => {
     firstName: '',
     lastName: '',
     email: '',
-    role: 'USER',
+    role: 'ENGINEER',
     password: ''
   });
 
@@ -86,7 +86,7 @@ export const UserManagement: React.FC = () => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        role: user.roles[0] || 'USER',
+        role: user.roles[0] || 'ENGINEER',
         password: '' // Don't populate password on edit
       });
     } else {
@@ -95,7 +95,7 @@ export const UserManagement: React.FC = () => {
         firstName: '',
         lastName: '',
         email: '',
-        role: 'USER',
+        role: 'ENGINEER',
         password: ''
       });
     }
@@ -109,16 +109,29 @@ export const UserManagement: React.FC = () => {
     setFormError('');
     
     try {
-      // Stub for actual API call, replacing raw implementation if backend exists.
-      // If the backend doesn't support this yet, we just show a simulated success/error.
       if (selectedUser) {
-        await apiClient.put(`/users/${selectedUser.id}`, {
+        await apiClient.patch(`/users/${selectedUser.id}`, {
           firstName: formData.firstName,
           lastName: formData.lastName,
-          role: formData.role
+          email: formData.email
         });
+        
+        // Update roles separately if changed
+        const currentRole = selectedUser.roles[0] || 'ENGINEER';
+        if (currentRole !== formData.role) {
+          await apiClient.put(`/users/${selectedUser.id}/roles`, {
+            roleCodes: [formData.role]
+          });
+        }
       } else {
-        await apiClient.post('/users', formData);
+        await apiClient.post('/users', {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          temporaryPassword: formData.password,
+          roleCodes: [formData.role],
+          active: true
+        });
       }
       setIsModalOpen(false);
       handleRefresh();
@@ -299,10 +312,13 @@ export const UserManagement: React.FC = () => {
                 disabled={formLoading}
                 required
               >
-                <option value="USER">User</option>
-                <option value="HR_MANAGER">HR Manager</option>
-                <option value="SALES_MANAGER">Sales Manager</option>
+                <option value="ENGINEER">User</option>
+                <option value="BDM">Business Development Manager</option>
+                <option value="HOD">Head of Department</option>
+                <option value="TECHNICAL_COORDINATOR">Technical Coordinator</option>
                 <option value="SYSTEM_ADMIN">System Admin</option>
+                <option value="SALES_OFFICER">Sales Officer</option>
+                <option value="TOP_MANAGEMENT">Top Management</option>
               </Select>
             </FormField>
           </div>

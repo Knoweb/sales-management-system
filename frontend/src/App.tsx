@@ -11,6 +11,7 @@ import { NotFoundPage } from './pages/NotFoundPage';
 import { AuthenticatedLayout } from './components/AuthenticatedLayout';
 import { DepartmentsPage } from './pages/DepartmentsPage';
 import { DepartmentFormPage } from './pages/DepartmentFormPage';
+import { DepartmentDetailsPage } from './pages/DepartmentDetailsPage';
 import { SkillsPage } from './pages/SkillsPage';
 import { SkillFormPage } from './pages/SkillFormPage';
 import { EmployeesPage } from './pages/EmployeesPage';
@@ -30,6 +31,10 @@ import { LeadsPage } from './pages/LeadsPage';
 import { LeadFormPage } from './pages/LeadFormPage';
 import { LeadDetailsPage } from './pages/LeadDetailsPage';
 import { FollowUpDashboard } from './pages/FollowUpDashboard';
+import { TechnicalProjectQueuePage } from './pages/TechnicalProjectQueuePage';
+import { TechnicalProjectRoutingPage } from './pages/TechnicalProjectRoutingPage';
+import { HodProjectQueuePage } from './pages/HodProjectQueuePage';
+import { ProjectTeamBuilderPage } from './pages/ProjectTeamBuilderPage';
 
 import './index.css';
 import './styles/auth.css';
@@ -77,6 +82,11 @@ function App() {
                 <DepartmentFormPage />
               </ProtectedRoute>
             } />
+            <Route path="/departments/:id" element={
+              <ProtectedRoute requiredPermission="DEPARTMENT_READ">
+                <DepartmentDetailsPage />
+              </ProtectedRoute>
+            } />
             
             <Route path="/employees" element={
               <ProtectedRoute requiredPermission="EMPLOYEE_READ">
@@ -91,6 +101,11 @@ function App() {
             <Route path="/employees/:id" element={
               <ProtectedRoute requiredPermission={["EMPLOYEE_READ", "EMPLOYEE_SELF_READ"]}>
                 <EmployeeDetailsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/employees/:id/edit" element={
+              <ProtectedRoute requiredPermission="EMPLOYEE_UPDATE">
+                <EmployeeFormPage />
               </ProtectedRoute>
             } />
             
@@ -176,6 +191,30 @@ function App() {
             <Route path="/product-categories" element={
               <ProtectedRoute requiredPermission="PRODUCT_CATEGORY_READ">
                 <ProductCategoriesPage />
+              </ProtectedRoute>
+            } />
+            
+            {/* Technical Project Routes */}
+            <Route path="/technical-projects" element={
+              <ProtectedRoute requiredPermission="TECHNICAL_PROJECT_ROUTE">
+                <TechnicalProjectQueuePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/technical-projects/:id/route" element={
+              <ProtectedRoute requiredPermission="TECHNICAL_PROJECT_ROUTE">
+                <TechnicalProjectRoutingPage />
+              </ProtectedRoute>
+            } />
+
+            {/* HOD Team Builder Routes */}
+            <Route path="/hod/projects" element={
+              <ProtectedRoute requiredPermission="PROJECT_TEAM_MANAGE">
+                <HodProjectQueuePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/hod/projects/:id/team" element={
+              <ProtectedRoute requiredPermission="PROJECT_TEAM_MANAGE">
+                <ProjectTeamBuilderPage />
               </ProtectedRoute>
             } />
           </Route>

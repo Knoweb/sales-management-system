@@ -38,8 +38,8 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public Page<SafeUserDto> searchUsers(String search, Boolean active, String roleCode, Pageable pageable) {
-        Page<SafeUserDto> page = userRepository.searchUsers(search, active, roleCode, pageable)
+    public Page<SafeUserDto> searchUsers(String search, Boolean active, String roleCode, Boolean unlinked, Pageable pageable) {
+        Page<SafeUserDto> page = userRepository.searchUsers(search, active, roleCode, unlinked, pageable)
                 .map(SafeUserDto::fromEntity);
         return page;
     }

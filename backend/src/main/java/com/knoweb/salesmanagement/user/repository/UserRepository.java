@@ -21,10 +21,12 @@ public interface UserRepository extends JpaRepository<User, UUID> {
            "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
            "OR LOWER(u.email) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))) " +
            "AND (CAST(:active AS boolean) IS NULL OR u.active = :active) " +
-           "AND (CAST(:roleCode AS string) IS NULL OR EXISTS (SELECT r FROM u.roles r WHERE r.code = :roleCode))")
+           "AND (CAST(:roleCode AS string) IS NULL OR EXISTS (SELECT r FROM u.roles r WHERE r.code = :roleCode)) " +
+           "AND (CAST(:unlinked AS boolean) IS NULL OR :unlinked = false OR NOT EXISTS (SELECT e FROM Employee e WHERE e.user = u))")
     Page<User> searchUsers(@Param("search") String search, 
                            @Param("active") Boolean active, 
                            @Param("roleCode") String roleCode, 
+                           @Param("unlinked") Boolean unlinked,
                            Pageable pageable);
 
     @Query("SELECT COUNT(u) FROM User u JOIN u.roles r WHERE r.code = 'SYSTEM_ADMIN' AND u.active = true")

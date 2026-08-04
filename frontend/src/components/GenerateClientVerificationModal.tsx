@@ -143,3 +143,5 @@ export const GenerateClientVerificationModal: React.FC<GenerateClientVerificatio
     </div>
   );
 };
+
+
