@@ -1,4 +1,4 @@
--- V17__add_missing_notification_permissions.sql
+-- V18__add_missing_notification_permissions.sql
 -- Add missing NOTIFICATION_SELF_READ and NOTIFICATION_SELF_UPDATE permissions to all roles
 
 INSERT INTO role_permissions (role_id, permission_id)
