@@ -131,7 +131,9 @@ export const reviseRouting = async (id: string, request: RoutingRevisionRequest)
   return response.data;
 };
 
-
-
-
-
+export const getTechnicalProjects = async (page: number = 0, size: number = 20, status?: string): Promise<Page<TechnicalProjectSummaryDTO>> => {
+  const params: Record<string, string | number> = { page, size };
+  if (status) params.status = status;
+  const response = await api.get<Page<TechnicalProjectSummaryDTO>>('/technical-routing/projects', { params });
+  return response.data;
+};

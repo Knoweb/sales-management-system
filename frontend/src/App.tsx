@@ -35,6 +35,9 @@ import { TechnicalProjectQueuePage } from './pages/TechnicalProjectQueuePage';
 import { TechnicalProjectRoutingPage } from './pages/TechnicalProjectRoutingPage';
 import { HodProjectQueuePage } from './pages/HodProjectQueuePage';
 import { ProjectTeamBuilderPage } from './pages/ProjectTeamBuilderPage';
+import { HODTechnicalEstimatesQueuePage } from './pages/HODTechnicalEstimatesQueuePage';
+import { DepartmentEstimateEditorPage } from './pages/DepartmentEstimateEditorPage';
+import { AdminEstimateReviewsPage } from './pages/AdminEstimateReviewsPage';
 
 import './index.css';
 import './styles/auth.css';
@@ -215,6 +218,23 @@ function App() {
             <Route path="/hod/projects/:id/team" element={
               <ProtectedRoute requiredPermission="PROJECT_TEAM_MANAGE">
                 <ProjectTeamBuilderPage />
+              </ProtectedRoute>
+            } />
+
+            {/* Technical Estimates Routes */}
+            <Route path="/hod/estimates" element={
+              <ProtectedRoute requiredPermission="PROJECT_TEAM_MANAGE">
+                <HODTechnicalEstimatesQueuePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/hod/estimates/:projectId/department/:departmentId" element={
+              <ProtectedRoute requiredPermission="PROJECT_TEAM_MANAGE">
+                <DepartmentEstimateEditorPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/estimates" element={
+              <ProtectedRoute requiredPermission="TECHNICAL_ESTIMATE_REVIEW">
+                <AdminEstimateReviewsPage />
               </ProtectedRoute>
             } />
           </Route>
