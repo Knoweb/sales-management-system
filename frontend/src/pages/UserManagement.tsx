@@ -1,151 +1,290 @@
-import React, { useEffect, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type FormEvent,
+} from 'react';
+import {
+  Edit2,
+  Plus,
+  Search,
+  Users,
+} from 'lucide-react';
+
 import { apiClient } from '../services/Api';
 import type { User } from '../context/AuthContext';
-import { Search, RefreshCw, Users, Plus, Edit2 } from 'lucide-react';
+
 import { PageHeader } from '../components/PageHeader';
 import { Card } from '../components/Card';
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/Table';
-import { FormField, Input, Select } from '../components/Forms';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../components/Table';
+import {
+  FormField,
+  Input,
+  Select,
+} from '../components/Forms';
 import { Button } from '../components/Button';
 import { IconButton } from '../components/IconButton';
 import { StatusBadge } from '../components/StatusBadge';
-import { ErrorState, LoadingState, EmptyState } from '../components/FeedbackStates';
-import { FilterBar } from '../components/FilterBar';
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+} from '../components/FeedbackStates';
 import { Modal } from '../components/Modal';
 import { Alert } from '../components/Alert';
 
-export const UserManagement: React.FC = () => {
+const PAGE_SIZE = 20;
+
+const roleOptions = [
+  {
+    value: 'ENGINEER',
+    label: 'User',
+  },
+  {
+    value: 'BDM',
+    label: 'Business Development Manager',
+  },
+  {
+    value: 'HOD',
+    label: 'Head of Department',
+  },
+  {
+    value: 'TECHNICAL_COORDINATOR',
+    label: 'Technical Coordinator',
+  },
+  {
+    value: 'SYSTEM_ADMIN',
+    label: 'System Admin',
+  },
+  {
+    value: 'SALES_OFFICER',
+    label: 'Sales Officer',
+  },
+  {
+    value: 'TOP_MANAGEMENT',
+    label: 'Top Management',
+  },
+];
+
+const emptyFormData = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  role: 'ENGINEER',
+  password: '',
+};
+
+export const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
-  // Pagination & Filters
-  const [page, setPage] = useState(0);
-  const size = 20; 
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  // Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [formLoading, setFormLoading] = useState(false);
+  const [page, setPage] = useState(0);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] =
+    useState('');
+
+  const [isModalOpen, setIsModalOpen] =
+    useState(false);
+  const [selectedUser, setSelectedUser] =
+    useState<User | null>(null);
+
+  const [formLoading, setFormLoading] =
+    useState(false);
   const [formError, setFormError] = useState('');
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    role: 'ENGINEER',
-    password: ''
-  });
+
+  const [formData, setFormData] =
+    useState(emptyFormData);
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(search);
+    const timer = window.setTimeout(() => {
+      setDebouncedSearch(search.trim());
       setPage(0);
     }, 400);
-    return () => clearTimeout(handler);
+
+    return () => window.clearTimeout(timer);
   }, [search]);
 
-  const fetchUsers = async (currentPage: number, currentSize: number, currentSearch: string) => {
-    setError('');
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      params.append('page', currentPage.toString());
-      params.append('size', currentSize.toString());
-      if (currentSearch) {
-        params.append('search', currentSearch);
+  const fetchUsers = useCallback(
+    async (
+      currentPage: number,
+      currentSize: number,
+      currentSearch: string
+    ) => {
+      setError('');
+      setLoading(true);
+
+      try {
+        const params = new URLSearchParams({
+          page: currentPage.toString(),
+          size: currentSize.toString(),
+        });
+
+        if (currentSearch) {
+          params.append('search', currentSearch);
+        }
+
+        const response = await apiClient.get(
+          `/users?${params.toString()}`
+        );
+
+        if (
+          response.data &&
+          Array.isArray(response.data.content)
+        ) {
+          setUsers(response.data.content);
+        } else if (Array.isArray(response.data)) {
+          setUsers(response.data);
+        } else {
+          setUsers([]);
+        }
+      } catch {
+        setError(
+          'Failed to load users. Please check your connection or permissions.'
+        );
+      } finally {
+        setLoading(false);
       }
-      
-      const response = await apiClient.get(`/users?${params.toString()}`);
-      if (response.data && Array.isArray(response.data.content)) {
-        setUsers(response.data.content);
-      } else if (Array.isArray(response.data)) {
-        setUsers(response.data);
-      }
-    } catch {
-      setError('Failed to load users. Please check your connection or permissions.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    []
+  );
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchUsers(page, size, debouncedSearch);
-  }, [page, size, debouncedSearch]);
+    fetchUsers(
+      page,
+      PAGE_SIZE,
+      debouncedSearch
+    );
+  }, [
+    page,
+    debouncedSearch,
+    fetchUsers,
+  ]);
 
-  const handleRefresh = () => {
-    fetchUsers(page, size, debouncedSearch);
+  const handleRetry = () => {
+    fetchUsers(
+      page,
+      PAGE_SIZE,
+      debouncedSearch
+    );
+  };
+
+  const updateFormField = (
+    field: keyof typeof formData,
+    value: string
+  ) => {
+    setFormData((previous) => ({
+      ...previous,
+      [field]: value,
+    }));
   };
 
   const handleOpenModal = (user?: User) => {
+    setFormError('');
+
     if (user) {
       setSelectedUser(user);
+
       setFormData({
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        role: user.roles[0] || 'ENGINEER',
-        password: '' // Don't populate password on edit
+        role: user.roles?.[0] || 'ENGINEER',
+        password: '',
       });
     } else {
       setSelectedUser(null);
-      setFormData({
-        firstName: '',
-        lastName: '',
-        email: '',
-        role: 'ENGINEER',
-        password: ''
-      });
+      setFormData(emptyFormData);
     }
-    setFormError('');
+
     setIsModalOpen(true);
   };
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCloseModal = () => {
+    if (!formLoading) {
+      setIsModalOpen(false);
+      setFormError('');
+    }
+  };
+
+  const handleFormSubmit = async (
+    event: FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+
     setFormLoading(true);
     setFormError('');
-    
+
     try {
       if (selectedUser) {
-        await apiClient.patch(`/users/${selectedUser.id}`, {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email
-        });
-        
-        // Update roles separately if changed
-        const currentRole = selectedUser.roles[0] || 'ENGINEER';
+        await apiClient.patch(
+          `/users/${selectedUser.id}`,
+          {
+            firstName: formData.firstName.trim(),
+            lastName: formData.lastName.trim(),
+            email: formData.email.trim(),
+          }
+        );
+
+        const currentRole =
+          selectedUser.roles?.[0] || 'ENGINEER';
+
         if (currentRole !== formData.role) {
-          await apiClient.put(`/users/${selectedUser.id}/roles`, {
-            roleCodes: [formData.role]
-          });
+          await apiClient.put(
+            `/users/${selectedUser.id}/roles`,
+            {
+              roleCodes: [formData.role],
+            }
+          );
         }
       } else {
         await apiClient.post('/users', {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
+          email: formData.email.trim(),
           temporaryPassword: formData.password,
           roleCodes: [formData.role],
-          active: true
+          active: true,
         });
       }
+
       setIsModalOpen(false);
-      handleRefresh();
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } } };
-      setFormError(e.response?.data?.message || 'Failed to save user.');
+      setSelectedUser(null);
+      setFormData(emptyFormData);
+
+      await fetchUsers(
+        page,
+        PAGE_SIZE,
+        debouncedSearch
+      );
+    } catch (error: unknown) {
+      const apiError = error as {
+        response?: {
+          data?: {
+            message?: string;
+          };
+        };
+      };
+
+      setFormError(
+        apiError.response?.data?.message ||
+          'Failed to save user.'
+      );
     } finally {
       setFormLoading(false);
     }
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto w-full">
-      <PageHeader 
+    <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <PageHeader
         title="User Management"
         description="Manage system users, roles, and access."
         icon={<Users size={24} />}
@@ -153,122 +292,198 @@ export const UserManagement: React.FC = () => {
           label: 'Add User',
           show: true,
           onClick: () => handleOpenModal(),
-          icon: <Plus size={16} />
+          icon: <Plus size={16} />,
         }}
       />
 
       {error && (
         <div className="mb-6">
-          <ErrorState message={error} onRetry={handleRefresh} />
+          <ErrorState
+            message={error}
+            onRetry={handleRetry}
+          />
         </div>
       )}
 
-      <FilterBar>
-        <div style={{ flex: 1, minWidth: '250px' }}>
-          <Input 
-            placeholder="Search users..." 
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <div style={{ width: '200px' }}>
-          <Select disabled value="ACTIVE">
-            <option value="ACTIVE">Active Users</option>
-            <option value="INACTIVE">Inactive Users</option>
-          </Select>
-        </div>
-        <Button variant="ghost" onClick={handleRefresh} isLoading={loading}>
-          <RefreshCw size={16} style={{ marginRight: '8px' }} /> Refresh
-        </Button>
-      </FilterBar>
+      <div>
+        <Input
+          type="search"
+          placeholder="Search by name or email..."
+          value={search}
+          onChange={(event) =>
+            setSearch(event.target.value)
+          }
+          style={{
+            width: '100%',
+            height: '44px',
+            paddingLeft: '16px',
+            paddingRight: '16px',
+            borderRadius: '9px',
+          }}
+        />
+      </div>
 
       <Card>
         {loading ? (
-          <LoadingState message="Loading user database..." />
+          <div className="flex min-h-[320px] items-center justify-center">
+            <LoadingState message="Loading user database..." />
+          </div>
         ) : users.length === 0 ? (
-          <EmptyState 
-            icon={<Search size={48} />}
-            title="No users found" 
-            message="No users match your search criteria." 
-          />
+          <div className="flex min-h-[320px] items-center justify-center">
+            <EmptyState
+              icon={<Search size={44} />}
+              title="No users found"
+              message={
+                search
+                  ? 'No users match your search criteria.'
+                  : 'No users are available in the system.'
+              }
+            />
+          </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
+          <div className="overflow-x-auto">
             <Table>
               <TableHead>
                 <TableRow>
                   <TableHeader>Name</TableHeader>
-                  <TableHeader>Email Address</TableHeader>
-                  <TableHeader>System Roles</TableHeader>
+                  <TableHeader>
+                    Email Address
+                  </TableHeader>
+                  <TableHeader>
+                    System Roles
+                  </TableHeader>
                   <TableHeader>Status</TableHeader>
-                  <TableHeader align="right">Actions</TableHeader>
+                  <TableHeader align="right">
+                    Actions
+                  </TableHeader>
                 </TableRow>
               </TableHead>
+
               <TableBody>
-                {users.map((u) => (
-                  <TableRow key={u.id}>
-                    <TableCell>
-                      <div className="font-medium text-gray-900">{u.firstName} {u.lastName}</div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-gray-500">{u.email}</span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2 flex-wrap">
-                        {u.roles.map(role => (
-                          <StatusBadge 
-                            key={role} 
-                            status={role} 
+                {users.map((user) => {
+                  const fullName =
+                    `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim();
+
+                  return (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <div className="font-medium text-gray-900">
+                          {fullName}
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        <span className="text-sm text-gray-500">
+                          {user.email}
+                        </span>
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="flex flex-wrap gap-2">
+                          {user.roles?.length > 0 ? (
+                            user.roles.map((role) => (
+                              <StatusBadge
+                                key={role}
+                                status={role}
+                              />
+                            ))
+                          ) : (
+                            <span className="text-sm text-gray-400">
+                              No role assigned
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        <StatusBadge status="ACTIVE" />
+                      </TableCell>
+
+                      <TableCell align="right">
+                        <div className="flex justify-end">
+                          <IconButton
+                            type="button"
+                            icon={<Edit2 size={16} />}
+                            onClick={() =>
+                              handleOpenModal(user)
+                            }
+                            title="Edit User"
+                            aria-label={`Edit ${fullName}`}
+                            variant="ghost"
                           />
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status="ACTIVE" />
-                    </TableCell>
-                    <TableCell align="right">
-                      <IconButton 
-                        icon={<Edit2 size={16} />} 
-                        onClick={() => handleOpenModal(u)}
-                        title="Edit User"
-                        aria-label="Edit User"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
         )}
       </Card>
 
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={() => !formLoading && setIsModalOpen(false)}
-        title={selectedUser ? 'Edit User' : 'Add New User'}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title={
+          selectedUser
+            ? 'Edit User'
+            : 'Add New User'
+        }
         maxWidth="600px"
       >
         <form onSubmit={handleFormSubmit}>
           {formError && (
-            <Alert variant="error" style={{ marginBottom: '1.5rem' }}>
+            <Alert
+              variant="error"
+              style={{
+                marginBottom: '1.5rem',
+              }}
+            >
               {formError}
             </Alert>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-            <FormField label="First Name" required id="firstName">
-              <Input 
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '1rem',
+            }}
+          >
+            <FormField
+              label="First Name"
+              required
+              id="firstName"
+            >
+              <Input
                 id="firstName"
                 value={formData.firstName}
-                onChange={e => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                onChange={(event) =>
+                  updateFormField(
+                    'firstName',
+                    event.target.value
+                  )
+                }
                 disabled={formLoading}
                 required
               />
             </FormField>
-            <FormField label="Last Name" required id="lastName">
-              <Input 
+
+            <FormField
+              label="Last Name"
+              required
+              id="lastName"
+            >
+              <Input
                 id="lastName"
                 value={formData.lastName}
-                onChange={e => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                onChange={(event) =>
+                  updateFormField(
+                    'lastName',
+                    event.target.value
+                  )
+                }
                 disabled={formLoading}
                 required
               />
@@ -276,13 +491,25 @@ export const UserManagement: React.FC = () => {
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
-            <FormField label="Email Address" required id="email">
-              <Input 
+            <FormField
+              label="Email Address"
+              required
+              id="email"
+            >
+              <Input
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                disabled={formLoading || !!selectedUser} // Cannot change email if editing
+                onChange={(event) =>
+                  updateFormField(
+                    'email',
+                    event.target.value
+                  )
+                }
+                disabled={
+                  formLoading ||
+                  Boolean(selectedUser)
+                }
                 required
               />
             </FormField>
@@ -290,12 +517,21 @@ export const UserManagement: React.FC = () => {
 
           {!selectedUser && (
             <div style={{ marginBottom: '1.5rem' }}>
-              <FormField label="Password" required id="password">
-                <Input 
+              <FormField
+                label="Password"
+                required
+                id="password"
+              >
+                <Input
                   id="password"
                   type="password"
                   value={formData.password}
-                  onChange={e => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                  onChange={(event) =>
+                    updateFormField(
+                      'password',
+                      event.target.value
+                    )
+                  }
                   disabled={formLoading}
                   required
                 />
@@ -304,31 +540,81 @@ export const UserManagement: React.FC = () => {
           )}
 
           <div style={{ marginBottom: '2rem' }}>
-            <FormField label="System Role" required id="role">
-              <Select 
+            <FormField
+              label="System Role"
+              required
+              id="role"
+            >
+              <Select
                 id="role"
                 value={formData.role}
-                onChange={e => setFormData(prev => ({ ...prev, role: e.target.value }))}
+                onChange={(event) =>
+                  updateFormField(
+                    'role',
+                    event.target.value
+                  )
+                }
                 disabled={formLoading}
                 required
               >
-                <option value="ENGINEER">User</option>
-                <option value="BDM">Business Development Manager</option>
-                <option value="HOD">Head of Department</option>
-                <option value="TECHNICAL_COORDINATOR">Technical Coordinator</option>
-                <option value="SYSTEM_ADMIN">System Admin</option>
-                <option value="SALES_OFFICER">Sales Officer</option>
-                <option value="TOP_MANAGEMENT">Top Management</option>
+                {roleOptions.map((role) => (
+                  <option
+                    key={role.value}
+                    value={role.value}
+                  >
+                    {role.label}
+                  </option>
+                ))}
               </Select>
             </FormField>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-            <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)} disabled={formLoading}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+              gap: '1rem',
+            }}
+          >
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleCloseModal}
+              disabled={formLoading}
+              style={{
+                minWidth: '110px',
+                height: '42px',
+                backgroundColor: '#f1f5f9',
+                color: '#475569',
+                border: '1px solid #cbd5e1',
+                borderRadius: '9px',
+                fontWeight: 600,
+              }}
+            >
               Cancel
             </Button>
-            <Button type="submit" variant="primary" isLoading={formLoading}>
-              {selectedUser ? 'Save Changes' : 'Create User'}
+
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={formLoading}
+              style={{
+                minWidth: '130px',
+                height: '42px',
+                backgroundColor: '#2563eb',
+                color: '#ffffff',
+                border: '1px solid #2563eb',
+                borderRadius: '9px',
+                fontSize: '14px',
+                fontWeight: 600,
+                boxShadow:
+                  '0 4px 10px rgba(37, 99, 235, 0.2)',
+              }}
+            >
+              {selectedUser
+                ? 'Save Changes'
+                : 'Create User'}
             </Button>
           </div>
         </form>
