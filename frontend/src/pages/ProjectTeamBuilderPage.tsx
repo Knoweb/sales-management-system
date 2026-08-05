@@ -346,21 +346,46 @@ export const ProjectTeamBuilderPage: React.FC = () => {
                   <div className="mt-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Results</label>
                     <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
-                      {searchResults.map(emp => (
+                      {searchResults.map(emp => {
+                        const isAlreadyInTeam = team?.members?.some(m => m.employeeId === emp.employeeId);
+                        const isFullyUnavailable = emp.availableHours !== undefined && emp.availableHours <= 0;
+                        const isDisabled = isAlreadyInTeam || isFullyUnavailable;
+                        const isSelected = selectedEmployee?.employeeId === emp.employeeId;
+                        return (
                         <div 
                           key={emp.employeeId} 
-                          className={`p-3 border rounded-md cursor-pointer transition-colors ${selectedEmployee?.employeeId === emp.employeeId ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-primary-300'}`}
+                          className={`p-3 border rounded-md transition-colors ${
+                            isDisabled ? 'bg-gray-50 opacity-75 cursor-not-allowed' :
+                            isSelected ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-primary-300 cursor-pointer'
+                          }`}
                           onClick={() => {
-                            setSelectedEmployee(emp);
-                            setOverrideRequested(!emp.available);
+                            if (!isDisabled) {
+                              setSelectedEmployee(emp);
+                              setOverrideRequested(!emp.available);
+                            }
                           }}
                         >
                           <div className="flex justify-between items-start">
-                            <div>
-                              <p className="font-medium text-sm text-gray-900">
-                                {emp.employeeName || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || 'Unknown'}
-                              </p>
-                              <p className="text-xs text-gray-500">{emp.jobTitle}</p>
+                            <div className="flex items-start space-x-3">
+                              {!isDisabled && (
+                                <input
+                                  type="radio"
+                                  checked={isSelected}
+                                  readOnly
+                                  className="mt-1"
+                                />
+                              )}
+                              <div>
+                                <p className="font-medium text-sm text-gray-900">
+                                  {emp.employeeName || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || 'Unknown'}
+                                </p>
+                                <p className="text-xs text-gray-500">{emp.jobTitle} {emp.departmentName ? `• ${emp.departmentName}` : ''}</p>
+                                {emp.availableHours !== undefined && (
+                                  <p className="text-xs text-gray-600 mt-1">
+                                    Available Hours: <span className="font-medium">{emp.availableHours}</span>
+                                  </p>
+                                )}
+                              </div>
                             </div>
                             <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${emp.available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                               {emp.available ? 'Available' : 'Conflict'}
@@ -371,9 +396,15 @@ export const ProjectTeamBuilderPage: React.FC = () => {
                               Conflicts: {emp.conflicts.join(', ')}
                             </p>
                           )}
-
+                          {isAlreadyInTeam && (
+                            <p className="mt-2 text-xs text-gray-500 font-medium">Already assigned to this team.</p>
+                          )}
+                          {!isAlreadyInTeam && isFullyUnavailable && (
+                            <p className="mt-2 text-xs text-gray-500 font-medium">Fully unavailable (0 hours remaining).</p>
+                          )}
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -400,6 +431,22 @@ export const ProjectTeamBuilderPage: React.FC = () => {
                   <option value="SYSTEM_ANALYST">System Analyst</option>
                   <option value="ASSISTANT">Assistant</option>
                 </Select>
+                <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    label="Allocation Start Date *"
+                    type="date"
+                    value={startDate}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement>) => setStartDate(e.target.value)}
+                    required
+                  />
+                  <Input
+                    label="Allocation End Date *"
+                    type="date"
+                    value={endDate}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement>) => setEndDate(e.target.value)}
+                    required
+                  />
+                </div>
                 <Input
                   label="Assigned Hours *"
                   type="number" 
@@ -438,7 +485,7 @@ export const ProjectTeamBuilderPage: React.FC = () => {
                   isLoading={actionLoading}
                   icon={<Plus className="w-4 h-4" />}
                 >
-                  Confirm Assignment
+                  Add to Team
                 </Button>
               </div>
             </Card>

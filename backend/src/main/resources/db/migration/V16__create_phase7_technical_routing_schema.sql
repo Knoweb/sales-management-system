@@ -1,4 +1,4 @@
--- V19__create_phase7_technical_routing_schema.sql
+-- V16__create_phase7_technical_routing_schema.sql
 
 -- 1. Technical Projects
 CREATE TABLE technical_projects (
