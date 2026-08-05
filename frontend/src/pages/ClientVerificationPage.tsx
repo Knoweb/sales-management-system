@@ -21,9 +21,13 @@ export const ClientVerificationPage: React.FC = () => {
       setLoading(true);
       const data = await getVerificationByToken(token!);
       setVerification(data);
-      if (data.projectBriefId && data.projectBriefVersionNumber) {
-        const versionData = await getProjectBriefVersion(data.projectBriefId, data.projectBriefVersionNumber);
-        setBriefVersion(versionData);
+      if (!data.projectBriefSnapshot && data.projectBriefId && data.projectBriefVersionNumber) {
+        try {
+          const versionData = await getProjectBriefVersion(data.projectBriefId, data.projectBriefVersionNumber);
+          setBriefVersion(versionData);
+        } catch {
+          // Public unauthenticated page: ignore auth error if fallback fails
+        }
       }
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
@@ -86,21 +90,42 @@ export const ClientVerificationPage: React.FC = () => {
           <div className="text-center text-red-600">Verification details not found.</div>
         ) : verification.status !== 'PENDING' ? (
           <div className="text-center text-gray-600">
-            <p className="mb-4">This verification link has already been processed.</p>
-            <p className="font-semibold text-lg">Status: {verification.status}</p>
+            <p className="mb-4">This verification link is no longer active.</p>
+            <p className="font-semibold text-lg mb-2">Status: {verification.status}</p>
+            <div className="text-sm text-gray-500 space-y-1">
+              <p>Generated: {new Date(verification.createdAt).toLocaleString()}</p>
+              {verification.expiresAt && <p>Expires: {new Date(verification.expiresAt).toLocaleString()}</p>}
+              {verification.decisionDate && <p>Decision Date: {new Date(verification.decisionDate).toLocaleString()}</p>}
+            </div>
+            {(verification.projectBriefSnapshot || (briefVersion && briefVersion.snapshot)) && (
+              <div className="border border-gray-200 rounded-md p-6 bg-white shadow-sm mt-6 mb-8 overflow-y-auto max-h-96 text-left">
+                <h3 className="text-lg font-semibold border-b pb-2 mb-4">Project Brief Preview</h3>
+                <div 
+                  className="prose prose-sm max-w-none prose-headings:font-bold prose-a:text-primary"
+                  dangerouslySetInnerHTML={{ __html: verification.projectBriefSnapshot || briefVersion?.snapshot || '' }} 
+                />
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="bg-gray-50 p-4 rounded-md text-sm text-gray-700">
-              <p>Please review the project brief details communicated by our team. If you agree with the scope, budget, and requirements, please fill out the form below to confirm.</p>
+            <div className="bg-gray-50 p-4 rounded-md text-sm text-gray-700 flex justify-between items-center flex-wrap gap-4">
+              <div className="max-w-xl">
+                <p>Please review the project brief details communicated by our team. If you agree with the scope, budget, and requirements, please fill out the form below to confirm.</p>
+              </div>
+              <div className="text-right text-xs text-gray-500 shrink-0">
+                <p>Status: <span className="font-semibold">{verification.status}</span></p>
+                <p>Generated: {new Date(verification.createdAt).toLocaleString()}</p>
+                {verification.expiresAt && <p>Expires: {new Date(verification.expiresAt).toLocaleString()}</p>}
+              </div>
             </div>
             
-            {briefVersion && briefVersion.snapshot && (
+            {(verification.projectBriefSnapshot || (briefVersion && briefVersion.snapshot)) && (
               <div className="border border-gray-200 rounded-md p-6 bg-white shadow-sm mt-6 mb-8 overflow-y-auto max-h-96">
                 <h3 className="text-lg font-semibold border-b pb-2 mb-4">Project Brief Preview</h3>
                 <div 
                   className="prose prose-sm max-w-none prose-headings:font-bold prose-a:text-primary"
-                  dangerouslySetInnerHTML={{ __html: briefVersion.snapshot }} 
+                  dangerouslySetInnerHTML={{ __html: verification.projectBriefSnapshot || briefVersion?.snapshot || '' }} 
                 />
               </div>
             )}

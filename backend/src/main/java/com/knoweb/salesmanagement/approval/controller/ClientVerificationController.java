@@ -46,7 +46,7 @@ public class ClientVerificationController {
         return ResponseEntity.noContent().build();
     }
 
-    @PreAuthorize("hasAuthority('CLIENT_VERIFICATION_READ_LINK')")
+    @PreAuthorize("hasAuthority('CLIENT_VERIFICATION_CREATE') or hasAuthority('CLIENT_VERIFICATION_READ_LINK')")
     @GetMapping("/client-verifications/{id}/link")
     public ResponseEntity<Map<String, String>> getVerificationLink(@PathVariable UUID id) {
         String token = clientVerificationService.getVerificationLink(id);

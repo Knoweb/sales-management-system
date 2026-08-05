@@ -14,4 +14,5 @@ public interface ClientVerificationRepository extends JpaRepository<ClientVerifi
     Optional<ClientVerification> findByTokenHash(String tokenHash);
     Optional<ClientVerification> findByProjectBriefIdAndProjectBriefVersionNumberAndStatus(UUID projectBriefId, Integer versionNumber, ClientVerificationStatus status);
     List<ClientVerification> findByOpportunityIdOrderByCreatedAtDesc(UUID opportunityId);
+    List<ClientVerification> findByProjectBriefIdOrderByCreatedAtDesc(UUID projectBriefId);
 }

@@ -27,10 +27,8 @@ public interface ProjectBriefRepository extends JpaRepository<ProjectBrief, UUID
            "WHERE pb.status NOT IN :invalidStatuses " +
            "AND NOT EXISTS (SELECT tp FROM TechnicalProject tp WHERE tp.projectBrief = pb) " +
            "AND EXISTS (SELECT cv FROM ClientVerification cv WHERE cv.projectBrief = pb " +
-           "  AND cv.projectBriefVersionNumber = pb.currentVersionNumber " +
            "  AND cv.status = :verificationStatus) " +
            "AND EXISTS (SELECT ba FROM BdmApproval ba WHERE ba.projectBrief = pb " +
-           "  AND ba.projectBriefVersionNumber = pb.currentVersionNumber " +
            "  AND ba.status = :approvalStatus)")
     Page<ProjectBrief> findEligibleForTechnicalRouting(
         @Param("invalidStatuses") List<ProjectBriefStatus> invalidStatuses,

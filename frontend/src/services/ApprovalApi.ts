@@ -64,6 +64,8 @@ export interface ClientVerificationDTO {
   expiresAt: string;
   decisionDate?: string;
   createdAt: string;
+  recoverable?: boolean;
+  projectBriefSnapshot?: string;
 }
 
 export interface WorkflowHistoryDTO {

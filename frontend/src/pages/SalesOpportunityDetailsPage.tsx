@@ -3,18 +3,17 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getOpportunity } from '../api/opportunityApi';
 import type { SalesOpportunityDTO } from '../api/opportunityApi';
 import { initializeProjectBrief } from '../api/projectBriefApi';
-import { getBdmApprovals, getClientVerifications, getWorkflowHistory, regenerateClientVerification, revokeClientVerification, getVerificationLink, type BdmApprovalDTO, type ClientVerificationDTO, type WorkflowHistoryDTO } from '../services/ApprovalApi';
+import { getBdmApprovals, getClientVerifications, getWorkflowHistory, type BdmApprovalDTO, type ClientVerificationDTO, type WorkflowHistoryDTO } from '../services/ApprovalApi';
 import { format } from 'date-fns';
 import { PageHeader } from '../components/PageHeader';
 import { Card } from '../components/Card';
 import { Tabs, type TabItem } from '../components/Tabs';
 import { StatusBadge, getStatusVariant } from '../components/StatusBadge';
-
 import { LoadingState, ErrorState } from '../components/FeedbackStates';
-import { FileText, Activity, Paperclip, LayoutDashboard, TrendingUp, CheckCircle, Edit2, ExternalLink, History, RefreshCw, XCircle, Copy } from 'lucide-react';
+import { FileText, Activity, Paperclip, LayoutDashboard, TrendingUp, CheckCircle, Edit2, ExternalLink, History } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/Button';
-import { GenerateClientVerificationModal } from '../components/GenerateClientVerificationModal';
+import { ClientVerificationCard } from '../components/ClientVerificationCard';
 
 const SalesOpportunityDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -34,9 +33,6 @@ const SalesOpportunityDetailsPage: React.FC = () => {
   const canCreateBrief = !!user?.permissions?.includes('PROJECT_BRIEF_CREATE');
   const canEditOpportunity = !!user?.permissions?.includes('OPPORTUNITY_UPDATE');
   const canCreateVerification = !!user?.permissions?.includes('CLIENT_VERIFICATION_CREATE');
-
-  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
 
   const loadData = useCallback(async (oppId: string) => {
     try {
@@ -72,81 +68,6 @@ const SalesOpportunityDetailsPage: React.FC = () => {
       loadData(id);
     }
   }, [id, loadData]);
-
-  const handleRegenerate = async (verificationId: string) => {
-    if (!window.confirm("Are you sure you want to regenerate the link? The old link will be permanently invalidated.")) return;
-    try {
-      setActionLoading(true);
-      await regenerateClientVerification(verificationId);
-      await loadData(id!);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string }; status?: number } };
-      if (e.response?.status === 409) {
-        alert(e.response.data?.message || 'Workflow conflict: Please check the current status of this verification.');
-      } else {
-        alert(e.response?.data?.message || 'Failed to regenerate link');
-      }
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleRevoke = async (verificationId: string) => {
-    if (!window.confirm("Are you sure you want to revoke this link? The client will no longer be able to use it.")) return;
-    try {
-      setActionLoading(true);
-      await revokeClientVerification(verificationId);
-      await loadData(id!);
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string }; status?: number } };
-      if (e.response?.status === 409) {
-        alert(e.response.data?.message || 'Workflow conflict: Please check the current status of this verification.');
-      } else {
-        alert(e.response?.data?.message || 'Failed to revoke link');
-      }
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleCopyLink = async (verificationId: string) => {
-    try {
-      setActionLoading(true);
-      const res = await getVerificationLink(verificationId);
-      await navigator.clipboard.writeText(`${window.location.origin}/client-verification/${res.token}`);
-      alert('Link copied to clipboard!');
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string }; status?: number } };
-      if (e.response?.status === 403) {
-        alert("You do not have permission to read the verification link.");
-      } else if (e.response?.status === 409) {
-        alert(e.response.data?.message || 'Workflow conflict: Cannot read link at this stage.');
-      } else {
-        alert(e.response?.data?.message || 'Failed to fetch link for copying.');
-      }
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleOpenPage = async (verificationId: string) => {
-    try {
-      setActionLoading(true);
-      const res = await getVerificationLink(verificationId);
-      window.open(`${window.location.origin}/client-verification/${res.token}`, '_blank');
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string }; status?: number } };
-      if (e.response?.status === 403) {
-        alert("You do not have permission to read the verification link.");
-      } else if (e.response?.status === 409) {
-        alert(e.response.data?.message || 'Workflow conflict: Cannot read link at this stage.');
-      } else {
-        alert(e.response?.data?.message || 'Failed to fetch link for opening.');
-      }
-    } finally {
-      setActionLoading(false);
-    }
-  };
 
   const handleStartBrief = async () => {
     if (!id) return;
@@ -377,38 +298,13 @@ const SalesOpportunityDetailsPage: React.FC = () => {
               )}
             </Card>
             <Card>
-              <div className="flex justify-between items-center mb-6 border-b border-border pb-4">
-                <h2 className="text-lg font-semibold text-text-primary">Client Verifications</h2>
-                {bdmApprovals.length > 0 && bdmApprovals[0].status === 'APPROVED' && 
-                 (!clientVerifications.find(v => v.status === 'PENDING' || v.status === 'CONFIRMED' || v.status === 'CHANGES_REQUESTED')) && 
-                 canCreateVerification && (
-                  <Button variant="primary" onClick={() => setIsVerificationModalOpen(true)}>
-                    Generate Client Verification Link
-                  </Button>
-                )}
-              </div>
-              {clientVerifications.length === 0 ? <p className="text-gray-500">No Client verifications found.</p> : (
-                <ul className="space-y-4">
-                  {clientVerifications.map(v => (
-                    <li key={v.id} className="border p-4 rounded bg-gray-50 flex flex-col gap-3">
-                      <div className="flex justify-between">
-                        <span className="font-medium text-gray-800">Status: {v.status}</span>
-                        <span className="text-sm text-gray-500">{new Date(v.createdAt).toLocaleString()}</span>
-                      </div>
-                      <p className="text-sm text-gray-600">Verifier: {v.verifierName || 'Pending'}</p>
-                      
-                      {canCreateVerification && v.status === 'PENDING' && (
-                        <div className="mt-2 p-3 bg-white border border-gray-200 rounded flex gap-2 flex-wrap items-center">
-                          <Button variant="outline" icon={<Copy size={16} />} onClick={() => handleCopyLink(v.id)} isLoading={actionLoading}>Copy Link</Button>
-                          <Button variant="outline" icon={<ExternalLink size={16} />} onClick={() => handleOpenPage(v.id)} isLoading={actionLoading}>Open Page</Button>
-                          <Button variant="outline" icon={<RefreshCw size={16} />} onClick={() => handleRegenerate(v.id)} isLoading={actionLoading}>Regenerate Link</Button>
-                          <Button variant="danger" icon={<XCircle size={16} />} onClick={() => handleRevoke(v.id)} isLoading={actionLoading}>Revoke Link</Button>
-                        </div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <ClientVerificationCard
+                verifications={clientVerifications}
+                projectBriefId={opportunity?.projectBrief?.id}
+                opportunityId={opportunity.id}
+                canCreate={canCreateVerification}
+                onRefresh={() => id && loadData(id)}
+              />
             </Card>
             <Card>
               <h2 className="text-lg font-semibold text-text-primary mb-6 border-b border-border pb-4">Workflow History</h2>
@@ -424,18 +320,6 @@ const SalesOpportunityDetailsPage: React.FC = () => {
               )}
             </Card>
           </div>
-        )}
-
-        {isVerificationModalOpen && opportunity?.projectBrief?.id && (
-          <GenerateClientVerificationModal
-            isOpen={isVerificationModalOpen}
-            onClose={() => {
-              setIsVerificationModalOpen(false);
-              loadData(id!);
-            }}
-            projectBriefId={opportunity.projectBrief.id}
-            opportunityId={opportunity.id}
-          />
         )}
 
         {activeTab === 'attachments' && (

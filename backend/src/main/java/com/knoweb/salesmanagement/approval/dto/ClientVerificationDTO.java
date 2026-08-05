@@ -18,6 +18,8 @@ public class ClientVerificationDTO {
     private OffsetDateTime expiresAt;
     private OffsetDateTime decisionDate;
     private OffsetDateTime createdAt;
+    private Boolean recoverable;
+    private String projectBriefSnapshot;
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -45,4 +47,8 @@ public class ClientVerificationDTO {
     public void setDecisionDate(OffsetDateTime decisionDate) { this.decisionDate = decisionDate; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
+    public Boolean getRecoverable() { return recoverable; }
+    public void setRecoverable(Boolean recoverable) { this.recoverable = recoverable; }
+    public String getProjectBriefSnapshot() { return projectBriefSnapshot; }
+    public void setProjectBriefSnapshot(String projectBriefSnapshot) { this.projectBriefSnapshot = projectBriefSnapshot; }
 }

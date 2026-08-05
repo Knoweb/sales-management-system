@@ -73,18 +73,14 @@ public class TechnicalProjectEligibilityService {
         List<ClientVerification> verifications = clientVerificationRepository.findByOpportunityIdOrderByCreatedAtDesc(brief.getOpportunity().getId());
         ClientVerification validVerification = null;
         for (ClientVerification cv : verifications) {
-            if (cv.getProjectBrief().getId().equals(projectBriefId) &&
-                cv.getProjectBriefVersionNumber().equals(brief.getCurrentVersionNumber())) {
+            if (cv.getProjectBrief().getId().equals(projectBriefId) && cv.getStatus() == ClientVerificationStatus.CONFIRMED) {
                 validVerification = cv;
                 break;
             }
         }
         
         if (validVerification == null) {
-            return setReason(result, TechnicalProjectEligibilityReason.CLIENT_VERIFICATION_REQUIRED, "Client verification is required for the current version of this project brief.");
-        }
-        if (validVerification.getStatus() != ClientVerificationStatus.CONFIRMED) {
-            return setReason(result, TechnicalProjectEligibilityReason.CLIENT_VERIFICATION_NOT_APPROVED, "Client verification is not confirmed.");
+            return setReason(result, TechnicalProjectEligibilityReason.CLIENT_VERIFICATION_REQUIRED, "A confirmed client verification is required for this project brief.");
         }
         result.setVerified(true);
         result.setClientVerificationId(validVerification.getId());
@@ -92,18 +88,14 @@ public class TechnicalProjectEligibilityService {
         List<BdmApproval> approvals = bdmApprovalRepository.findByOpportunityIdOrderByCreatedAtDesc(brief.getOpportunity().getId());
         BdmApproval validApproval = null;
         for (BdmApproval ba : approvals) {
-            if (ba.getProjectBrief().getId().equals(projectBriefId) &&
-                ba.getProjectBriefVersionNumber().equals(brief.getCurrentVersionNumber())) {
+            if (ba.getProjectBrief().getId().equals(projectBriefId) && ba.getStatus() == BdmApprovalStatus.APPROVED) {
                 validApproval = ba;
                 break;
             }
         }
 
         if (validApproval == null) {
-            return setReason(result, TechnicalProjectEligibilityReason.BDM_APPROVAL_REQUIRED, "BDM approval is required for the current version of this project brief.");
-        }
-        if (validApproval.getStatus() != BdmApprovalStatus.APPROVED) {
-            return setReason(result, TechnicalProjectEligibilityReason.BDM_APPROVAL_NOT_APPROVED, "BDM approval is not approved.");
+            return setReason(result, TechnicalProjectEligibilityReason.BDM_APPROVAL_REQUIRED, "An approved BDM approval is required for this project brief.");
         }
         result.setBdmApproved(true);
         result.setBdmApprovalId(validApproval.getId());

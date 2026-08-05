@@ -5,5 +5,6 @@ public enum ClientVerificationStatus {
     CONFIRMED,
     CHANGES_REQUESTED,
     REJECTED,
-    REVOKED
+    REVOKED,
+    EXPIRED
 }

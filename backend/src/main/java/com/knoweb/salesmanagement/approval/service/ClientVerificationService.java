@@ -8,6 +8,7 @@ import com.knoweb.salesmanagement.approval.repository.ClientVerificationReposito
 import com.knoweb.salesmanagement.common.exception.ResourceNotFoundException;
 import com.knoweb.salesmanagement.projectbrief.entity.ProjectBrief;
 import com.knoweb.salesmanagement.projectbrief.repository.ProjectBriefRepository;
+import com.knoweb.salesmanagement.projectbrief.repository.ProjectBriefVersionRepository;
 import com.knoweb.salesmanagement.user.entity.User;
 import com.knoweb.salesmanagement.user.repository.UserRepository;
 import com.knoweb.salesmanagement.notification.service.NotificationService;
@@ -45,6 +46,7 @@ public class ClientVerificationService {
     private final EncryptionService encryptionService;
     private final WorkflowHistoryRepository workflowHistoryRepository;
     private final BdmApprovalRepository bdmApprovalRepository;
+    private final ProjectBriefVersionRepository projectBriefVersionRepository;
 
     public ClientVerificationService(ClientVerificationRepository clientVerificationRepository,
                                      ProjectBriefRepository projectBriefRepository,
@@ -53,7 +55,8 @@ public class ClientVerificationService {
                                      NotificationService notificationService,
                                      EncryptionService encryptionService,
                                      WorkflowHistoryRepository workflowHistoryRepository,
-                                     BdmApprovalRepository bdmApprovalRepository) {
+                                     BdmApprovalRepository bdmApprovalRepository,
+                                     ProjectBriefVersionRepository projectBriefVersionRepository) {
         this.clientVerificationRepository = clientVerificationRepository;
         this.projectBriefRepository = projectBriefRepository;
         this.userRepository = userRepository;
@@ -62,6 +65,7 @@ public class ClientVerificationService {
         this.encryptionService = encryptionService;
         this.workflowHistoryRepository = workflowHistoryRepository;
         this.bdmApprovalRepository = bdmApprovalRepository;
+        this.projectBriefVersionRepository = projectBriefVersionRepository;
     }
 
     private User getAuthenticatedUser() {
@@ -96,6 +100,19 @@ public class ClientVerificationService {
             throw new com.knoweb.salesmanagement.common.exception.ResourceConflictException("Cannot create client verification. Exact brief version must be BDM_APPROVED.");
         }
         
+        List<ClientVerification> existingList = clientVerificationRepository.findByProjectBriefIdOrderByCreatedAtDesc(brief.getId());
+        for (ClientVerification existing : existingList) {
+            if (existing.getStatus() == ClientVerificationStatus.CONFIRMED) {
+                throw new com.knoweb.salesmanagement.common.exception.ResourceConflictException("A confirmed client verification already exists for this Project Brief.");
+            }
+            if (existing.getStatus() == ClientVerificationStatus.PENDING && (existing.getExpiresAt() == null || existing.getExpiresAt().isAfter(OffsetDateTime.now()))) {
+                throw new com.knoweb.salesmanagement.common.exception.ResourceConflictException("An active verification link already exists for this Project Brief. Please regenerate or copy the existing link.");
+            }
+            if (existing.getStatus() == ClientVerificationStatus.PENDING && existing.getExpiresAt() != null && existing.getExpiresAt().isBefore(OffsetDateTime.now())) {
+                existing.setStatus(ClientVerificationStatus.EXPIRED);
+                clientVerificationRepository.save(existing);
+            }
+        }
         
         transitionService.createClientVerification(brief, user);
 
@@ -133,35 +150,77 @@ public class ClientVerificationService {
         ClientVerification verification = clientVerificationRepository.findByTokenHash(tokenHash)
                 .orElseThrow(() -> new ResourceNotFoundException("Invalid or expired verification link"));
                 
-        if (verification.getExpiresAt().isBefore(OffsetDateTime.now())) {
-            throw new IllegalArgumentException("Verification link has expired");
+        if (verification.getStatus() == ClientVerificationStatus.PENDING && verification.getExpiresAt() != null && verification.getExpiresAt().isBefore(OffsetDateTime.now())) {
+            verification.setStatus(ClientVerificationStatus.EXPIRED);
+            clientVerificationRepository.save(verification);
         }
         
         return mapToDTO(verification);
     }
 
-    @PreAuthorize("hasAuthority('CLIENT_VERIFICATION_CREATE')")
+    @PreAuthorize("hasAuthority('CLIENT_VERIFICATION_CREATE') or hasAuthority('CLIENT_VERIFICATION_READ_LINK')")
     @Transactional
     public String regenerateVerificationLink(UUID id) {
         ClientVerification verification = clientVerificationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Verification not found"));
         
-        if (verification.getStatus() != ClientVerificationStatus.PENDING) {
-            throw new IllegalArgumentException("Only PENDING verifications can be regenerated");
+        if (verification.getStatus() == ClientVerificationStatus.CONFIRMED) {
+            throw new IllegalArgumentException("Cannot regenerate a CONFIRMED verification");
+        }
+        
+        User user = getAuthenticatedUser();
+        String previousState = verification.getStatus().name();
+        
+        if (verification.getStatus() == ClientVerificationStatus.PENDING) {
+            verification.setStatus(ClientVerificationStatus.REVOKED);
+            verification.setDecisionDate(OffsetDateTime.now());
+            clientVerificationRepository.save(verification);
+        }
+
+        List<ClientVerification> existingList = clientVerificationRepository.findByProjectBriefIdOrderByCreatedAtDesc(verification.getProjectBrief().getId());
+        for (ClientVerification existing : existingList) {
+            if (existing.getStatus() == ClientVerificationStatus.PENDING) {
+                existing.setStatus(ClientVerificationStatus.REVOKED);
+                existing.setDecisionDate(OffsetDateTime.now());
+                clientVerificationRepository.save(existing);
+            }
         }
         
         String plainToken = UUID.randomUUID().toString() + "-" + UUID.randomUUID().toString();
         String tokenHash = hashToken(plainToken);
         
-        verification.setTokenHash(tokenHash);
-        verification.setEncryptedToken(encryptionService.encrypt(plainToken));
-        verification.setExpiresAt(OffsetDateTime.now().plusDays(7));
+        ClientVerification newVerification = new ClientVerification();
+        newVerification.setOpportunity(verification.getOpportunity());
+        newVerification.setProjectBrief(verification.getProjectBrief());
+        newVerification.setProjectBriefVersionNumber(verification.getProjectBriefVersionNumber());
+        newVerification.setTokenHash(tokenHash);
+        newVerification.setEncryptedToken(encryptionService.encrypt(plainToken));
+        newVerification.setStatus(ClientVerificationStatus.PENDING);
+        newVerification.setExpiresAt(OffsetDateTime.now().plusDays(7));
+        newVerification.setVerifierName(verification.getVerifierName());
+        newVerification.setVerifierEmail(verification.getVerifierEmail());
+        newVerification.setCreatedBy(user);
         
-        clientVerificationRepository.save(verification);
+        clientVerificationRepository.save(newVerification);
+        
+        WorkflowHistory history = new WorkflowHistory();
+        history.setOpportunity(verification.getOpportunity());
+        history.setProjectBrief(verification.getProjectBrief());
+        history.setProjectBriefVersionNumber(verification.getProjectBriefVersionNumber());
+        history.setActor(user);
+        if (user != null) {
+            history.setActorName(user.getFirstName() + " " + user.getLastName());
+        }
+        history.setAction("REGENERATE_VERIFICATION_LINK");
+        history.setPreviousState(previousState);
+        history.setNewState("PENDING");
+        history.setComments("Revoked previous verification link and generated a new client verification link.");
+        workflowHistoryRepository.save(history);
+        
         return plainToken;
     }
 
-    @PreAuthorize("hasAuthority('CLIENT_VERIFICATION_READ_LINK')")
+    @PreAuthorize("hasAuthority('CLIENT_VERIFICATION_CREATE') or hasAuthority('CLIENT_VERIFICATION_READ_LINK')")
     @Transactional
     public String getVerificationLink(UUID id) {
         ClientVerification verification = clientVerificationRepository.findById(id)
@@ -169,6 +228,12 @@ public class ClientVerificationService {
         
         if (verification.getStatus() != ClientVerificationStatus.PENDING) {
             throw new IllegalArgumentException("Only PENDING verifications have an active link");
+        }
+        if (verification.getExpiresAt() != null && verification.getExpiresAt().isBefore(OffsetDateTime.now())) {
+            throw new IllegalArgumentException("Verification link has expired");
+        }
+        if (verification.getEncryptedToken() == null || verification.getEncryptedToken().isBlank()) {
+            throw new IllegalArgumentException("Verification link token is not recoverable; only hash was stored. Please regenerate the verification link.");
         }
         
         String plainToken = encryptionService.decrypt(verification.getEncryptedToken());
@@ -341,6 +406,9 @@ public class ClientVerificationService {
     }
 
     private ClientVerificationDTO mapToDTO(ClientVerification entity) {
+        if (entity.getStatus() == ClientVerificationStatus.PENDING && entity.getExpiresAt() != null && entity.getExpiresAt().isBefore(OffsetDateTime.now())) {
+            entity.setStatus(ClientVerificationStatus.EXPIRED);
+        }
         ClientVerificationDTO dto = new ClientVerificationDTO();
         dto.setId(entity.getId());
         dto.setOpportunityId(entity.getOpportunity().getId());
@@ -355,6 +423,30 @@ public class ClientVerificationService {
         dto.setExpiresAt(entity.getExpiresAt());
         dto.setDecisionDate(entity.getDecisionDate());
         dto.setCreatedAt(entity.getCreatedAt());
+        dto.setRecoverable(entity.getEncryptedToken() != null && !entity.getEncryptedToken().isBlank() && entity.getStatus() == ClientVerificationStatus.PENDING && entity.getExpiresAt() != null && !entity.getExpiresAt().isBefore(OffsetDateTime.now()));
+
+        // Prefer the exact version snapshot; fall back to the most recently submitted version for the same brief
+        boolean snapshotSet = false;
+        if (entity.getProjectBriefVersionNumber() != null) {
+            java.util.Optional<com.knoweb.salesmanagement.projectbrief.entity.ProjectBriefVersion> versionOpt =
+                projectBriefVersionRepository.findByProjectBriefIdAndVersionNumber(
+                    entity.getProjectBrief().getId(),
+                    entity.getProjectBriefVersionNumber()
+                );
+            if (versionOpt.isPresent()) {
+                dto.setProjectBriefSnapshot(versionOpt.get().getSnapshot());
+                snapshotSet = true;
+            }
+        }
+        if (!snapshotSet) {
+            // Fall back: use the most recently submitted version for this brief
+            projectBriefVersionRepository
+                .findByProjectBriefIdOrderByVersionNumberDesc(entity.getProjectBrief().getId())
+                .stream()
+                .filter(v -> v.isSubmittedVersion() && v.getSnapshot() != null)
+                .findFirst()
+                .ifPresent(v -> dto.setProjectBriefSnapshot(v.getSnapshot()));
+        }
         return dto;
     }
 }
