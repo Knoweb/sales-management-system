@@ -11,6 +11,7 @@ public class ProjectBriefSummaryDTO {
     private boolean overdue;
     private Long overdueHours;
     private String deadlineStatus; // ON_TIME, DUE_SOON, OVERDUE, SUBMITTED_ON_TIME, SUBMITTED_LATE
+    private Integer currentVersionNumber;
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -24,4 +25,6 @@ public class ProjectBriefSummaryDTO {
     public void setOverdueHours(Long overdueHours) { this.overdueHours = overdueHours; }
     public String getDeadlineStatus() { return deadlineStatus; }
     public void setDeadlineStatus(String deadlineStatus) { this.deadlineStatus = deadlineStatus; }
+    public Integer getCurrentVersionNumber() { return currentVersionNumber; }
+    public void setCurrentVersionNumber(Integer currentVersionNumber) { this.currentVersionNumber = currentVersionNumber; }
 }

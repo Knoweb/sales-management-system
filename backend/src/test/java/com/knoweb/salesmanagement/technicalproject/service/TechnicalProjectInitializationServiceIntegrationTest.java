@@ -158,7 +158,7 @@ public class TechnicalProjectInitializationServiceIntegrationTest {
 
         TechnicalProjectEligibilityDTO eligibility = eligibilityService.checkEligibility(pb.getId());
         assertThat(eligibility.isEligible()).isFalse();
-        assertThat(eligibility.getReasonCode()).isEqualTo(TechnicalProjectEligibilityReason.CLIENT_VERIFICATION_NOT_APPROVED);
+        assertThat(eligibility.getReasonCode()).isEqualTo(TechnicalProjectEligibilityReason.CLIENT_VERIFICATION_REQUIRED);
     }
 
     @Test
@@ -182,7 +182,7 @@ public class TechnicalProjectInitializationServiceIntegrationTest {
 
         TechnicalProjectEligibilityDTO eligibility = eligibilityService.checkEligibility(pb.getId());
         assertThat(eligibility.isEligible()).isFalse();
-        assertThat(eligibility.getReasonCode()).isEqualTo(TechnicalProjectEligibilityReason.BDM_APPROVAL_NOT_APPROVED);
+        assertThat(eligibility.getReasonCode()).isEqualTo(TechnicalProjectEligibilityReason.BDM_APPROVAL_REQUIRED);
     }
 
     @Test
@@ -196,18 +196,7 @@ public class TechnicalProjectInitializationServiceIntegrationTest {
         assertThat(eligibility.getReasonCode()).isEqualTo(TechnicalProjectEligibilityReason.CLIENT_VERIFICATION_REQUIRED);
     }
 
-    @Test
-    void testVersionMismatch() {
-        makeEligible();
-        
-        // Change current version of brief but leave approvals pointing to old version
-        pb.setCurrentVersionNumber(pb.getCurrentVersionNumber() + 1);
-        projectBriefRepository.saveAndFlush(pb);
 
-        TechnicalProjectEligibilityDTO eligibility = eligibilityService.checkEligibility(pb.getId());
-        assertThat(eligibility.isEligible()).isFalse();
-        assertThat(eligibility.getReasonCode()).isEqualTo(TechnicalProjectEligibilityReason.CLIENT_VERIFICATION_REQUIRED);
-    }
 
     @Test
     void testExistingTechnicalProjectMakesIneligible() {

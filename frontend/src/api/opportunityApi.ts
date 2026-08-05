@@ -13,7 +13,11 @@ export interface OpportunityActivityDTO {
 export interface ProjectBriefSummaryDTO {
   id: string;
   status: string;
-  currentVersionNumber: number;
+  dueAt?: string;
+  overdue?: boolean;
+  overdueHours?: number;
+  deadlineStatus?: 'ON_TIME' | 'DUE_SOON' | 'OVERDUE' | 'SUBMITTED_ON_TIME' | 'SUBMITTED_LATE';
+  currentVersionNumber?: number;
 }
 
 export interface SalesOpportunityDTO {

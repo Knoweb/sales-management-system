@@ -208,7 +208,11 @@ const SalesOpportunityDetailsPage: React.FC = () => {
                 <p className="text-sm font-medium text-text-secondary">BDM Approval</p>
                 <div className="mt-1">
                   {bdmApprovals.length > 0 ? (
-                    <StatusBadge status={bdmApprovals[0].status} variant={bdmApprovals[0].status === 'APPROVED' ? 'success' : bdmApprovals[0].status === 'REJECTED' ? 'error' : 'warning'} />
+                    bdmApprovals[0].projectBriefVersionNumber === opportunity.projectBrief?.currentVersionNumber ? (
+                      <StatusBadge status={bdmApprovals[0].status} variant={bdmApprovals[0].status === 'APPROVED' ? 'success' : bdmApprovals[0].status === 'REJECTED' ? 'error' : 'warning'} />
+                    ) : (
+                      <StatusBadge status="RE-APPROVAL REQUIRED" variant="warning" />
+                    )
                   ) : (
                     <span className="text-text-muted italic">Not Started</span>
                   )}
@@ -218,7 +222,11 @@ const SalesOpportunityDetailsPage: React.FC = () => {
                 <p className="text-sm font-medium text-text-secondary">Client Verification</p>
                 <div className="mt-1">
                   {clientVerifications.length > 0 ? (
-                    <StatusBadge status={clientVerifications[0].status} variant={clientVerifications[0].status === 'CONFIRMED' ? 'success' : clientVerifications[0].status === 'REJECTED' ? 'error' : 'warning'} />
+                    clientVerifications[0].projectBriefVersionNumber === opportunity.projectBrief?.currentVersionNumber ? (
+                      <StatusBadge status={clientVerifications[0].status} variant={clientVerifications[0].status === 'CONFIRMED' ? 'success' : clientVerifications[0].status === 'REJECTED' ? 'error' : 'warning'} />
+                    ) : (
+                      <StatusBadge status="RE-VERIFICATION REQUIRED" variant="warning" />
+                    )
                   ) : (
                     <span className="text-text-muted italic">Not Started</span>
                   )}
