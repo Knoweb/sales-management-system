@@ -10,7 +10,6 @@ import { NotFoundPage } from './pages/NotFoundPage';
 
 import { AuthenticatedLayout } from './components/AuthenticatedLayout';
 import { DepartmentsPage } from './pages/DepartmentsPage';
-import { DepartmentFormPage } from './pages/DepartmentFormPage';
 import { DepartmentDetailsPage } from './pages/DepartmentDetailsPage';
 import { SkillsPage } from './pages/SkillsPage';
 import { SkillFormPage } from './pages/SkillFormPage';
@@ -78,11 +77,6 @@ function App() {
             <Route path="/departments" element={
               <ProtectedRoute requiredPermission="DEPARTMENT_READ">
                 <DepartmentsPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/departments/new" element={
-              <ProtectedRoute requiredPermission="DEPARTMENT_CREATE">
-                <DepartmentFormPage />
               </ProtectedRoute>
             } />
             <Route path="/departments/:id" element={
