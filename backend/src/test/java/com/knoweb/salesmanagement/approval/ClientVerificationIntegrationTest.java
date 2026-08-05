@@ -102,12 +102,12 @@ public class ClientVerificationIntegrationTest {
         testOpportunity.setOpportunityNumber("OPP-VERIFY-TEST-" + UUID.randomUUID().toString().substring(0, 4));
 
         Client client = new Client();
-        client.setName("Test Client Co");
+        client.setName(("Client-" + java.util.UUID.randomUUID().toString()));
         client.setClientType(ClientType.COMPANY);
         clientRepository.save(client);
 
         Lead lead = new Lead();
-        lead.setTitle("Test Lead");
+        lead.setTitle(("Lead-" + java.util.UUID.randomUUID().toString()));
         lead.setClient(client);
         lead.setInquirySource(InquirySource.WEBSITE);
         lead.setStatus(LeadStatus.NEW);
@@ -115,7 +115,7 @@ public class ClientVerificationIntegrationTest {
 
         ProductCategory category = new ProductCategory();
         category.setCode("SW-" + UUID.randomUUID().toString().substring(0, 4).toUpperCase());
-        category.setName("Software");
+        category.setName(("Software-" + java.util.UUID.randomUUID().toString()));
         productCategoryRepository.save(category);
 
         testOpportunity.setTitle("Test Opportunity");

@@ -131,12 +131,12 @@ public class BdmApprovalControllerTest {
     @WithMockUser(username = "bdm@test.com", authorities = {"BDM_APPROVAL_READ"})
     public void testGetPendingApprovalsPopulatedQueue() throws Exception {
         Client client = new Client();
-        client.setName("Test Client Co");
+        client.setName(("Client-" + java.util.UUID.randomUUID().toString()));
         client.setClientType(ClientType.COMPANY);
         clientRepository.save(client);
         
         Lead lead = new Lead();
-        lead.setTitle("Test Lead");
+        lead.setTitle(("Lead-" + java.util.UUID.randomUUID().toString()));
         lead.setClient(client);
         lead.setInquirySource(InquirySource.WEBSITE);
         lead.setStatus(LeadStatus.NEW);
@@ -144,7 +144,7 @@ public class BdmApprovalControllerTest {
         
         ProductCategory category = new ProductCategory();
         category.setCode("SW-" + java.util.UUID.randomUUID().toString().substring(0, 4));
-        category.setName("Software");
+        category.setName(("Software-" + java.util.UUID.randomUUID().toString()));
         productCategoryRepository.save(category);
 
         SalesOpportunity opportunity = new SalesOpportunity();
@@ -185,19 +185,19 @@ public class BdmApprovalControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].opportunityNumber", is("OPP-12345")))
-                .andExpect(jsonPath("$[0].clientName", is("Test Client Co")))
+                .andExpect(jsonPath("$[0].clientName", is(client.getName())))
                 .andExpect(jsonPath("$[0].projectBriefVersionNumber", is(1)));
     }
     @Test
     @WithMockUser(username = "bdm@test.com", authorities = {"BDM_APPROVAL_READ"})
     public void testGetPendingApprovals_UnassignedOpportunity() throws Exception {
         Client client = new Client();
-        client.setName("Test Client Co");
+        client.setName(("Client-" + java.util.UUID.randomUUID().toString()));
         client.setClientType(ClientType.COMPANY);
         clientRepository.save(client);
         
         Lead lead = new Lead();
-        lead.setTitle("Test Lead");
+        lead.setTitle(("Lead-" + java.util.UUID.randomUUID().toString()));
         lead.setClient(client);
         lead.setInquirySource(InquirySource.WEBSITE);
         lead.setStatus(LeadStatus.NEW);
@@ -205,7 +205,7 @@ public class BdmApprovalControllerTest {
         
         ProductCategory category = new ProductCategory();
         category.setCode("SW-" + java.util.UUID.randomUUID().toString().substring(0, 4));
-        category.setName("Software");
+        category.setName(("Software-" + java.util.UUID.randomUUID().toString()));
         productCategoryRepository.save(category);
 
         SalesOpportunity opportunity = new SalesOpportunity();
@@ -249,7 +249,7 @@ public class BdmApprovalControllerTest {
         // Create an employee without a user account
         com.knoweb.salesmanagement.department.entity.Department dept = new com.knoweb.salesmanagement.department.entity.Department();
         dept.setCode("SALES-" + java.util.UUID.randomUUID().toString().substring(0, 4).toUpperCase());
-        dept.setName("Sales");
+        dept.setName(("Sales-" + java.util.UUID.randomUUID().toString()));
         com.knoweb.salesmanagement.department.repository.DepartmentRepository deptRepo = context.getBean(com.knoweb.salesmanagement.department.repository.DepartmentRepository.class);
         deptRepo.save(dept);
         
@@ -265,12 +265,12 @@ public class BdmApprovalControllerTest {
         empRepo.save(employee);
         
         Client client = new Client();
-        client.setName("Test Client Co");
+        client.setName(("Client-" + java.util.UUID.randomUUID().toString()));
         client.setClientType(ClientType.COMPANY);
         clientRepository.save(client);
         
         Lead lead = new Lead();
-        lead.setTitle("Test Lead");
+        lead.setTitle(("Lead-" + java.util.UUID.randomUUID().toString()));
         lead.setClient(client);
         lead.setInquirySource(InquirySource.WEBSITE);
         lead.setStatus(LeadStatus.NEW);
@@ -278,7 +278,7 @@ public class BdmApprovalControllerTest {
         
         ProductCategory category = new ProductCategory();
         category.setCode("SW-" + java.util.UUID.randomUUID().toString().substring(0, 4));
-        category.setName("Software");
+        category.setName(("Software-" + java.util.UUID.randomUUID().toString()));
         productCategoryRepository.save(category);
 
         SalesOpportunity opportunity = new SalesOpportunity();
@@ -322,12 +322,12 @@ public class BdmApprovalControllerTest {
     @WithMockUser(username = "bdm@test.com", authorities = {"BDM_APPROVAL_DECIDE", "BDM_APPROVAL_READ"})
     public void testApprove_UnassignedOpportunity() throws Exception {
         Client client = new Client();
-        client.setName("Test Client Co");
+        client.setName(("Client-" + java.util.UUID.randomUUID().toString()));
         client.setClientType(ClientType.COMPANY);
         clientRepository.save(client);
         
         Lead lead = new Lead();
-        lead.setTitle("Test Lead");
+        lead.setTitle(("Lead-" + java.util.UUID.randomUUID().toString()));
         lead.setClient(client);
         lead.setInquirySource(InquirySource.WEBSITE);
         lead.setStatus(LeadStatus.NEW);
@@ -335,7 +335,7 @@ public class BdmApprovalControllerTest {
         
         ProductCategory category = new ProductCategory();
         category.setCode("SW-" + java.util.UUID.randomUUID().toString().substring(0, 4));
-        category.setName("Software");
+        category.setName(("Software-" + java.util.UUID.randomUUID().toString()));
         productCategoryRepository.save(category);
 
         SalesOpportunity opportunity = new SalesOpportunity();
@@ -389,7 +389,7 @@ public class BdmApprovalControllerTest {
     public void testApprove_EmployeeWithoutUser() throws Exception {
         com.knoweb.salesmanagement.department.entity.Department dept = new com.knoweb.salesmanagement.department.entity.Department();
         dept.setCode("SALES-EMP-" + java.util.UUID.randomUUID().toString().substring(0, 4).toUpperCase());
-        dept.setName("Sales");
+        dept.setName(("Sales-" + java.util.UUID.randomUUID().toString()));
         com.knoweb.salesmanagement.department.repository.DepartmentRepository deptRepo = context.getBean(com.knoweb.salesmanagement.department.repository.DepartmentRepository.class);
         deptRepo.save(dept);
         
@@ -405,12 +405,12 @@ public class BdmApprovalControllerTest {
         empRepo.save(employee);
         
         Client client = new Client();
-        client.setName("Test Client Co");
+        client.setName(("Client-" + java.util.UUID.randomUUID().toString()));
         client.setClientType(ClientType.COMPANY);
         clientRepository.save(client);
         
         Lead lead = new Lead();
-        lead.setTitle("Test Lead");
+        lead.setTitle(("Lead-" + java.util.UUID.randomUUID().toString()));
         lead.setClient(client);
         lead.setInquirySource(InquirySource.WEBSITE);
         lead.setStatus(LeadStatus.NEW);
@@ -418,7 +418,7 @@ public class BdmApprovalControllerTest {
 
         ProductCategory category = new ProductCategory();
         category.setCode("SW-" + java.util.UUID.randomUUID().toString().substring(0, 4).toUpperCase());
-        category.setName("Software");
+        category.setName(("Software-" + java.util.UUID.randomUUID().toString()));
         com.knoweb.salesmanagement.productcategory.repository.ProductCategoryRepository pcRepo = context.getBean(com.knoweb.salesmanagement.productcategory.repository.ProductCategoryRepository.class);
         pcRepo.save(category);
 
@@ -473,20 +473,20 @@ public class BdmApprovalControllerTest {
     public void testApprove_WithLinkedUser_AndFallbackRecipient() throws Exception {
         User salesUser = new User();
         salesUser.setEmail("sales@test.com");
-        salesUser.setFirstName("Sales");
+        salesUser.setFirstName(("Sales-" + java.util.UUID.randomUUID().toString()));
         salesUser.setLastName("User");
         salesUser.setPasswordHash("pass");
         userRepository.save(salesUser);
         
         com.knoweb.salesmanagement.department.entity.Department dept = new com.knoweb.salesmanagement.department.entity.Department();
         dept.setCode("SALES-EMP-USR-" + java.util.UUID.randomUUID().toString().substring(0, 4).toUpperCase());
-        dept.setName("Sales");
+        dept.setName(("Sales-" + java.util.UUID.randomUUID().toString()));
         com.knoweb.salesmanagement.department.repository.DepartmentRepository deptRepo = context.getBean(com.knoweb.salesmanagement.department.repository.DepartmentRepository.class);
         deptRepo.save(dept);
         
         com.knoweb.salesmanagement.employee.entity.Employee employee = new com.knoweb.salesmanagement.employee.entity.Employee();
         employee.setEmployeeNumber("EMP-003");
-        employee.setFirstName("Sales");
+        employee.setFirstName(("Sales-" + java.util.UUID.randomUUID().toString()));
         employee.setLastName("User");
         employee.setJobTitle("Sales Rep");
         employee.setDepartment(dept);
@@ -497,12 +497,12 @@ public class BdmApprovalControllerTest {
         empRepo.save(employee);
         
         Client client = new Client();
-        client.setName("Test Client Co");
+        client.setName(("Client-" + java.util.UUID.randomUUID().toString()));
         client.setClientType(ClientType.COMPANY);
         clientRepository.save(client);
         
         Lead lead = new Lead();
-        lead.setTitle("Test Lead");
+        lead.setTitle(("Lead-" + java.util.UUID.randomUUID().toString()));
         lead.setClient(client);
         lead.setInquirySource(InquirySource.WEBSITE);
         lead.setStatus(LeadStatus.NEW);
@@ -510,7 +510,7 @@ public class BdmApprovalControllerTest {
 
         ProductCategory category = new ProductCategory();
         category.setCode("SW-" + java.util.UUID.randomUUID().toString().substring(0, 4).toUpperCase());
-        category.setName("Software");
+        category.setName(("Software-" + java.util.UUID.randomUUID().toString()));
         com.knoweb.salesmanagement.productcategory.repository.ProductCategoryRepository pcRepo = context.getBean(com.knoweb.salesmanagement.productcategory.repository.ProductCategoryRepository.class);
         pcRepo.save(category);
 
@@ -547,19 +547,51 @@ public class BdmApprovalControllerTest {
         BdmDecisionRequest request = new BdmDecisionRequest();
         request.setComments("Approved with linked user.");
 
-        mockMvc.perform(post("/api/v1/project-briefs/{briefId}/bdm-approve", brief.getId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status", is("APPROVED")));
+        try {
+            mockMvc.perform(post("/api/v1/project-briefs/{briefId}/bdm-approve", brief.getId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status", is("APPROVED")));
 
-        BdmApproval updatedApproval = bdmApprovalRepository.findById(approval.getId()).orElseThrow();
-        assertEquals(BdmApprovalStatus.APPROVED, updatedApproval.getStatus());
+            BdmApproval updatedApproval = bdmApprovalRepository.findById(approval.getId()).orElseThrow();
+            assertEquals(BdmApprovalStatus.APPROVED, updatedApproval.getStatus());
 
-        List<Notification> notifications = notificationRepository.findAll();
-        assertEquals(1, notifications.size(), "One notification should be created for the linked user");
-        Notification notification = notifications.get(0);
-        assertEquals(salesUser.getId(), notification.getRecipient().getId());
-        assertTrue(notification.getDeduplicationKey().startsWith("BDM_DECISION:"));
+            org.springframework.test.context.transaction.TestTransaction.flagForCommit();
+            org.springframework.test.context.transaction.TestTransaction.end();
+
+            List<Notification> notifications = notificationRepository.findAll();
+            assertEquals(1, notifications.size(), "One notification should be created for the linked user");
+            Notification notification = notifications.get(0);
+            assertEquals(salesUser.getId(), notification.getRecipient().getId());
+            assertTrue(notification.getDeduplicationKey().startsWith("BDM_DECISION:"));
+        } finally {
+            if (org.springframework.test.context.transaction.TestTransaction.isActive()) {
+                org.springframework.test.context.transaction.TestTransaction.flagForRollback();
+                org.springframework.test.context.transaction.TestTransaction.end();
+            }
+            
+            // Clean up using JdbcTemplate in a fresh transaction
+            org.springframework.test.context.transaction.TestTransaction.start();
+            try {
+                org.springframework.jdbc.core.JdbcTemplate jdbcTemplate = context.getBean(org.springframework.jdbc.core.JdbcTemplate.class);
+                jdbcTemplate.execute("DELETE FROM notifications");
+                jdbcTemplate.execute("DELETE FROM bdm_approvals");
+                jdbcTemplate.execute("DELETE FROM project_briefs");
+                jdbcTemplate.execute("DELETE FROM sales_opportunities");
+                jdbcTemplate.execute("DELETE FROM product_categories WHERE name LIKE 'Software-%'");
+                jdbcTemplate.execute("DELETE FROM leads WHERE title LIKE 'Lead-%'");
+                jdbcTemplate.execute("DELETE FROM clients WHERE name LIKE 'Client-%'");
+                jdbcTemplate.execute("DELETE FROM employees WHERE employee_number = 'EMP-003'");
+                jdbcTemplate.execute("DELETE FROM departments WHERE code LIKE 'SALES-EMP-USR-%'");
+                jdbcTemplate.execute("DELETE FROM users WHERE email = 'sales@test.com'");
+                org.springframework.test.context.transaction.TestTransaction.flagForCommit();
+            } catch (Exception e) {
+                // Ignore cleanup errors
+            } finally {
+                org.springframework.test.context.transaction.TestTransaction.end();
+                org.springframework.test.context.transaction.TestTransaction.start();
+            }
+        }
     }
 }

@@ -2,13 +2,16 @@ package com.knoweb.salesmanagement.notification.controller;
 
 import com.knoweb.salesmanagement.notification.dto.NotificationDTO;
 import com.knoweb.salesmanagement.notification.service.NotificationService;
-import com.knoweb.salesmanagement.user.entity.User;
-import com.knoweb.salesmanagement.user.repository.UserRepository;
+import com.knoweb.salesmanagement.security.principal.CustomUserDetails;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -16,32 +19,48 @@ import java.util.UUID;
 public class NotificationController {
 
     private final NotificationService notificationService;
-    private final UserRepository userRepository;
 
-    public NotificationController(NotificationService notificationService, UserRepository userRepository) {
+    public NotificationController(NotificationService notificationService) {
         this.notificationService = notificationService;
-        this.userRepository = userRepository;
     }
 
-    private User getAuthenticatedUser(Authentication auth) {
-        if (auth == null || !auth.isAuthenticated()) return null;
-        return userRepository.findByEmail(auth.getName()).orElse(null);
+    private UUID getUserId(Authentication auth) {
+        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails) {
+            return ((CustomUserDetails) auth.getPrincipal()).getId();
+        }
+        throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException("Not authenticated");
     }
 
     @GetMapping
-    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('NOTIFICATION_SELF_READ')")
-    public List<NotificationDTO> getMyNotifications(Authentication authentication) {
-        User user = getAuthenticatedUser(authentication);
-        if (user == null) return Collections.emptyList();
-        return notificationService.getUserNotifications(user.getId());
+    @PreAuthorize("hasAuthority('NOTIFICATION_SELF_READ')")
+    public Page<NotificationDTO> getMyNotifications(
+            @RequestParam(required = false) Boolean isRead,
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            Authentication authentication) {
+        
+        UUID userId = getUserId(authentication);
+        return notificationService.getUserNotifications(userId, isRead, pageable);
     }
 
-    @PostMapping("/{id}/read")
-    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('NOTIFICATION_SELF_UPDATE')")
+    @GetMapping("/unread-count")
+    @PreAuthorize("hasAuthority('NOTIFICATION_SELF_READ')")
+    public Map<String, Long> getUnreadCount(Authentication authentication) {
+        UUID userId = getUserId(authentication);
+        long count = notificationService.getUnreadCount(userId);
+        return Map.of("count", count);
+    }
+
+    @PatchMapping("/{id}/read")
+    @PreAuthorize("hasAuthority('NOTIFICATION_SELF_UPDATE')")
     public void markAsRead(@PathVariable UUID id, Authentication authentication) {
-        User user = getAuthenticatedUser(authentication);
-        if (user != null) {
-            notificationService.markAsRead(id); // Simple mark as read
-        }
+        UUID userId = getUserId(authentication);
+        notificationService.markAsRead(userId, id);
+    }
+
+    @PatchMapping("/read-all")
+    @PreAuthorize("hasAuthority('NOTIFICATION_SELF_UPDATE')")
+    public void markAllAsRead(Authentication authentication) {
+        UUID userId = getUserId(authentication);
+        notificationService.markAllAsRead(userId);
     }
 }

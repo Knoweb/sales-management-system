@@ -22,9 +22,24 @@ const NotificationsDropdown: React.FC = () => {
     try {
       if (showLoading) setLoading(true);
       const data = await getMyNotifications();
-      setNotifications(data);
+      const responseData: any = data;
+      
+      // Safely extract array from paginated response
+      let extracted: NotificationDTO[] = [];
+      if (Array.isArray(responseData)) {
+        extracted = responseData;
+      } else if (responseData && Array.isArray(responseData.content)) {
+        extracted = responseData.content;
+      } else if (responseData && responseData.data && Array.isArray(responseData.data.content)) {
+        extracted = responseData.data.content;
+      } else {
+        console.warn('Unexpected notifications API response format:', responseData);
+      }
+      
+      setNotifications(extracted);
     } catch (err) {
       console.error('Failed to load notifications', err);
+      setNotifications([]);
     } finally {
       if (showLoading) setLoading(false);
     }
@@ -72,7 +87,8 @@ const NotificationsDropdown: React.FC = () => {
   const handleMarkAllAsRead = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
+    const safeNotifications = Array.isArray(notifications) ? notifications : [];
+    const unreadIds = safeNotifications.filter(n => !n.read).map(n => n.id);
     if (unreadIds.length === 0) return;
 
     try {
@@ -83,7 +99,8 @@ const NotificationsDropdown: React.FC = () => {
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const safeNotifications = Array.isArray(notifications) ? notifications : [];
+  const unreadCount = safeNotifications.filter(n => !n.read).length;
 
   return (
     <div ref={dropdownRef} className="relative inline-block text-left">
@@ -119,11 +136,11 @@ const NotificationsDropdown: React.FC = () => {
           </div>
           
           <div className="overflow-y-auto flex-1">
-            {loading && notifications.length === 0 ? (
+            {loading && safeNotifications.length === 0 ? (
               <div className="p-8">
                 <LoadingState message="Loading notifications..." />
               </div>
-            ) : notifications.length === 0 ? (
+            ) : safeNotifications.length === 0 ? (
               <div className="p-8">
                 <EmptyState 
                   icon={<Bell size={32} />} 
@@ -133,7 +150,7 @@ const NotificationsDropdown: React.FC = () => {
               </div>
             ) : (
               <div className="divide-y divide-border">
-                {notifications.map((notification) => (
+                {safeNotifications.map((notification) => (
                   <div
                     key={notification.id}
                     className={`p-4 transition-colors duration-200 ${!notification.read ? 'bg-info-bg' : 'bg-transparent hover:bg-surface-secondary'}`}
