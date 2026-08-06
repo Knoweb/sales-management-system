@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Button } from './Button';
-import { FormField, Input, Select, Textarea, Checkbox } from './Forms';
-import { Modal } from './Modal';
-import { Alert } from './Alert';
+import { Button } from '../Button';
+import { FormField, Input, Select, Textarea, Checkbox } from '../Forms';
+import { Modal } from '../Modal';
+import { Alert } from '../Alert';
 
 interface EmployeeLeaveFormProps {
   onClose: () => void;

@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { EmployeeApi } from "../services/EmployeeApi";
-import { DepartmentApi } from "../services/DepartmentApi";
-import { PageHeader } from "../components/PageHeader";
-import { Button } from "../components/Button";
-import { Card } from "../components/Card";
-import { FormField, Input, Select } from "../components/Forms";
-import { SectionHeader } from "../components/SectionHeader";
-import { Alert } from "../components/Alert";
-import type { Department } from "../types/department";
-import { apiClient } from "../services/Api";
+import { EmployeeApi } from "../../services/EmployeeApi";
+import { DepartmentApi } from "../../services/DepartmentApi";
+import { PageHeader } from "../../components/PageHeader";
+import { Button } from "../../components/Button";
+import { Card } from "../../components/Card";
+import { FormField, Input, Select } from "../../components/Forms";
+import { SectionHeader } from "../../components/SectionHeader";
+import { Alert } from "../../components/Alert";
+import type { Department } from "../../types/department";
+import { apiClient } from "../../services/Api";
 
 interface SimpleUser {
   id: string;
@@ -22,7 +22,7 @@ import type {
   CreateEmployeeRequest,
   UpdateEmployeeRequest,
   EmploymentType,
-} from "../types/employee";
+} from "../../types/employee";
 
 import { ContactRound } from "lucide-react";
 

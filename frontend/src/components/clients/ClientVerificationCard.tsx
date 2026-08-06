@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { CheckCircle2, Clock, XCircle, RefreshCw, Link2, Copy, AlertTriangle, Shield } from 'lucide-react';
-import { Button } from './Button';
-import { StatusBadge } from './StatusBadge';
-import type { ClientVerificationDTO } from '../services/ApprovalApi';
+import { Button } from '../Button';
+import { StatusBadge } from '../StatusBadge';
+import type { ClientVerificationDTO } from '../../services/ApprovalApi';
 import {
   createClientVerification,
   getVerificationLink,
   regenerateClientVerification,
-} from '../services/ApprovalApi';
+} from '../../services/ApprovalApi';
 
 interface ClientVerificationCardProps {
   verifications: ClientVerificationDTO[];

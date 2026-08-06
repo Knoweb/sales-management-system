@@ -29,7 +29,7 @@ import { SectionHeader } from '../components/SectionHeader';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/Table';
 import { Download, CheckCircle, XCircle, RotateCcw, HelpCircle, ArrowLeft, Building, Clock, FileText, CheckCircle2 } from 'lucide-react';
 import { Alert } from '../components/Alert';
-import { GenerateClientVerificationModal } from '../components/GenerateClientVerificationModal';
+import { GenerateClientVerificationModal } from '../components/clients/GenerateClientVerificationModal';
 import { useAuth } from '../context/AuthContext';
 
 interface BriefData {

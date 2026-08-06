@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Button } from './Button';
-import { createClientVerification } from '../services/ApprovalApi';
+import { Button } from '../Button';
+import { createClientVerification } from '../../services/ApprovalApi';
 
 interface GenerateClientVerificationModalProps {
   isOpen: boolean;

@@ -1,16 +1,16 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ClientApi } from '../services/ClientApi';
-import type { Client } from '../types/client';
-import { PageHeader } from '../components/PageHeader';
-import { Button } from '../components/Button';
+import { ClientApi } from '../../services/ClientApi';
+import type { Client } from '../../types/client';
+import { PageHeader } from '../../components/PageHeader';
+import { Button } from '../../components/Button';
 import { Handshake, Briefcase, Building, Mail, Phone, MapPin, Edit, ShieldAlert, ShieldCheck, Users, Activity, FileText, Target } from 'lucide-react';
-import { PermissionGuard } from '../components/PermissionGuard';
-import { ContactList } from '../components/clients/ContactList';
-import { Tabs, type TabItem } from '../components/Tabs';
-import { Card } from '../components/Card';
-import { StatusBadge } from '../components/StatusBadge';
-import { EmptyState } from '../components/FeedbackStates';
+import { PermissionGuard } from '../../components/PermissionGuard';
+import { ContactList } from '../../components/clients/ContactList';
+import { Tabs, type TabItem } from '../../components/Tabs';
+import { Card } from '../../components/Card';
+import { StatusBadge } from '../../components/StatusBadge';
+import { EmptyState } from '../../components/FeedbackStates';
 
 export const ClientDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

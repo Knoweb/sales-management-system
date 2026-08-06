@@ -13,14 +13,14 @@ import {
   Building2,
 } from 'lucide-react';
 
-import { DepartmentApi } from '../services/DepartmentApi';
-import { EmployeeApi } from '../services/EmployeeApi';
+import { DepartmentApi } from '../../services/DepartmentApi';
+import { EmployeeApi } from '../../services/EmployeeApi';
 
-import type { Department } from '../types/department';
-import type { Employee } from '../types/employee';
+import type { Department } from '../../types/department';
+import type { Employee } from '../../types/employee';
 
-import { PageHeader } from '../components/PageHeader';
-import { Card } from '../components/Card';
+import { PageHeader } from '../../components/PageHeader';
+import { Card } from '../../components/Card';
 import {
   Table,
   TableBody,
@@ -28,20 +28,20 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../components/Table';
-import { Button } from '../components/Button';
-import { StatusBadge } from '../components/StatusBadge';
+} from '../../components/Table';
+import { Button } from '../../components/Button';
+import { StatusBadge } from '../../components/StatusBadge';
 import {
   ErrorState,
   LoadingState,
-} from '../components/FeedbackStates';
-import { useAuth } from '../context/AuthContext';
-import { Modal } from '../components/Modal';
+} from '../../components/FeedbackStates';
+import { useAuth } from '../../context/AuthContext';
+import { Modal } from '../../components/Modal';
 import {
   FormField,
   Select,
-} from '../components/Forms';
-import { Alert } from '../components/Alert';
+} from '../../components/Forms';
+import { Alert } from '../../components/Alert';
 
 export const DepartmentDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

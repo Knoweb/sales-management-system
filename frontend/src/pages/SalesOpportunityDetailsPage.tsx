@@ -13,7 +13,7 @@ import { LoadingState, ErrorState } from '../components/FeedbackStates';
 import { FileText, Activity, Paperclip, LayoutDashboard, TrendingUp, CheckCircle, Edit2, ExternalLink, History } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/Button';
-import { ClientVerificationCard } from '../components/ClientVerificationCard';
+import { ClientVerificationCard } from '../components/clients/ClientVerificationCard';
 
 const SalesOpportunityDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

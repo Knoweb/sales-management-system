@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Button } from './Button';
-import { FormField, Input, Select, Textarea, Checkbox } from './Forms';
-import { Modal } from './Modal';
-import { Alert } from './Alert';
-import type { Skill } from '../types/skill';
-import { SkillApi } from '../services/SkillApi';
+import { Button } from '../Button';
+import { FormField, Input, Select, Textarea, Checkbox } from '../Forms';
+import { Modal } from '../Modal';
+import { Alert } from '../Alert';
+import type { Skill } from '../../types/skill';
+import { SkillApi } from '../../services/SkillApi';
 
 interface EmployeeSkillFormProps {
   onClose: () => void;

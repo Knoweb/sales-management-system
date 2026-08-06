@@ -15,7 +15,7 @@ import {
 } from '../services/QuotationApi';
 import { useAuth } from '../context/AuthContext';
 import { QuotationApprovalModal } from '../components/QuotationApprovalModal';
-import { ClientDecisionModal } from '../components/ClientDecisionModal';
+import { ClientDecisionModal } from '../components/clients/ClientDecisionModal';
 
 export const QuotationDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

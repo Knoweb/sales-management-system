@@ -1,8 +1,8 @@
 import React, { useEffect, useState, type FormEvent } from 'react';
-import { EmployeeApi } from '../services/EmployeeApi';
-import { DepartmentApi } from '../services/DepartmentApi';
-import type { Employee, UpdateEmployeeRequest, CreateEmployeeRequest } from '../types/employee';
-import type { Department } from '../types/department';
+import { EmployeeApi } from '../../services/EmployeeApi';
+import { DepartmentApi } from '../../services/DepartmentApi';
+import type { Employee, UpdateEmployeeRequest, CreateEmployeeRequest } from '../../types/employee';
+import type { Department } from '../../types/department';
 import {
   ContactRound,
   Eye,
@@ -10,10 +10,10 @@ import {
   Edit2,
   X,
 } from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
+import { PageHeader } from '../../components/PageHeader';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { Card } from '../components/Card';
+import { useAuth } from '../../context/AuthContext';
+import { Card } from '../../components/Card';
 import {
   Table,
   TableHead,
@@ -21,19 +21,19 @@ import {
   TableRow,
   TableHeader,
   TableCell,
-} from '../components/Table';
+} from '../../components/Table';
 import {
   LoadingState,
   EmptyState,
-} from '../components/FeedbackStates';
-import { StatusBadge } from '../components/StatusBadge';
-import { IconButton } from '../components/IconButton';
-import { Input, Select, FormField } from '../components/Forms';
-import { Modal } from '../components/Modal';
-import { Alert } from '../components/Alert';
-import { Button } from '../components/Button';
-import { SectionHeader } from '../components/SectionHeader';
-import { apiClient } from '../services/Api';
+} from '../../components/FeedbackStates';
+import { StatusBadge } from '../../components/StatusBadge';
+import { IconButton } from '../../components/IconButton';
+import { Input, Select, FormField } from '../../components/Forms';
+import { Modal } from '../../components/Modal';
+import { Alert } from '../../components/Alert';
+import { Button } from '../../components/Button';
+import { SectionHeader } from '../../components/SectionHeader';
+import { apiClient } from '../../services/Api';
 
 interface SimpleUser {
   id: string;

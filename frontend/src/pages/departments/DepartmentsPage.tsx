@@ -12,15 +12,15 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-import { DepartmentApi } from '../services/DepartmentApi';
+import { DepartmentApi } from '../../services/DepartmentApi';
 import type {
   CreateDepartmentRequest,
   Department,
-} from '../types/department';
+} from '../../types/department';
 
-import { PageHeader } from '../components/PageHeader';
-import { useAuth } from '../context/AuthContext';
-import { Card } from '../components/Card';
+import { PageHeader } from '../../components/PageHeader';
+import { useAuth } from '../../context/AuthContext';
+import { Card } from '../../components/Card';
 import {
   Table,
   TableBody,
@@ -28,21 +28,21 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../components/Table';
-import { StatusBadge } from '../components/StatusBadge';
-import { IconButton } from '../components/IconButton';
+} from '../../components/Table';
+import { StatusBadge } from '../../components/StatusBadge';
+import { IconButton } from '../../components/IconButton';
 import {
   FormField,
   Input,
   Textarea,
-} from '../components/Forms';
+} from '../../components/Forms';
 import {
   EmptyState,
   LoadingState,
-} from '../components/FeedbackStates';
-import { Modal } from '../components/Modal';
-import { Alert } from '../components/Alert';
-import { Button } from '../components/Button';
+} from '../../components/FeedbackStates';
+import { Modal } from '../../components/Modal';
+import { Alert } from '../../components/Alert';
+import { Button } from '../../components/Button';
 
 const emptyDepartmentForm: CreateDepartmentRequest = {
   code: '',

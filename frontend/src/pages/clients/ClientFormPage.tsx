@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { PageHeader } from '../components/PageHeader';
-import { ClientForm } from '../components/clients/ClientForm';
-import { ClientApi } from '../services/ClientApi';
-import { Card } from '../components/Card';
-import type { Client } from '../types/client';
+import { PageHeader } from '../../components/PageHeader';
+import { ClientForm } from '../../components/clients/ClientForm';
+import { ClientApi } from '../../services/ClientApi';
+import { Card } from '../../components/Card';
+import type { Client } from '../../types/client';
 
 import { Handshake } from 'lucide-react';
 

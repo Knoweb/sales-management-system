@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { getVerificationByToken, confirmVerification, requestChangesVerification, rejectVerification, getProjectBriefVersion, type ClientVerificationDTO, type ProjectBriefVersionDTO } from '../services/ApprovalApi';
+import { getVerificationByToken, confirmVerification, requestChangesVerification, rejectVerification, getProjectBriefVersion, type ClientVerificationDTO, type ProjectBriefVersionDTO } from '../../services/ApprovalApi';
 
 export const ClientVerificationPage: React.FC = () => {
   const { token } = useParams<{ token: string }>();

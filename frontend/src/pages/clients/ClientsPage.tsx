@@ -1,19 +1,19 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { ClientApi } from '../services/ClientApi';
-import type { Client } from '../types/client';
+import { ClientApi } from '../../services/ClientApi';
+import type { Client } from '../../types/client';
 import { Handshake, Search, Plus, Edit, Eye, ShieldAlert, ShieldCheck, RefreshCw } from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
+import { PageHeader } from '../../components/PageHeader';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { PermissionGuard } from '../components/PermissionGuard';
-import { Button } from '../components/Button';
-import { IconButton } from '../components/IconButton';
-import { Card } from '../components/Card';
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/Table';
-import { Input, Select } from '../components/Forms';
-import { ErrorState, EmptyState, LoadingState } from '../components/FeedbackStates';
-import { StatusBadge } from '../components/StatusBadge';
-import { FilterBar } from '../components/FilterBar';
+import { useAuth } from '../../context/AuthContext';
+import { PermissionGuard } from '../../components/PermissionGuard';
+import { Button } from '../../components/Button';
+import { IconButton } from '../../components/IconButton';
+import { Card } from '../../components/Card';
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../components/Table';
+import { Input, Select } from '../../components/Forms';
+import { ErrorState, EmptyState, LoadingState } from '../../components/FeedbackStates';
+import { StatusBadge } from '../../components/StatusBadge';
+import { FilterBar } from '../../components/FilterBar';
 
 export const ClientsPage: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);

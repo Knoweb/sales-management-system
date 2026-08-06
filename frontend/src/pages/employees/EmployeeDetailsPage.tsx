@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { EmployeeApi } from "../services/EmployeeApi";
-import type { Employee } from "../types/employee";
-import type { EmployeeSkill } from "../types/skill";
-import type { EmployeeQualification } from "../types/qualification";
-import type { EmployeeLeave, LeaveStatus } from "../types/leave";
-import type { AvailabilityResponse } from "../types/availability";
+import { EmployeeApi } from "../../services/EmployeeApi";
+import type { Employee } from "../../types/employee";
+import type { EmployeeSkill } from "../../types/skill";
+import type { EmployeeQualification } from "../../types/qualification";
+import type { EmployeeLeave, LeaveStatus } from "../../types/leave";
+import type { AvailabilityResponse } from "../../types/availability";
 import {
   ContactRound,
   CheckCircle,
@@ -14,13 +14,13 @@ import {
   Clock,
   ArrowLeft,
 } from "lucide-react";
-import { PermissionGuard } from "../components/PermissionGuard";
-import { EmployeeSkillForm } from "../components/EmployeeSkillForm";
-import { EmployeeQualificationForm } from "../components/EmployeeQualificationForm";
-import { EmployeeLeaveForm } from "../components/EmployeeLeaveForm";
-import { Tabs } from "../components/Tabs";
-import { PageHeader } from "../components/PageHeader";
-import { Card } from "../components/Card";
+import { PermissionGuard } from "../../components/PermissionGuard";
+import { EmployeeSkillForm } from "../../components/employees/EmployeeSkillForm";
+import { EmployeeQualificationForm } from "../../components/employees/EmployeeQualificationForm";
+import { EmployeeLeaveForm } from "../../components/employees/EmployeeLeaveForm";
+import { Tabs } from "../../components/Tabs";
+import { PageHeader } from "../../components/PageHeader";
+import { Card } from "../../components/Card";
 import {
   Table,
   TableHead,
@@ -28,15 +28,15 @@ import {
   TableRow,
   TableHeader,
   TableCell,
-} from "../components/Table";
-import { Button } from "../components/Button";
-import { StatusBadge } from "../components/StatusBadge";
+} from "../../components/Table";
+import { Button } from "../../components/Button";
+import { StatusBadge } from "../../components/StatusBadge";
 import {
   ErrorState,
   LoadingState,
   EmptyState,
-} from "../components/FeedbackStates";
-import { Input } from "../components/Forms";
+} from "../../components/FeedbackStates";
+import { Input } from "../../components/Forms";
 
 export const EmployeeDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
