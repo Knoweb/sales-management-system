@@ -37,6 +37,10 @@ import { ProjectTeamBuilderPage } from './pages/ProjectTeamBuilderPage';
 import { HODTechnicalEstimatesQueuePage } from './pages/HODTechnicalEstimatesQueuePage';
 import { DepartmentEstimateEditorPage } from './pages/DepartmentEstimateEditorPage';
 import { AdminEstimateReviewsPage } from './pages/AdminEstimateReviewsPage';
+import { QuotationBuilderPage } from './pages/QuotationBuilderPage';
+import { QuotationFormPage } from './pages/QuotationFormPage';
+import { QuotationDetailsPage } from './pages/QuotationDetailsPage';
+import { QuotationsPage } from './pages/QuotationsPage';
 
 import './index.css';
 import './styles/auth.css';
@@ -200,6 +204,26 @@ function App() {
             <Route path="/technical-projects/:id/route" element={
               <ProtectedRoute requiredPermission="TECHNICAL_PROJECT_ROUTE">
                 <TechnicalProjectRoutingPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/technical-projects/:technicalProjectId/quotation/new" element={
+              <ProtectedRoute requiredPermission="QUOTATION_CREATE">
+                <QuotationBuilderPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/quotations" element={
+              <ProtectedRoute requiredPermission={["QUOTATION_READ", "QUOTATION_APPROVE"]}>
+                <QuotationsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/quotations/:id/edit" element={
+              <ProtectedRoute requiredPermission="QUOTATION_CREATE">
+                <QuotationFormPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/quotations/:id" element={
+              <ProtectedRoute requiredPermission={["QUOTATION_READ", "QUOTATION_APPROVE"]}>
+                <QuotationDetailsPage />
               </ProtectedRoute>
             } />
 

@@ -1,0 +1,12 @@
+package com.knoweb.salesmanagement.quotation.enums;
+
+public enum QuotationStatus {
+    DRAFT,
+    PENDING_TOP_MANAGEMENT_APPROVAL,
+    APPROVED_BY_TOP_MANAGEMENT,
+    REJECTED_BY_TOP_MANAGEMENT,
+    RETURNED_FOR_CORRECTION,
+    PENDING_CLIENT_APPROVAL,
+    CLIENT_ACCEPTED,
+    CLIENT_REJECTED
+}

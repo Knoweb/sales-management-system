@@ -117,12 +117,21 @@ export interface RevisionRequest {
 }
 
 export interface ApprovedTechnicalEstimateSummaryDTO {
-  consolidatedEstimateId: string;
+  id: string;
   technicalProjectId: string;
+  projectCode: string;
+  projectTitle: string;
+  versionNumber: number;
+  status: string;
+  subtotal: number;
+  contingencyAmount: number;
+  taxAmount: number;
+  marginAmount: number;
   finalTotal: number;
   totalDurationDays: number;
   approvedAt: string;
   approvedByName: string;
+  categoryBreakdown: Record<string, number>;
 }
 
 export const getDepartmentEstimate = async (projectId: string, departmentId: string): Promise<DepartmentEstimateDTO> => {
