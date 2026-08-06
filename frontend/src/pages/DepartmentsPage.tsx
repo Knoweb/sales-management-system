@@ -253,9 +253,7 @@ export const DepartmentsPage = () => {
 
                   <TableHeader>Status</TableHeader>
 
-                  <TableHeader>
-                    Employees
-                  </TableHeader>
+                  <TableHeader align="center">Employees</TableHeader>
 
                   <TableHeader>
                     Active HOD
@@ -293,8 +291,8 @@ export const DepartmentsPage = () => {
                         />
                       </TableCell>
 
-                      <TableCell>
-                        {department.employeeCount}
+                      <TableCell align="center">
+                        {department.employeeCount ?? 0}
                       </TableCell>
 
                       <TableCell>

@@ -8,6 +8,7 @@ import {
   Eye,
   Plus,
   Edit2,
+  X,
 } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 import { useNavigate } from 'react-router-dom';
@@ -474,12 +475,42 @@ export const EmployeesPage: React.FC = () => {
           height: '44px',
         }}
       >
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
           <Input
             placeholder="Search by name, employee number, or email..."
             value={search}
             onChange={(event) => setSearch(event.target.value)}
+            style={{
+              width: '100%',
+              height: '44px',
+              paddingLeft: '16px',
+              paddingRight: search ? '40px' : '16px',
+              borderRadius: '9px',
+            }}
           />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              style={{
+                position: 'absolute',
+                right: '12px',
+                top: '40%',
+                transform: 'translateY(-50%)',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#64748b',
+                padding: '4px',
+              }}
+              aria-label="Clear search"
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
 
         <div style={{ width: '220px', flexShrink: 0 }}>

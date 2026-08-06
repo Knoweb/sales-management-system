@@ -150,7 +150,21 @@ export const EmployeeSkillForm: React.FC<EmployeeSkillFormProps> = ({ onClose, o
         </div>
         
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
-          <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onClose}
+            disabled={loading}
+            style={{
+              minWidth: '110px',
+              height: '42px',
+              backgroundColor: '#f1f5f9',
+              color: '#475569',
+              border: '1px solid #cbd5e1',
+              borderRadius: '9px',
+              fontWeight: 600,
+            }}
+          >
             Cancel
           </Button>
           <Button type="submit" variant="primary" isLoading={loading}>
