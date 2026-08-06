@@ -39,6 +39,8 @@ import { QuotationBuilderPage } from './pages/QuotationBuilderPage';
 import { QuotationFormPage } from './pages/QuotationFormPage';
 import { QuotationDetailsPage } from './pages/QuotationDetailsPage';
 import { QuotationsPage } from './pages/QuotationsPage';
+import { ExecutionProjectQueue } from './pages/ExecutionProjectQueue';
+import { ExecutionWorkspaceDetails } from './pages/ExecutionWorkspaceDetails';
 
 import './index.css';
 import './styles/auth.css';
@@ -237,6 +239,18 @@ function App() {
             <Route path="/admin/estimates" element={
               <ProtectedRoute requiredPermission="TECHNICAL_ESTIMATE_REVIEW">
                 <AdminEstimateReviewsPage />
+              </ProtectedRoute>
+            } />
+
+            {/* Phase 11: Project Execution Routes */}
+            <Route path="/execution" element={
+              <ProtectedRoute requiredPermission={["PROJECT_EXECUTION_READ", "PROJECT_EXECUTION_WRITE"]}>
+                <ExecutionProjectQueue />
+              </ProtectedRoute>
+            } />
+            <Route path="/execution/workspace/:id" element={
+              <ProtectedRoute requiredPermission={["PROJECT_EXECUTION_READ", "PROJECT_EXECUTION_WRITE"]}>
+                <ExecutionWorkspaceDetails />
               </ProtectedRoute>
             } />
           </Route>

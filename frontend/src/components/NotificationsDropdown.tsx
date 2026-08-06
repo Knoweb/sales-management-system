@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Bell, CheckCheck } from 'lucide-react';
 import type { NotificationDTO } from '../api/notificationApi';

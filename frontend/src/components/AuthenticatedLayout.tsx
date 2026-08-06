@@ -6,7 +6,7 @@ import {
   LayoutDashboard, UsersRound, Building2, ContactRound, BadgeCheck, 
   Handshake, Target, CalendarClock, TrendingUp,
   LogOut, Menu, X, Sun, Moon, ClipboardCheck,
-  Briefcase, Waypoints, Users, Calculator, FileCheck, FileText
+  Briefcase, Waypoints, Users, Calculator, FileCheck, FileText, Activity
 } from 'lucide-react';
 import NotificationsDropdown from './NotificationsDropdown';
 import { IconButton } from './IconButton';
@@ -67,6 +67,7 @@ export const AuthenticatedLayout: React.FC = () => {
     { name: 'Dept Projects', path: '/hod/projects', icon: <Users size={20} />, allowed: isDeptHead },
     { name: 'Technical Estimates', path: '/hod/estimates', icon: <Calculator size={20} />, allowed: isDeptHead },
     { name: 'Estimate Reviews', path: '/admin/estimates', icon: <FileCheck size={20} />, allowed: user?.permissions?.includes('TECHNICAL_ESTIMATE_REVIEW') },
+    { name: 'Project Execution', path: '/execution', icon: <Activity size={20} />, allowed: user?.permissions?.includes('PROJECT_EXECUTION_READ') || user?.permissions?.includes('PROJECT_EXECUTION_WRITE') },
   ];
 
   return (

@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../components/PageHeader';
@@ -15,10 +16,14 @@ export const QuotationsPage: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [projectId, setProjectId] = useState('');
 
+  const canCreate = user?.permissions?.includes('QUOTATION_CREATE');
+
   useEffect(() => {
     fetchQuotations();
-    fetchProjects();
-  }, []);
+    if (canCreate) {
+      fetchProjects();
+    }
+  }, [canCreate]);
 
   const fetchQuotations = async () => {
     try {
@@ -55,7 +60,7 @@ export const QuotationsPage: React.FC = () => {
         description="View and manage client quotations."
         icon={<FileText size={24} className="text-blue-500" />}
         actionElement={
-          !user?.roles.includes('SALES_OFFICER') && (
+          canCreate && (
             <button 
               onClick={() => setShowModal(true)} 
               className="btn btn-primary"

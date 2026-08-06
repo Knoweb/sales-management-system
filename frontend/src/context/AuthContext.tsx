@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { apiClient } from '../services/Api';
 
@@ -30,10 +30,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 let inMemoryToken: string | null = null;
 
+let authInitialized = false;
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const initStartedRef = useRef(false);
+  const [isLoading, setIsLoading] = useState(!authInitialized);
 
   const login = (data: AuthResponse) => {
     inMemoryToken = data.accessToken;
@@ -129,9 +130,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const initializeAuth = async () => {
       try {
         // Use a short timeout (e.g. 5000ms) for the initial refresh so the app doesn't hang if backend is down
-        const { data } = await apiClient.post<AuthResponse>('/auth/refresh', null, { timeout: 5000 });
-        inMemoryToken = data.accessToken;
-        setUser(data.user);
+        const response = await apiClient.post<AuthResponse>('/auth/refresh', null, { 
+          timeout: 5000,
+          validateStatus: (status) => (status >= 200 && status < 300) || status === 401
+        });
+
+        if (response.status === 401) {
+          inMemoryToken = null;
+        } else {
+          inMemoryToken = response.data.accessToken;
+          setUser(response.data.user);
+        }
       } catch {
         inMemoryToken = null;
       } finally {
@@ -139,9 +148,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     };
 
-    if (!initStartedRef.current) {
-      initStartedRef.current = true;
+    if (!authInitialized) {
+      authInitialized = true;
       initializeAuth();
+    } else if (inMemoryToken && !user) {
+      // If already initialized but user state was lost (e.g., HMR), fetch it using token
+      // or just assume we're done loading.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsLoading(false);
+    } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsLoading(false);
     }
 
     return () => {

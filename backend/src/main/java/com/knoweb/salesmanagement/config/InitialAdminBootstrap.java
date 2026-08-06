@@ -41,8 +41,8 @@ public class InitialAdminBootstrap implements ApplicationRunner {
     @Value("${INITIAL_ADMIN_LAST_NAME:Administrator}")
     private String initialAdminLastName;
 
-    @Value("${INITIAL_ADMIN_FORCE_PASSWORD_RESET:false}")
-    private boolean forcePasswordReset;
+    @Value("${ADMIN_RECOVERY_MODE:false}")
+    private boolean adminRecoveryMode;
 
     public InitialAdminBootstrap(UserRepository userRepository, RoleRepository roleRepository, 
                                  PasswordEncoder passwordEncoder, Environment environment) {
@@ -58,35 +58,31 @@ public class InitialAdminBootstrap implements ApplicationRunner {
         boolean isProduction = Arrays.stream(environment.getActiveProfiles())
                 .anyMatch(p -> "prod".equalsIgnoreCase(p) || "production".equalsIgnoreCase(p));
 
-        if (forcePasswordReset) {
+        if (adminRecoveryMode) {
             if (isProduction) {
-                logger.warn("INITIAL_ADMIN_FORCE_PASSWORD_RESET is ignored in production environment.");
+                logger.warn("ADMIN_RECOVERY_MODE is ignored in production environment.");
                 return;
             }
-            if (initialAdminEmail == null || initialAdminEmail.trim().isEmpty() ||
-                initialAdminPassword == null || initialAdminPassword.trim().isEmpty()) {
-                logger.warn("INITIAL_ADMIN_FORCE_PASSWORD_RESET enabled but missing INITIAL_ADMIN_EMAIL or INITIAL_ADMIN_PASSWORD.");
+            if (initialAdminPassword == null || initialAdminPassword.trim().isEmpty()) {
+                logger.warn("ADMIN_RECOVERY_MODE enabled but missing INITIAL_ADMIN_PASSWORD. Cannot recover.");
                 return;
             }
-            Optional<User> existingUserOpt = userRepository.findByEmail(initialAdminEmail.toLowerCase());
-            if (existingUserOpt.isPresent()) {
-                User adminUser = existingUserOpt.get();
+            
+            java.util.List<User> systemAdmins = userRepository.findByRolesCode("SYSTEM_ADMIN");
+            if (systemAdmins.isEmpty()) {
+                logger.warn("ADMIN_RECOVERY_MODE enabled but no SYSTEM_ADMIN found to recover. Normal bootstrap will proceed if required.");
+            } else {
+                User adminUser = systemAdmins.get(0);
                 adminUser.setPasswordHash(passwordEncoder.encode(initialAdminPassword));
                 adminUser.setActive(true);
                 adminUser.setLocked(false);
                 adminUser.setPasswordChangeRequired(false);
 
-                Role adminRole = roleRepository.findByCode("SYSTEM_ADMIN")
-                        .orElseThrow(() -> new IllegalStateException("SYSTEM_ADMIN role not found in database. Ensure Flyway migrations have run."));
-                Set<Role> roles = adminUser.getRoles() == null ? new HashSet<>() : new HashSet<>(adminUser.getRoles());
-                roles.add(adminRole);
-                adminUser.setRoles(roles);
-
                 userRepository.save(adminUser);
-                logger.info("System administrator password successfully reset via INITIAL_ADMIN_FORCE_PASSWORD_RESET.");
+                logger.info("System administrator ({}) password successfully recovered via ADMIN_RECOVERY_MODE.", adminUser.getEmail());
+                
+                disableRecoveryFlagInEnv();
                 return;
-            } else {
-                logger.warn("INITIAL_ADMIN_FORCE_PASSWORD_RESET enabled but no user found for email: {}. Normal bootstrap will proceed if required.", initialAdminEmail);
             }
         }
 
@@ -127,6 +123,33 @@ public class InitialAdminBootstrap implements ApplicationRunner {
 
         userRepository.save(adminUser);
         logger.info("Initial system administrator successfully bootstrapped.");
+    }
+
+    private void disableRecoveryFlagInEnv() {
+        try {
+            java.io.File envFile = new java.io.File(".env");
+            if (!envFile.exists()) {
+                envFile = new java.io.File("backend/.env");
+            }
+            
+            if (envFile.exists()) {
+                java.util.List<String> lines = java.nio.file.Files.readAllLines(envFile.toPath());
+                boolean changed = false;
+                for (int i = 0; i < lines.size(); i++) {
+                    String line = lines.get(i);
+                    if (line.trim().startsWith("ADMIN_RECOVERY_MODE=")) {
+                        lines.set(i, "ADMIN_RECOVERY_MODE=false");
+                        changed = true;
+                    }
+                }
+                if (changed) {
+                    java.nio.file.Files.write(envFile.toPath(), lines);
+                    logger.info("Disabled ADMIN_RECOVERY_MODE in .env file.");
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Failed to disable ADMIN_RECOVERY_MODE in .env file", e);
+        }
     }
 }
 

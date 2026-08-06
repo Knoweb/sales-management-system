@@ -113,6 +113,54 @@ public class AuthenticationIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    public void testRefresh_NoCookieReturnsUnauthenticated() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/refresh"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void testLoginFailure_DisabledUser() throws Exception {
+        User disabledUser = new User();
+        disabledUser.setEmail("disabled@knoweb.lk");
+        disabledUser.setFirstName("Disabled");
+        disabledUser.setLastName("User");
+        disabledUser.setPasswordHash(passwordEncoder.encode("Password123"));
+        disabledUser.setActive(false);
+        disabledUser.setLocked(false);
+        userRepository.save(disabledUser);
+
+        LoginRequest request = new LoginRequest();
+        request.setEmail("disabled@knoweb.lk");
+        request.setPassword("Password123");
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void testLoginFailure_LockedUser() throws Exception {
+        User lockedUser = new User();
+        lockedUser.setEmail("locked@knoweb.lk");
+        lockedUser.setFirstName("Locked");
+        lockedUser.setLastName("User");
+        lockedUser.setPasswordHash(passwordEncoder.encode("Password123"));
+        lockedUser.setActive(true);
+        lockedUser.setLocked(true);
+        userRepository.save(lockedUser);
+
+        LoginRequest request = new LoginRequest();
+        request.setEmail("locked@knoweb.lk");
+        request.setPassword("Password123");
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized());
+    }
+
     @Autowired
     private com.knoweb.salesmanagement.config.InitialAdminBootstrap initialAdminBootstrap;
 
@@ -149,7 +197,7 @@ public class AuthenticationIntegrationTest {
                 .andExpect(status().isUnauthorized());
 
         // 3. Set flag=true and run bootstrap
-        org.springframework.test.util.ReflectionTestUtils.setField(initialAdminBootstrap, "forcePasswordReset", true);
+        org.springframework.test.util.ReflectionTestUtils.setField(initialAdminBootstrap, "adminRecoveryMode", true);
         initialAdminBootstrap.run(null);
 
         // Verify admin login returns 200
@@ -160,7 +208,7 @@ public class AuthenticationIntegrationTest {
                 .andExpect(jsonPath("$.accessToken").isNotEmpty());
 
         // 4. Set flag=false and run bootstrap again
-        org.springframework.test.util.ReflectionTestUtils.setField(initialAdminBootstrap, "forcePasswordReset", false);
+        org.springframework.test.util.ReflectionTestUtils.setField(initialAdminBootstrap, "adminRecoveryMode", false);
         initialAdminBootstrap.run(null);
 
         // Verify admin login STILL returns 200

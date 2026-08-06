@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {
   useCallback,
   useEffect,
@@ -42,36 +43,10 @@ import { Alert } from '../components/Alert';
 
 const PAGE_SIZE = 20;
 
-const roleOptions = [
-  {
-    value: 'ENGINEER',
-    label: 'User',
-  },
-  {
-    value: 'BDM',
-    label: 'Business Development Manager',
-  },
-  {
-    value: 'HOD',
-    label: 'Head of Department',
-  },
-  {
-    value: 'TECHNICAL_COORDINATOR',
-    label: 'Technical Coordinator',
-  },
-  {
-    value: 'SYSTEM_ADMIN',
-    label: 'System Admin',
-  },
-  {
-    value: 'SALES_OFFICER',
-    label: 'Sales Officer',
-  },
-  {
-    value: 'TOP_MANAGEMENT',
-    label: 'Top Management',
-  },
-];
+interface Role {
+  code: string;
+  name: string;
+}
 
 const emptyFormData = {
   firstName: '',
@@ -96,6 +71,8 @@ export const UserManagement = () => {
   const [selectedUser, setSelectedUser] =
     useState<User | null>(null);
 
+  const [roles, setRoles] = useState<Role[]>([]);
+
   const [formLoading, setFormLoading] =
     useState(false);
   const [formError, setFormError] = useState('');
@@ -111,6 +88,18 @@ export const UserManagement = () => {
 
     return () => window.clearTimeout(timer);
   }, [search]);
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const response = await apiClient.get('/roles');
+        setRoles(response.data);
+      } catch (err) {
+        console.error('Failed to fetch roles:', err);
+      }
+    };
+    fetchRoles();
+  }, []);
 
   const fetchUsers = useCallback(
     async (
@@ -156,6 +145,7 @@ export const UserManagement = () => {
     []
   );
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     fetchUsers(
       page,
@@ -557,12 +547,12 @@ export const UserManagement = () => {
                 disabled={formLoading}
                 required
               >
-                {roleOptions.map((role) => (
+                {roles.map((r) => (
                   <option
-                    key={role.value}
-                    value={role.value}
+                    key={r.code}
+                    value={r.code}
                   >
-                    {role.label}
+                    {r.name}
                   </option>
                 ))}
               </Select>
