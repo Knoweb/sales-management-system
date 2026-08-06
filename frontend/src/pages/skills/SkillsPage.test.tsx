@@ -1,13 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SkillsPage } from './SkillsPage';
-import { SkillApi } from '../services/SkillApi';
-import { useAuth } from '../context/AuthContext';
+import { SkillApi } from '../../services/SkillApi';
+import { useAuth } from '../../context/AuthContext';
 import { BrowserRouter } from 'react-router-dom';
 
 // Mock dependencies
-vi.mock('../services/SkillApi');
-vi.mock('../context/AuthContext');
+vi.mock('../../services/SkillApi');
+vi.mock('../../context/AuthContext');
 
 const renderWithRouter = (ui: React.ReactElement) => {
   return render(<BrowserRouter>{ui}</BrowserRouter>);

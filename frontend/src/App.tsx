@@ -11,8 +11,7 @@ import { NotFoundPage } from './pages/NotFoundPage';
 import { AuthenticatedLayout } from './components/AuthenticatedLayout';
 import { DepartmentsPage } from './pages/departments/DepartmentsPage';
 import { DepartmentDetailsPage } from './pages/departments/DepartmentDetailsPage';
-import { SkillsPage } from './pages/SkillsPage';
-import { SkillFormPage } from './pages/SkillFormPage';
+import { SkillsPage } from './pages/skills/SkillsPage';
 import { EmployeesPage } from './pages/employees/EmployeesPage';
 import { EmployeeDetailsPage } from './pages/employees/EmployeeDetailsPage';
 import SalesOpportunitiesPage from './pages/SalesOpportunitiesPage';
@@ -105,12 +104,7 @@ function App() {
                 <SkillsPage />
               </ProtectedRoute>
             } />
-            <Route path="/skills/new" element={
-              <ProtectedRoute requiredPermission="SKILL_CATALOG_MANAGE">
-                <SkillFormPage />
-              </ProtectedRoute>
-            } />
-            
+
             <Route path="/clients" element={
               <ProtectedRoute requiredPermission="CLIENT_READ">
                 <ClientsPage />
