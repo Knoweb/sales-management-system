@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useNavigate, useParams } from 'react-router-dom';
-import { EmployeeApi } from '../services/EmployeeApi';
-import { DepartmentApi } from '../services/DepartmentApi';
-import { PageHeader } from '../components/PageHeader';
-import { Button } from '../components/Button';
-import { Card } from '../components/Card';
-import { FormField, Input, Select } from '../components/Forms';
-import { SectionHeader } from '../components/SectionHeader';
-import { Alert } from '../components/Alert';
-import type { Department } from '../types/department';
-import { apiClient } from '../services/Api';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { EmployeeApi } from "../services/EmployeeApi";
+import { DepartmentApi } from "../services/DepartmentApi";
+import { PageHeader } from "../components/PageHeader";
+import { Button } from "../components/Button";
+import { Card } from "../components/Card";
+import { FormField, Input, Select } from "../components/Forms";
+import { SectionHeader } from "../components/SectionHeader";
+import { Alert } from "../components/Alert";
+import type { Department } from "../types/department";
+import { apiClient } from "../services/Api";
 
 interface SimpleUser {
   id: string;
@@ -18,35 +18,36 @@ interface SimpleUser {
   firstName: string;
   lastName: string;
 }
-import type { CreateEmployeeRequest, UpdateEmployeeRequest, EmploymentType } from '../types/employee';
+import type {
+  CreateEmployeeRequest,
+  UpdateEmployeeRequest,
+  EmploymentType,
+} from "../types/employee";
 
-import { ContactRound } from 'lucide-react';
+import { ContactRound } from "lucide-react";
 
 export const EmployeeFormPage: React.FC = () => {
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
-  const isEditMode = !!id;
 
   const [formData, setFormData] = useState({
-    employeeNumber: '',
-    departmentId: '',
-    firstName: '',
-    lastName: '',
-    workEmail: '',
-    personalEmail: '',
-    contactNumber: '',
-    jobTitle: '',
-    employmentType: 'FULL_TIME',
-    hireDate: '',
+    employeeNumber: "",
+    departmentId: "",
+    firstName: "",
+    lastName: "",
+    workEmail: "",
+    personalEmail: "",
+    contactNumber: "",
+    jobTitle: "",
+    employmentType: "FULL_TIME",
+    hireDate: "",
     weeklyCapacityHours: 40,
-    userId: '',
-    notes: ''
+    userId: "",
+    notes: "",
   });
 
   const [departments, setDepartments] = useState<Department[]>([]);
   const [availableUsers, setAvailableUsers] = useState<SimpleUser[]>([]);
   const [loading, setLoading] = useState(false);
-  const [pageLoading, setPageLoading] = useState(isEditMode);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -57,49 +58,20 @@ export const EmployeeFormPage: React.FC = () => {
         setDepartments(deptData.content || []);
 
         // Fetch active, unlinked users
-        const usersResponse = await apiClient.get<{ content: SimpleUser[] }>('/users', {
-          params: { active: true, unlinked: true, size: 100 }
-        });
-        let usersList = usersResponse.data.content || [];
-
-        if (isEditMode && id) {
-          // Fetch existing employee
-          const employee = await EmployeeApi.getById(id);
-          setFormData({
-            employeeNumber: employee.employeeNumber,
-            departmentId: employee.department?.id || '',
-            firstName: employee.firstName,
-            lastName: employee.lastName,
-            workEmail: employee.workEmail || '',
-            personalEmail: employee.personalEmail || '',
-            contactNumber: employee.contactNumber || '',
-            jobTitle: employee.jobTitle,
-            employmentType: employee.employmentType,
-            hireDate: employee.hireDate || '',
-            weeklyCapacityHours: employee.weeklyCapacityHours || 40,
-            userId: employee.user?.id || '',
-            notes: employee.notes || ''
-          });
-
-          // If the employee already has a linked user, add it to available users so it can be selected/retained
-          if (employee.user) {
-            const alreadyInList = usersList.some(u => u.id === employee.user?.id);
-            if (!alreadyInList) {
-              usersList = [employee.user, ...usersList];
-            }
-          }
-        }
-
-        setAvailableUsers(usersList);
+        const usersResponse = await apiClient.get<{ content: SimpleUser[] }>(
+          "/users",
+          {
+            params: { active: true, unlinked: true, size: 100 },
+          },
+        );
+        setAvailableUsers(usersResponse.data.content || []);
       } catch (err) {
-        console.error('Failed to load initial data', err);
-        setError('Failed to load form data.');
-      } finally {
-        setPageLoading(false);
+        console.error("Failed to load initial data", err);
+        setError("Failed to load form data.");
       }
     };
     fetchInitialData();
-  }, [id, isEditMode]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,67 +91,61 @@ export const EmployeeFormPage: React.FC = () => {
         weeklyCapacityHours: formData.weeklyCapacityHours,
         userId: formData.userId || undefined,
         notes: formData.notes || undefined,
-        employeeNumber: formData.employeeNumber
+        employeeNumber: formData.employeeNumber,
       };
 
-      if (isEditMode && id) {
-        await EmployeeApi.update(id, payload);
-      } else {
-        await EmployeeApi.create(payload);
-      }
-      navigate('/employees');
+      await EmployeeApi.create(payload);
+      navigate("/employees");
     } catch (err: unknown) {
       console.error(err);
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} employee`);
+        setError(err.response?.data?.message || "Failed to create employee");
       } else {
-        setError(`Failed to ${isEditMode ? 'update' : 'create'} employee`);
+        setError("Failed to create employee");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
+  ) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'number' ? Number(value) : value
+      [name]: type === "number" ? Number(value) : value,
     }));
   };
 
-  if (pageLoading) {
-    return (
-      <div className="p-6 max-w-7xl mx-auto w-full">
-        <PageHeader 
-          title={isEditMode ? "Edit Employee" : "Create Employee"}
-          description="Please wait..."
-          icon={<ContactRound size={24} />}
-        />
-        <Card className="p-6 text-center text-gray-500">Loading form data...</Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="p-6 max-w-7xl mx-auto w-full">
-      <PageHeader 
-        title={isEditMode ? "Edit Employee" : "Create Employee"}
-        description={isEditMode ? "Update employee details." : "Add a new employee record."}
+    <div className="max-w-4xl mx-auto w-full p-6">
+      <PageHeader
+        title="Add New Employee"
+        description="Create a new employee record and setup their profile."
         icon={<ContactRound size={24} />}
       />
 
-      <div style={{ maxWidth: '800px' }}>
+      <div style={{ maxWidth: "800px" }}>
         <Card>
           {error && (
-            <Alert variant="error" style={{ marginBottom: '1.5rem' }}>
+            <Alert variant="error" style={{ marginBottom: "1.5rem" }}>
               {error}
             </Alert>
           )}
-          
+
           <form onSubmit={handleSubmit}>
             <SectionHeader title="Personal Information" />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                gap: "1.5rem",
+                marginBottom: "2rem",
+              }}
+            >
               <FormField label="First Name" required id="firstName">
                 <Input
                   type="text"
@@ -206,7 +172,14 @@ export const EmployeeFormPage: React.FC = () => {
             </div>
 
             <SectionHeader title="Employment Information" />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                gap: "1.5rem",
+                marginBottom: "2rem",
+              }}
+            >
               <FormField label="Employee Number" required id="employeeNumber">
                 <Input
                   type="text"
@@ -215,7 +188,7 @@ export const EmployeeFormPage: React.FC = () => {
                   value={formData.employeeNumber}
                   onChange={handleChange}
                   required
-                  disabled={loading || isEditMode}
+                  disabled={loading}
                 />
               </FormField>
 
@@ -229,8 +202,10 @@ export const EmployeeFormPage: React.FC = () => {
                   disabled={loading}
                 >
                   <option value="">Select Department</option>
-                  {departments.map(d => (
-                    <option key={d.id} value={d.id}>{d.name}</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
                   ))}
                 </Select>
               </FormField>
@@ -283,7 +258,7 @@ export const EmployeeFormPage: React.FC = () => {
                   disabled={loading}
                 >
                   <option value="">-- No User Account --</option>
-                  {availableUsers.map(u => (
+                  {availableUsers.map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.firstName} {u.lastName} ({u.email})
                     </option>
@@ -293,7 +268,14 @@ export const EmployeeFormPage: React.FC = () => {
             </div>
 
             <SectionHeader title="Contact Information" />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                gap: "1.5rem",
+                marginBottom: "2rem",
+              }}
+            >
               <FormField label="Work Email" id="workEmail">
                 <Input
                   type="email"
@@ -329,8 +311,18 @@ export const EmployeeFormPage: React.FC = () => {
             </div>
 
             <SectionHeader title="Capacity and Notes" />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-              <FormField label="Weekly Capacity (Hours)" id="weeklyCapacityHours">
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                gap: "1.5rem",
+                marginBottom: "2rem",
+              }}
+            >
+              <FormField
+                label="Weekly Capacity (Hours)"
+                id="weeklyCapacityHours"
+              >
                 <Input
                   type="number"
                   id="weeklyCapacityHours"
@@ -342,12 +334,25 @@ export const EmployeeFormPage: React.FC = () => {
               </FormField>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
-              <Button type="button" variant="ghost" onClick={() => navigate('/employees')} disabled={loading}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "1rem",
+                borderTop: "1px solid var(--color-border)",
+                paddingTop: "1.5rem",
+              }}
+            >
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => navigate("/employees")}
+                disabled={loading}
+              >
                 Cancel
               </Button>
-              <Button type="submit" variant="primary" isLoading={loading}>
-                {isEditMode ? 'Update Employee' : 'Save Employee'}
+              <Button type="submit" isLoading={loading}>
+                Create Employee
               </Button>
             </div>
           </form>

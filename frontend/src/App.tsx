@@ -22,7 +22,6 @@ import { BdmReviewPage } from './pages/BdmReviewPage';
 import { ClientVerificationPage } from './pages/ClientVerificationPage';
 import ProjectBriefEditor from './pages/ProjectBriefEditor';
 import ProductCategoriesPage from './pages/ProductCategoriesPage';
-import { EmployeeFormPage } from './pages/EmployeeFormPage';
 import { ClientsPage } from './pages/ClientsPage';
 import { ClientFormPage } from './pages/ClientFormPage';
 import { ClientDetailsPage } from './pages/ClientDetailsPage';
@@ -94,21 +93,12 @@ function App() {
                 <EmployeesPage />
               </ProtectedRoute>
             } />
-            <Route path="/employees/new" element={
-              <ProtectedRoute requiredPermission="EMPLOYEE_CREATE">
-                <EmployeeFormPage />
-              </ProtectedRoute>
-            } />
             <Route path="/employees/:id" element={
               <ProtectedRoute requiredPermission={["EMPLOYEE_READ", "EMPLOYEE_SELF_READ"]}>
                 <EmployeeDetailsPage />
               </ProtectedRoute>
             } />
-            <Route path="/employees/:id/edit" element={
-              <ProtectedRoute requiredPermission="EMPLOYEE_UPDATE">
-                <EmployeeFormPage />
-              </ProtectedRoute>
-            } />
+
             
             <Route path="/skills" element={
               <ProtectedRoute requiredPermission="SKILL_CATALOG_READ">
