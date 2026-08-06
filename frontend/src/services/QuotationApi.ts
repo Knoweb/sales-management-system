@@ -114,8 +114,8 @@ export const markQuotationAsSent = async (id: string): Promise<QuotationDto> => 
   return response.data;
 };
 
-export const updateQuotationClientDecision = async (id: string, accepted: boolean): Promise<QuotationDto> => {
-  const response = await apiClient.post<QuotationDto>(`/quotations/${id}/client-decision?accepted=${accepted}`);
+export const updateQuotationClientDecision = async (id: string, decision: { action: string; comments?: string }): Promise<QuotationDto> => {
+  const response = await apiClient.post<QuotationDto>(`/quotations/${id}/client-decision`, decision);
   return response.data;
 };
 

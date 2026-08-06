@@ -15,6 +15,7 @@ import {
 } from '../services/QuotationApi';
 import { useAuth } from '../context/AuthContext';
 import { QuotationApprovalModal } from '../components/QuotationApprovalModal';
+import { ClientDecisionModal } from '../components/ClientDecisionModal';
 
 export const QuotationDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +28,8 @@ export const QuotationDetailsPage: React.FC = () => {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalAction, setModalAction] = useState<QuotationApprovalDto['action'] | null>(null);
+  
+  const [isClientModalOpen, setIsClientModalOpen] = useState(false);
 
   const isTopManagement = user?.roles.includes('TOP_MANAGEMENT') || user?.roles.includes('SYSTEM_ADMIN');
 
@@ -95,14 +98,16 @@ export const QuotationDetailsPage: React.FC = () => {
     }
   };
 
-  const handleClientDecision = async (accepted: boolean) => {
+  const handleClientDecision = async (decision: { action: string; comments?: string }) => {
     try {
       if (id) {
-        await updateQuotationClientDecision(id, accepted);
+        await updateQuotationClientDecision(id, decision);
+        setIsClientModalOpen(false);
         await fetchData(id);
       }
     } catch (e) {
       console.error("Failed to update client decision", e);
+      alert("An error occurred while saving the client decision.");
     }
   };
 
@@ -343,7 +348,7 @@ export const QuotationDetailsPage: React.FC = () => {
             
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               {/* Creator Actions */}
-              {(quotation.status === 'DRAFT' || quotation.status === 'RETURNED_FOR_CORRECTION') && user?.permissions.includes('QUOTATION_CREATE') && (
+              {(quotation.status === 'DRAFT' || quotation.status === 'RETURNED_FOR_CORRECTION') && user?.permissions.includes('QUOTATION_CREATE') && !user?.roles.includes('SALES_OFFICER') && (
                 <>
                   <button className="btn btn-secondary" onClick={() => navigate(`/quotations/${id}/edit`)}>
                     <Edit size={18} style={{ marginRight: '0.5rem' }}/> Edit Quotation
@@ -366,21 +371,16 @@ export const QuotationDetailsPage: React.FC = () => {
               )}
               
               {/* Post-Approval Actions */}
-              {quotation.status === 'APPROVED_BY_TOP_MANAGEMENT' && (
+              {quotation.status === 'APPROVED_BY_TOP_MANAGEMENT' && !user?.roles.includes('SALES_OFFICER') && (
                 <button className="btn btn-primary" onClick={handleMarkAsSent}>
                   <Send size={18} style={{ marginRight: '0.5rem' }}/> Mark as Sent to Client
                 </button>
               )}
               
-              {quotation.status === 'PENDING_CLIENT_APPROVAL' && (
-                <>
-                  <button className="btn btn-danger" onClick={() => handleClientDecision(false)}>
-                    <XCircle size={18} style={{ marginRight: '0.5rem' }}/> Client Rejected
-                  </button>
-                  <button className="btn btn-primary bg-green-600 hover:bg-green-700" onClick={() => handleClientDecision(true)}>
-                    <CheckCircle size={18} style={{ marginRight: '0.5rem' }}/> Client Accepted
-                  </button>
-                </>
+              {quotation.status === 'PENDING_CLIENT_APPROVAL' && user?.permissions.includes('QUOTATION_CREATE') && (
+                <button className="btn btn-primary bg-indigo-600 hover:bg-indigo-700" onClick={() => setIsClientModalOpen(true)}>
+                  <Edit size={18} style={{ marginRight: '0.5rem' }}/> Record Client Decision
+                </button>
               )}
             </div>
           </div>
@@ -562,10 +562,16 @@ export const QuotationDetailsPage: React.FC = () => {
       </div>
       
       <QuotationApprovalModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleModalSubmit}
-        action={modalAction}
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSubmit={handleModalSubmit} 
+        action={modalAction} 
+      />
+      
+      <ClientDecisionModal
+        isOpen={isClientModalOpen}
+        onClose={() => setIsClientModalOpen(false)}
+        onSubmit={handleClientDecision}
       />
     </div>
   );

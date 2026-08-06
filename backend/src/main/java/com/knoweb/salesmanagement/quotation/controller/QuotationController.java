@@ -60,17 +60,17 @@ public class QuotationController {
     }
 
     @PostMapping("/{id}/mark-sent")
-    @PreAuthorize("hasAuthority('QUOTATION_CREATE')")
+    @PreAuthorize("hasAnyAuthority('QUOTATION_CREATE', 'QUOTATION_APPROVE')")
     public ResponseEntity<QuotationDto> markAsSentToClient(@PathVariable UUID id) {
         return ResponseEntity.ok(quotationService.markAsSentToClient(id));
     }
 
     @PostMapping("/{id}/client-decision")
-    @PreAuthorize("hasAuthority('QUOTATION_CREATE')")
+    @PreAuthorize("hasAnyAuthority('QUOTATION_CREATE', 'QUOTATION_APPROVE')")
     public ResponseEntity<QuotationDto> updateClientDecision(
             @PathVariable UUID id, 
-            @RequestParam boolean accepted) {
-        return ResponseEntity.ok(quotationService.updateClientDecision(id, accepted));
+            @RequestBody com.knoweb.salesmanagement.quotation.dto.ClientDecisionDto request) {
+        return ResponseEntity.ok(quotationService.updateClientDecision(id, request));
     }
 
     @GetMapping("/{id}/approval-history")

@@ -4,9 +4,11 @@ import { PageHeader } from '../components/PageHeader';
 import { FileText, Plus, X } from 'lucide-react';
 import { getQuotations, type QuotationDto } from '../services/QuotationApi';
 import { getTechnicalProjects, type TechnicalProjectSummaryDTO } from '../services/TechnicalProjectApi';
+import { useAuth } from '../context/AuthContext';
 
 export const QuotationsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [quotations, setQuotations] = useState<QuotationDto[]>([]);
   const [projects, setProjects] = useState<TechnicalProjectSummaryDTO[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,14 +55,16 @@ export const QuotationsPage: React.FC = () => {
         description="View and manage client quotations."
         icon={<FileText size={24} className="text-blue-500" />}
         actionElement={
-          <button 
-            onClick={() => setShowModal(true)} 
-            className="btn btn-primary"
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-          >
-            <Plus size={18} />
-            Create Quotation
-          </button>
+          !user?.roles.includes('SALES_OFFICER') && (
+            <button 
+              onClick={() => setShowModal(true)} 
+              className="btn btn-primary"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+              <Plus size={18} />
+              Create Quotation
+            </button>
+          )
         }
       />
       

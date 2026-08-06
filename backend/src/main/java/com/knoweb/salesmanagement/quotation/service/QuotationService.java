@@ -190,7 +190,7 @@ public class QuotationService {
     }
 
     @Transactional
-    public QuotationDto updateClientDecision(UUID id, boolean accepted) {
+    public QuotationDto updateClientDecision(UUID id, com.knoweb.salesmanagement.quotation.dto.ClientDecisionDto request) {
         Quotation quotation = quotationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Quotation not found"));
                 
@@ -198,8 +198,34 @@ public class QuotationService {
             throw new RuntimeException("Quotation is not pending client approval.");
         }
         
-        quotation.setStatus(accepted ? com.knoweb.salesmanagement.quotation.enums.QuotationStatus.CLIENT_ACCEPTED : com.knoweb.salesmanagement.quotation.enums.QuotationStatus.CLIENT_REJECTED);
-        return mapToDto(quotationRepository.save(quotation));
+        String action = request.getAction();
+        switch (action) {
+            case "ACCEPT":
+                quotation.setStatus(com.knoweb.salesmanagement.quotation.enums.QuotationStatus.CLIENT_ACCEPTED);
+                break;
+            case "REJECT":
+                quotation.setStatus(com.knoweb.salesmanagement.quotation.enums.QuotationStatus.CLIENT_REJECTED);
+                break;
+            case "REVISE":
+            case "DISCOUNT":
+                quotation.setStatus(com.knoweb.salesmanagement.quotation.enums.QuotationStatus.CLIENT_REQUESTED_REVISION);
+                break;
+            case "NEGOTIATE":
+                quotation.setStatus(com.knoweb.salesmanagement.quotation.enums.QuotationStatus.IN_NEGOTIATION);
+                break;
+            case "DELAY":
+                quotation.setStatus(com.knoweb.salesmanagement.quotation.enums.QuotationStatus.DECISION_DELAYED);
+                break;
+            default:
+                throw new RuntimeException("Invalid client decision action.");
+        }
+        
+        Quotation saved = quotationRepository.save(quotation);
+        
+        // Record the decision in the history
+        recordApprovalHistory(saved, "CLIENT_" + action, request.getComments());
+        
+        return mapToDto(saved);
     }
 
     @Transactional(readOnly = true)
