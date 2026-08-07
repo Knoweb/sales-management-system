@@ -70,7 +70,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const requestInterceptor = apiClient.interceptors.request.use(
       (config) => {
         if (inMemoryToken && config.headers) {
-          config.headers.set('Authorization', `Bearer ${inMemoryToken}`);
+          if (config.headers.set) {
+            config.headers.set('Authorization', `Bearer ${inMemoryToken}`);
+          } else {
+            config.headers.Authorization = `Bearer ${inMemoryToken}`;
+          }
+        } else if (!inMemoryToken && config.headers) {
+          if (config.headers.delete) {
+            config.headers.delete('Authorization');
+          } else {
+            delete config.headers.Authorization;
+          }
         }
         return config;
       },
@@ -118,6 +128,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             processQueue(err, null);
             inMemoryToken = null;
             setUser(null);
+            window.location.href = '/login';
             return Promise.reject(err);
           } finally {
             isRefreshing = false;

@@ -423,7 +423,7 @@ export const LoginPage = () => {
     return <Navigate to={from} replace />;
   }
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
     setLoading(true);
@@ -436,7 +436,7 @@ export const LoginPage = () => {
 
       login(response.data);
       navigate(from, { replace: true });
-    } catch (error) {
+    } catch (error: any) {
       setError(
         error.response?.data?.message ||
           'Login failed. Please check your credentials.'

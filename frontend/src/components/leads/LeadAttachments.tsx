@@ -75,17 +75,28 @@ export const LeadAttachments: React.FC<LeadAttachmentsProps> = ({ entityId, enti
 
   return (
     <div className="card">
-      <div className="card-header flex-between">
-        <h3 className="card-title">Attachments</h3>
-        <div>
+      {/* Header */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          width: "100%",
+          marginBottom: "1.5rem",
+        }}
+      >
+        <h3 className="text-lg font-medium text-gray-900">
+          Attachments
+        </h3>
+        
+        <div style={{ marginLeft: "auto" }}>
           <input
             type="file"
             ref={fileInputRef}
             style={{ display: 'none' }}
             onChange={handleFileChange}
           />
-          <Button variant="primary" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-            {uploading ? 'Uploading...' : <><Upload size={16} /> Upload File</>}
+          <Button onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+            {uploading ? 'Uploading...' : <><Upload size={16} className="mr-2" /> Upload File</>}
           </Button>
         </div>
       </div>

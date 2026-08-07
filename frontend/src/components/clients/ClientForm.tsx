@@ -35,9 +35,19 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSuccess, 
 
     try {
       setFieldErrors({});
+
+      const payload: ClientRequest = {
+        ...formData,
+        registrationNumber: formData.registrationNumber || undefined,
+        email: formData.email || undefined,
+        phone: formData.phone || undefined,
+        industry: formData.industry || undefined,
+        address: formData.address || undefined,
+      };
+
       // Duplicate check step
       if (!ignoreDuplicates) {
-        const checkResult = await ClientApi.checkClientDuplicates(formData, initialData?.id);
+        const checkResult = await ClientApi.checkClientDuplicates(payload, initialData?.id);
 
         if (checkResult.hasConflict) {
           if (checkResult.message.includes('inactive')) {
@@ -68,9 +78,9 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSuccess, 
 
       let result: Client;
       if (initialData?.id) {
-        result = await ClientApi.updateClient(initialData.id, formData, ignoreDuplicates);
+        result = await ClientApi.updateClient(initialData.id, payload, ignoreDuplicates);
       } else {
-        result = await ClientApi.createClient(formData, ignoreDuplicates);
+        result = await ClientApi.createClient(payload, ignoreDuplicates);
       }
 
       onSuccess(result);
@@ -110,7 +120,8 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSuccess, 
   };
 
   return (
-    <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-8">
+    <form onSubmit={(e) => handleSubmit(e, false)}>
+      <div style={{ maxHeight: '65vh', overflowY: 'auto', paddingRight: '0.5rem' }} className="space-y-8">
       {error && (
         <Alert variant="error" style={{ marginBottom: '1rem' }}>
           {typeof error === 'object' ? error.message : error}
@@ -235,12 +246,53 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSuccess, 
           <Button type="button" variant="primary" onClick={(e) => handleSubmit(e, true)}>Proceed Anyway</Button>
         </div>
       )}
+      </div>
 
-      <div className="flex justify-end gap-4 mt-8 pt-4 border-t border-gray-200">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+          gap: '1rem',
+          borderTop: '1px solid #e2e8f0',
+          paddingTop: '1rem',
+          marginTop: '0.5rem'
+        }}
+      >
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onCancel}
+          disabled={loading}
+          style={{
+            minWidth: '110px',
+            height: '42px',
+            backgroundColor: '#f1f5f9',
+            color: '#475569',
+            border: '1px solid #cbd5e1',
+            borderRadius: '9px',
+            fontWeight: 600,
+          }}
+        >
           Cancel
         </Button>
-        <Button type="submit" variant="primary" isLoading={loading}>
+
+        <Button
+          type="submit"
+          variant="primary"
+          isLoading={loading}
+          style={{
+            minWidth: '130px',
+            height: '42px',
+            backgroundColor: '#2563eb',
+            color: '#ffffff',
+            border: '1px solid #2563eb',
+            borderRadius: '9px',
+            fontSize: '14px',
+            fontWeight: 600,
+            boxShadow: '0 4px 10px rgba(37, 99, 235, 0.2)',
+          }}
+        >
           {initialData ? 'Update Client' : 'Create Client'}
         </Button>
       </div>

@@ -14,8 +14,13 @@ import { StatusBadge } from '../StatusBadge';
 import { ErrorState, EmptyState, LoadingState } from '../FeedbackStates';
 import { FilterBar } from '../FilterBar';
 import LeadConversionModal from './../LeadConversionModal';
+interface LeadListProps {
+  clientId?: string;
+  hideFilters?: boolean;
+  viewOnly?: boolean;
+}
 
-export const LeadList: React.FC = () => {
+export const LeadList: React.FC<LeadListProps> = ({ clientId, hideFilters, viewOnly }) => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,10 +30,16 @@ export const LeadList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<string>('active');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [clientFilter, setClientFilter] = useState<string>('all');
+  const [clientFilter, setClientFilter] = useState<string>(clientId || 'all');
   const [clients, setClients] = useState<Client[]>([]);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+
+  useEffect(() => {
+    if (clientId) {
+      setClientFilter(clientId);
+    }
+  }, [clientId]);
 
   const navigate = useNavigate();
 
@@ -76,58 +87,62 @@ export const LeadList: React.FC = () => {
 
   return (
     <div>
-      <FilterBar>
-        <div className="flex-1 min-w-[200px]">
-          <Input 
-            type="text" 
-            placeholder="Search leads..." 
-            value={searchTerm}
-            onChange={e => { setSearchTerm(e.target.value); setPage(0); }}
-            label="Search"
-          />
-        </div>
-        
-        <div className="w-full md:w-48">
-          <Select 
-            value={clientFilter} 
-            onChange={e => { setClientFilter(e.target.value); setPage(0); }}
-            label="Client"
-          >
-            <option value="all">All Clients</option>
-            {clients.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </Select>
-        </div>
-        
-        <div className="w-full md:w-48">
-          <Select 
-            value={statusFilter} 
-            onChange={e => { setStatusFilter(e.target.value); setPage(0); }}
-            label="Status"
-          >
-            <option value="all">All Status</option>
-            <option value="NEW">New</option>
-            <option value="CONTACTED">Contacted</option>
-            <option value="QUALIFIED">Qualified</option>
-            <option value="PROPOSAL_SENT">Proposal Sent</option>
-            <option value="CLOSED_WON">Closed Won</option>
-            <option value="CLOSED_LOST">Closed Lost</option>
-          </Select>
-        </div>
-        
-        <div className="w-full md:w-48">
-          <Select 
-            value={activeFilter} 
-            onChange={e => { setActiveFilter(e.target.value); setPage(0); }}
-            label="Active State"
-          >
-            <option value="all">All Active State</option>
-            <option value="active">Active Only</option>
-            <option value="inactive">Inactive Only</option>
-          </Select>
-        </div>
-      </FilterBar>
+      {!hideFilters && (
+        <FilterBar>
+          <div className="flex-1 min-w-[200px]">
+            <Input 
+              type="text" 
+              placeholder="Search leads..." 
+              value={searchTerm}
+              onChange={e => { setSearchTerm(e.target.value); setPage(0); }}
+              label="Search"
+            />
+          </div>
+          
+          {!clientId && (
+            <div className="w-full md:w-48">
+              <Select 
+                value={clientFilter} 
+                onChange={e => { setClientFilter(e.target.value); setPage(0); }}
+                label="Client"
+              >
+                <option value="all">All Clients</option>
+                {clients.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </Select>
+            </div>
+          )}
+          
+          <div className="w-full md:w-48">
+            <Select 
+              value={statusFilter} 
+              onChange={e => { setStatusFilter(e.target.value); setPage(0); }}
+              label="Status"
+            >
+              <option value="all">All Status</option>
+              <option value="NEW">New</option>
+              <option value="CONTACTED">Contacted</option>
+              <option value="QUALIFIED">Qualified</option>
+              <option value="PROPOSAL_SENT">Proposal Sent</option>
+              <option value="CLOSED_WON">Closed Won</option>
+              <option value="CLOSED_LOST">Closed Lost</option>
+            </Select>
+          </div>
+          
+          <div className="w-full md:w-48">
+            <Select 
+              value={activeFilter} 
+              onChange={e => { setActiveFilter(e.target.value); setPage(0); }}
+              label="Active State"
+            >
+              <option value="all">All Active State</option>
+              <option value="active">Active Only</option>
+              <option value="inactive">Inactive Only</option>
+            </Select>
+          </div>
+        </FilterBar>
+      )}
 
       {error ? (
         <ErrorState message={error} onRetry={loadLeads} />
@@ -167,32 +182,36 @@ export const LeadList: React.FC = () => {
                       <IconButton onClick={() => navigate(`/leads/${lead.id}`)} title="View Details" aria-label="View Details">
                         <Eye size={16} />
                       </IconButton>
-                      <PermissionGuard permission="LEAD_UPDATE">
-                        <IconButton onClick={() => navigate(`/leads/${lead.id}/edit`)} title="Edit Lead" aria-label="Edit Lead">
-                          <Edit size={16} />
-                        </IconButton>
-                      </PermissionGuard>
-                      
-                      {lead.active ? (
-                        <PermissionGuard permission="LEAD_UPDATE">
-                          <IconButton onClick={() => handleToggleActive(lead)} title="Deactivate" aria-label="Deactivate" className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                            <ShieldAlert size={16} />
-                          </IconButton>
-                        </PermissionGuard>
-                      ) : (
-                        <PermissionGuard permission="LEAD_UPDATE">
-                          <IconButton onClick={() => handleToggleActive(lead)} title="Reactivate" aria-label="Reactivate" className="text-green-600 hover:text-green-700 hover:bg-green-50">
-                            <ShieldCheck size={16} />
-                          </IconButton>
-                        </PermissionGuard>
-                      )}
-                      
-                      {lead.status === 'QUALIFIED' && lead.active && (
-                        <PermissionGuard permission="OPPORTUNITY_CREATE">
-                          <IconButton onClick={() => setConvertingLead(lead)} title="Convert to Opportunity" aria-label="Convert to Opportunity" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50">
-                            <ArrowRightCircle size={16} />
-                          </IconButton>
-                        </PermissionGuard>
+                      {!viewOnly && (
+                        <>
+                          <PermissionGuard permission="LEAD_UPDATE">
+                            <IconButton onClick={() => navigate(`/leads/${lead.id}/edit`)} title="Edit Lead" aria-label="Edit Lead">
+                              <Edit size={16} />
+                            </IconButton>
+                          </PermissionGuard>
+                          
+                          {lead.active ? (
+                            <PermissionGuard permission="LEAD_UPDATE">
+                              <IconButton onClick={() => handleToggleActive(lead)} title="Deactivate" aria-label="Deactivate" className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                                <ShieldAlert size={16} />
+                              </IconButton>
+                            </PermissionGuard>
+                          ) : (
+                            <PermissionGuard permission="LEAD_UPDATE">
+                              <IconButton onClick={() => handleToggleActive(lead)} title="Reactivate" aria-label="Reactivate" className="text-green-600 hover:text-green-700 hover:bg-green-50">
+                                <ShieldCheck size={16} />
+                              </IconButton>
+                            </PermissionGuard>
+                          )}
+                          
+                          {lead.status === 'QUALIFIED' && lead.active && (
+                            <PermissionGuard permission="OPPORTUNITY_CREATE">
+                              <IconButton onClick={() => setConvertingLead(lead)} title="Convert to Opportunity" aria-label="Convert to Opportunity" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50">
+                                <ArrowRightCircle size={16} />
+                              </IconButton>
+                            </PermissionGuard>
+                          )}
+                        </>
                       )}
                     </div>
                   </TableCell>

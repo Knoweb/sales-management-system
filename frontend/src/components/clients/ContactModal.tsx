@@ -81,41 +81,45 @@ export const ContactModal: React.FC<ContactModalProps> = ({ clientId, isOpen, on
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={() => !loading && onClose()}
       title={initialData ? 'Edit Contact' : 'Add Contact'}
-      maxWidth="600px"
     >
-      <div className="p-6">
-        {error && (
-          <Alert variant="error" style={{ marginBottom: '1rem' }}>{error}</Alert>
-        )}
+      {error && (
+        <Alert variant="error" style={{ marginBottom: '1.5rem' }}>
+          {error}
+        </Alert>
+      )}
 
-        <form id="contact-form" onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField label="First Name" required>
-              <Input
-                type="text"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                required
-                disabled={loading}
-              />
-            </FormField>
-            <FormField label="Last Name" required>
-              <Input
-                type="text"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                required
-                disabled={loading}
-              />
-            </FormField>
-          </div>
-
-          <FormField label="Job Title">
+      <form id="contact-form" onSubmit={handleSubmit}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '0rem' }}>
+          <FormField label="First Name" required id="firstName">
             <Input
+              id="firstName"
+              type="text"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleChange}
+              required
+              disabled={loading}
+            />
+          </FormField>
+          <FormField label="Last Name" required id="lastName">
+            <Input
+              id="lastName"
+              type="text"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleChange}
+              required
+              disabled={loading}
+            />
+          </FormField>
+        </div>
+
+        <div style={{ marginBottom: '1.5rem' }}>
+          <FormField label="Job Title" id="jobTitle">
+            <Input
+              id="jobTitle"
               type="text"
               name="jobTitle"
               value={formData.jobTitle}
@@ -123,9 +127,12 @@ export const ContactModal: React.FC<ContactModalProps> = ({ clientId, isOpen, on
               disabled={loading}
             />
           </FormField>
+        </div>
 
-          <FormField label="Email">
+        <div style={{ marginBottom: '1.5rem' }}>
+          <FormField label="Email" id="email">
             <Input
+              id="email"
               type="email"
               name="email"
               value={formData.email}
@@ -133,9 +140,12 @@ export const ContactModal: React.FC<ContactModalProps> = ({ clientId, isOpen, on
               disabled={loading}
             />
           </FormField>
+        </div>
 
-          <FormField label="Phone">
+        <div style={{ marginBottom: '1.5rem' }}>
+          <FormField label="Phone" id="phone">
             <Input
+              id="phone"
               type="tel"
               name="phone"
               value={formData.phone}
@@ -143,27 +153,42 @@ export const ContactModal: React.FC<ContactModalProps> = ({ clientId, isOpen, on
               disabled={loading}
             />
           </FormField>
+        </div>
 
-          <FormField>
-            <Checkbox
-              name="primary"
-              label="Set as Primary Contact"
-              checked={formData.primary}
-              onChange={handleChange}
-              disabled={loading}
-            />
-          </FormField>
+        <div style={{ marginBottom: '2rem' }}>
+          <Checkbox
+            id="primary"
+            name="primary"
+            label="Set as Primary Contact"
+            checked={formData.primary}
+            onChange={handleChange}
+            disabled={loading}
+          />
+        </div>
 
-          <div className="flex justify-end gap-3 mt-8">
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary" isLoading={loading}>
-              Save Contact
-            </Button>
-          </div>
-        </form>
-      </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
+          <Button 
+            type="button" 
+            variant="ghost" 
+            onClick={onClose} 
+            disabled={loading}
+            style={{
+              minWidth: '110px',
+              height: '42px',
+              backgroundColor: '#f1f5f9',
+              color: '#475569',
+              border: '1px solid #cbd5e1',
+              borderRadius: '9px',
+              fontWeight: 600,
+            }}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" variant="primary" isLoading={loading}>
+            Save Contact
+          </Button>
+        </div>
+      </form>
     </Modal>
   );
 };

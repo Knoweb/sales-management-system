@@ -112,7 +112,7 @@ export const QuotationBuilderPage: React.FC = () => {
 
   const handleSave = async () => {
     try {
-      const saved = await createQuotation(quotation as QuotationDto);
+      await createQuotation(quotation as QuotationDto);
       navigate(`/quotations`); // Go back to list page for now
     } catch (error) {
       console.error("Failed to save quotation", error);
