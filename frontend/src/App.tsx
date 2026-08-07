@@ -24,7 +24,6 @@ import ProductCategoriesPage from './pages/ProductCategoriesPage';
 import { ClientsPage } from './pages/clients/ClientsPage';
 import { ClientDetailsPage } from './pages/clients/ClientDetailsPage';
 import { LeadsPage } from './pages/LeadsPage';
-import { LeadFormPage } from './pages/LeadFormPage';
 import { LeadDetailsPage } from './pages/LeadDetailsPage';
 import { FollowUpDashboard } from './pages/FollowUpDashboard';
 import { TechnicalProjectQueuePage } from './pages/TechnicalProjectQueuePage';
@@ -134,19 +133,9 @@ function App() {
                   <LeadsPage />
                 </ProtectedRoute>
               } />
-              <Route path="/leads/new" element={
-                <ProtectedRoute requiredPermission="LEAD_CREATE">
-                  <LeadFormPage />
-                </ProtectedRoute>
-              } />
               <Route path="/leads/:id" element={
                 <ProtectedRoute requiredPermission="LEAD_READ">
                   <LeadDetailsPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/leads/:id/edit" element={
-                <ProtectedRoute requiredPermission="LEAD_UPDATE">
-                  <LeadFormPage />
                 </ProtectedRoute>
               } />
 

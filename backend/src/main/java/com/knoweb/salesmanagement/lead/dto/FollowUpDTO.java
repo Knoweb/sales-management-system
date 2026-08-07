@@ -14,6 +14,8 @@ public class FollowUpDTO {
     private String assignedToName;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
+    private String clientName;
+    private String leadTitle;
 
     // Getters and setters
     public UUID getId() { return id; }
@@ -34,4 +36,8 @@ public class FollowUpDTO {
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public String getClientName() { return clientName; }
+    public void setClientName(String clientName) { this.clientName = clientName; }
+    public String getLeadTitle() { return leadTitle; }
+    public void setLeadTitle(String leadTitle) { this.leadTitle = leadTitle; }
 }

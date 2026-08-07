@@ -22,6 +22,7 @@ import {
 } from "../Table";
 import { PermissionGuard } from "../PermissionGuard";
 import { StatusBadge } from "../StatusBadge";
+import { EmptyState } from "../FeedbackStates";
 import { ContactModal } from "./ContactModal";
 
 interface ContactListProps {
@@ -129,7 +130,7 @@ export const ContactList: React.FC<ContactListProps> = ({
           display: "flex",
           alignItems: "center",
           width: "100%",
-          marginBottom: "1.5rem",
+          marginBottom: "2rem",
         }}
       >
         <h3 className="text-lg font-medium text-gray-900">
@@ -147,11 +148,10 @@ export const ContactList: React.FC<ContactListProps> = ({
 
       {/* Contact List */}
       {contacts.length === 0 ? (
-        <div className="rounded-md border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
-          <p className="text-gray-500">
-            No contacts found for this client.
-          </p>
-        </div>
+        <EmptyState
+          title="No contacts added"
+          message="This client has no contacts."
+        />
       ) : (
         <div className="overflow-x-auto">
           <Table>

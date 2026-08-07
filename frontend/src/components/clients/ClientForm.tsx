@@ -120,8 +120,8 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSuccess, 
   };
 
   return (
-    <form onSubmit={(e) => handleSubmit(e, false)}>
-      <div style={{ maxHeight: '65vh', overflowY: 'auto', paddingRight: '0.5rem' }} className="space-y-8">
+    <form onSubmit={(e) => handleSubmit(e, false)} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: '0.5rem' }} className="space-y-8">
       {error && (
         <Alert variant="error" style={{ marginBottom: '1rem' }}>
           {typeof error === 'object' ? error.message : error}
@@ -256,7 +256,8 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSuccess, 
           gap: '1rem',
           borderTop: '1px solid #e2e8f0',
           paddingTop: '1rem',
-          marginTop: '0.5rem'
+          marginTop: '0.5rem',
+          flexShrink: 0
         }}
       >
         <Button

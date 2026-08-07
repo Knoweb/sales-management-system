@@ -5,6 +5,8 @@ import { Button } from '../Button';
 import { Calendar, CheckCircle, Plus } from 'lucide-react';
 import { FormField, Input, Select, Textarea } from '../Forms';
 import { Card } from '../Card';
+import { EmptyState } from '../FeedbackStates';
+import { Modal } from '../Modal';
 
 interface LeadFollowUpsProps {
   leadId: string;
@@ -16,6 +18,7 @@ export const LeadFollowUps: React.FC<LeadFollowUpsProps> = ({ leadId }) => {
   const [error, setError] = useState<string | null>(null);
 
   const [showForm, setShowForm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [newFollowUp, setNewFollowUp] = useState({
     followUpDate: new Date().toISOString().slice(0, 16),
     status: 'PENDING' as FollowUpStatus,
@@ -41,6 +44,7 @@ export const LeadFollowUps: React.FC<LeadFollowUpsProps> = ({ leadId }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     try {
       await LeadApi.addFollowUp(leadId, {
         followUpDate: new Date(newFollowUp.followUpDate).toISOString(),
@@ -56,6 +60,8 @@ export const LeadFollowUps: React.FC<LeadFollowUpsProps> = ({ leadId }) => {
       void loadFollowUps();
     } catch {
       alert('Failed to add follow-up');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -83,7 +89,7 @@ export const LeadFollowUps: React.FC<LeadFollowUpsProps> = ({ leadId }) => {
 
   return (
     <Card>
-      <div className="flex-between mb-6 border-b border-border pb-4">
+      <div className="flex-between border-b border-border pb-4" style={{ marginBottom: '2rem' }}>
         <h3 className="text-lg font-semibold text-text-primary">Follow-Ups</h3>
         <Button variant="primary" onClick={() => setShowForm(!showForm)}>
           <Plus size={16} className="mr-2" /> Schedule Follow-Up
@@ -91,15 +97,22 @@ export const LeadFollowUps: React.FC<LeadFollowUpsProps> = ({ leadId }) => {
       </div>
       
       <div>
-        {showForm && (
-          <div className="bg-surface-secondary p-4 rounded-lg mb-6 border border-border">
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Modal 
+          isOpen={showForm} 
+          onClose={() => setShowForm(false)} 
+          title="Schedule Follow-Up" 
+          maxWidth="500px"
+          bodyStyle={{ overflowY: 'visible' }}
+        >
+          <form onSubmit={handleSubmit}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingBottom: '1rem' }}>
               <FormField label="Date & Time" required>
                 <Input
                   type="datetime-local"
                   required
                   value={newFollowUp.followUpDate}
                   onChange={e => setNewFollowUp(prev => ({ ...prev, followUpDate: e.target.value }))}
+                  disabled={isSubmitting}
                 />
               </FormField>
               <FormField label="Status" required>
@@ -107,69 +120,150 @@ export const LeadFollowUps: React.FC<LeadFollowUpsProps> = ({ leadId }) => {
                   required
                   value={newFollowUp.status}
                   onChange={e => setNewFollowUp(prev => ({ ...prev, status: e.target.value as FollowUpStatus }))}
+                  disabled={isSubmitting}
                 >
                   <option value="PENDING">Pending</option>
                   <option value="COMPLETED">Completed</option>
                   <option value="CANCELLED">Cancelled</option>
                 </Select>
               </FormField>
-              <div className="md:col-span-2">
-                <FormField label="Notes">
-                  <Textarea
-                    rows={3}
-                    value={newFollowUp.notes}
-                    onChange={e => setNewFollowUp(prev => ({ ...prev, notes: e.target.value }))}
-                  />
-                </FormField>
-              </div>
-              <div className="md:col-span-2 flex justify-end gap-3 pt-2">
-                <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>Cancel</Button>
-                <Button type="submit" variant="primary">Save Follow-Up</Button>
-              </div>
-            </form>
-          </div>
-        )}
+              <FormField label="Notes">
+                <Textarea
+                  rows={5}
+                  value={newFollowUp.notes}
+                  onChange={e => setNewFollowUp(prev => ({ ...prev, notes: e.target.value }))}
+                  disabled={isSubmitting}
+                  style={{ height: '110px' }}
+                />
+              </FormField>
+            </div>
+            
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'flex-end', 
+              gap: '1rem', 
+              borderTop: '1px solid var(--color-border)',
+              paddingTop: '1.25rem',
+              marginTop: '0.5rem'
+            }}>
+              <Button 
+                type="button" 
+                variant="ghost" 
+                onClick={() => setShowForm(false)}
+                disabled={isSubmitting}
+                style={{
+                  minWidth: '110px',
+                  height: '42px',
+                  backgroundColor: '#f1f5f9',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '9px',
+                  fontWeight: 600,
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                variant="primary" 
+                isLoading={isSubmitting}
+                style={{
+                  minWidth: '110px',
+                  height: '42px',
+                  borderRadius: '9px',
+                  fontWeight: 600,
+                }}
+              >
+                Schedule Follow-Up
+              </Button>
+            </div>
+          </form>
+        </Modal>
 
         {loading ? (
           <p className="text-text-secondary py-4 text-center">Loading follow-ups...</p>
         ) : error ? (
           <p className="text-danger py-4 text-center">{error}</p>
         ) : followUps.length === 0 ? (
-          <p className="text-text-muted py-8 text-center bg-surface-secondary rounded-lg border border-dashed border-border">No follow-ups scheduled.</p>
+          <EmptyState
+            title="No follow-ups added"
+            message="This lead has no follow-ups."
+          />
         ) : (
           <div className="flex flex-col gap-4">
             {followUps.map(fu => {
               const display = getStatusDisplay(fu);
+              const dateObj = new Date(fu.followUpDate);
+              const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+              const timeStr = dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+              const formattedDate = `${dateStr} • ${timeStr}`;
+
               return (
-              <div key={fu.id} className="p-4 rounded-lg border border-border" style={{ borderLeft: `4px solid ${display.border}`, backgroundColor: 'var(--color-surface)' }}>
-                <div className="flex-between mb-2">
-                  <div className="flex items-center gap-3">
-                    <h4 className="m-0 text-base flex items-center gap-2 font-medium text-text-primary">
-                      <Calendar size={16} className="text-text-muted" />
-                      {new Date(fu.followUpDate).toLocaleString()}
-                    </h4>
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold" style={{ 
-                      backgroundColor: display.bg,
-                      color: display.color
+              <div 
+                key={fu.id} 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  padding: '16px', 
+                  gap: '16px',
+                  backgroundColor: '#ffffff', 
+                  borderRadius: '10px', 
+                  border: '1px solid var(--color-border)', 
+                  borderLeft: `4px solid ${display.border}`,
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
+                }}
+              >
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <Calendar size={15} style={{ color: '#64748b' }} />
+                    <span style={{ fontSize: '15px', fontWeight: 600, color: '#0f172a' }}>
+                      {formattedDate}
+                    </span>
+                    <span style={{ 
+                      padding: '2px 8px', 
+                      borderRadius: '9999px', 
+                      fontSize: '11px', 
+                      fontWeight: 600, 
+                      backgroundColor: display.bg, 
+                      color: display.color,
+                      marginLeft: '4px'
                     }}>
                       {display.label}
                     </span>
                   </div>
-                  {fu.status === 'PENDING' && (
-                    <Button variant="ghost" onClick={() => handleComplete(fu.id)} title="Mark as Completed" style={{ color: 'var(--color-success)' }}>
-                      <CheckCircle size={18} />
-                    </Button>
+                  
+                  {fu.notes && (
+                    <div style={{ paddingLeft: '23px', fontSize: '14px', color: '#475569', lineHeight: 1.5 }}>
+                      {fu.notes}
+                    </div>
+                  )}
+                  {fu.assignedToName && (
+                    <div style={{ paddingLeft: '23px', fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>
+                      Assigned to: <span style={{ fontWeight: 500, color: '#64748b' }}>{fu.assignedToName}</span>
+                    </div>
                   )}
                 </div>
-                {fu.notes && (
-                  <p className="m-0 mt-2 text-sm text-text-secondary">
-                    {fu.notes}
-                  </p>
-                )}
-                {fu.assignedToName && (
-                  <p className="m-0 mt-2 text-xs text-text-muted">
-                    Assigned to: <span className="font-medium text-text-secondary">{fu.assignedToName}</span>
-                  </p>
+
+                {fu.status === 'PENDING' && (
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => handleComplete(fu.id)} 
+                    title="Mark as Completed" 
+                    style={{ 
+                      flexShrink: 0,
+                      color: '#10b981',
+                      width: '40px',
+                      height: '40px',
+                      padding: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '50%'
+                    }}
+                  >
+                    <CheckCircle size={22} />
+                  </Button>
                 )}
               </div>
             )})}

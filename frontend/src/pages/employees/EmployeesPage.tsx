@@ -63,7 +63,7 @@ const EmployeeFormFields: React.FC<EmployeeFormFieldsProps> = ({
 }) => {
   return (
     <>
-      <div style={{ maxHeight: '65vh', overflowY: 'auto', paddingRight: '0.5rem' }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: '0.5rem' }}>
         <div style={{ marginBottom: '0.75rem' }}>
           <SectionHeader title="Personal Information" />
         </div>
@@ -615,7 +615,7 @@ export const EmployeesPage: React.FC = () => {
         title="Edit Employee"
         maxWidth="760px"
       >
-        <form onSubmit={handleFormSubmit}>
+        <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
           {formError && (
             <Alert variant="error" style={{ marginBottom: '1rem' }}>
               {formError}
@@ -640,7 +640,8 @@ export const EmployeesPage: React.FC = () => {
               gap: '1rem',
               borderTop: '1px solid #e2e8f0',
               paddingTop: '1rem',
-              marginTop: '0.5rem'
+              marginTop: '0.5rem',
+              flexShrink: 0
             }}
           >
             <Button
@@ -690,7 +691,7 @@ export const EmployeesPage: React.FC = () => {
         title="Add Employee"
         maxWidth="760px"
       >
-        <form onSubmit={handleAddFormSubmit}>
+        <form onSubmit={handleAddFormSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
           {addFormError && (
             <Alert variant="error" style={{ marginBottom: '1rem' }}>
               {addFormError}
@@ -715,7 +716,8 @@ export const EmployeesPage: React.FC = () => {
               gap: '1rem',
               borderTop: '1px solid #e2e8f0',
               paddingTop: '1rem',
-              marginTop: '0.5rem'
+              marginTop: '0.5rem',
+              flexShrink: 0
             }}
           >
             <Button

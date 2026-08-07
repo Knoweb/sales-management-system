@@ -3,6 +3,7 @@ import { AttachmentApi } from '../../services/AttachmentApi';
 import type { Attachment } from '../../types/attachment';
 import { Button } from '../Button';
 import { File, Download, Trash2, Upload, AlertCircle } from 'lucide-react';
+import { EmptyState } from '../FeedbackStates';
 
 interface LeadAttachmentsProps {
   entityId: string;
@@ -81,7 +82,7 @@ export const LeadAttachments: React.FC<LeadAttachmentsProps> = ({ entityId, enti
           display: "flex",
           alignItems: "center",
           width: "100%",
-          marginBottom: "1.5rem",
+          marginBottom: "0.7rem",
         }}
       >
         <h3 className="text-lg font-medium text-gray-900">
@@ -110,7 +111,10 @@ export const LeadAttachments: React.FC<LeadAttachmentsProps> = ({ entityId, enti
         {loading ? (
           <p>Loading attachments...</p>
         ) : attachments.length === 0 ? (
-          <p>No attachments found.</p>
+          <EmptyState
+            title="No attachments added"
+            message={`This ${entityType.toLowerCase()} has no attachments.`}
+          />
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
             {attachments.map(att => (

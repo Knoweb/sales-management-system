@@ -63,6 +63,8 @@ export interface FollowUp {
   assignedToName: string | null;
   createdAt: string;
   updatedAt: string;
+  clientName?: string;
+  leadTitle?: string;
 }
 
 export interface FollowUpRequest {

@@ -64,6 +64,13 @@ public class LeadMapper {
         dto.setCreatedAt(followUp.getCreatedAt());
         dto.setUpdatedAt(followUp.getUpdatedAt());
         
+        if (followUp.getLead() != null) {
+            dto.setLeadTitle(followUp.getLead().getTitle());
+            if (followUp.getLead().getClient() != null) {
+                dto.setClientName(followUp.getLead().getClient().getName());
+            }
+        }
+        
         if (followUp.getAssignedTo() != null) {
             dto.setAssignedTo(followUp.getAssignedTo().getId());
             dto.setAssignedToName(followUp.getAssignedTo().getFirstName() + " " + followUp.getAssignedTo().getLastName());

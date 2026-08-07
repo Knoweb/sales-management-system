@@ -7,9 +7,10 @@ export interface ModalProps {
   title: React.ReactNode;
   children: React.ReactNode;
   maxWidth?: string;
+  bodyStyle?: React.CSSProperties;
 }
 
-export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, maxWidth = '500px' }) => {
+export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, maxWidth = '500px', bodyStyle }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
@@ -94,7 +95,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
             <X size={20} />
           </button>
         </div>
-        <div>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflowY: 'auto', ...bodyStyle }}>
           {children}
         </div>
       </div>

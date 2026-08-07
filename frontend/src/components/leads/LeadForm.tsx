@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
 import { Loader2, Lock } from 'lucide-react';
 import { LeadApi } from '../../services/LeadApi';
 import { ClientApi } from '../../services/ClientApi';
@@ -8,8 +7,9 @@ import type { Client, ClientContact } from '../../types/client';
 import { Button } from '../Button';
 import { LoadingState, ErrorState } from '../FeedbackStates';
 import { FormField, Input, Select, Textarea } from '../Forms';
-import { Card } from '../Card';
 import { Alert } from '../Alert';
+import { Modal } from '../Modal';
+import { SectionHeader } from '../SectionHeader';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -52,8 +52,6 @@ function mapApiError(message: string): string {
   return message;
 }
 
-
-
 // ── Form state ─────────────────────────────────────────────────────────────
 
 interface FormData extends LeadRequest {
@@ -82,13 +80,18 @@ interface FieldErrors {
 
 // ── Main component ─────────────────────────────────────────────────────────
 
-export const LeadForm: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const isEditing = !!id;
-  const navigate = useNavigate();
+export interface LeadFormProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  leadId?: string;
+}
+
+export const LeadForm: React.FC<LeadFormProps> = ({ isOpen, onClose, onSuccess, leadId }) => {
+  const isEditing = !!leadId;
 
   // Page-level state
-  const [pageLoading, setPageLoading] = useState(isEditing);
+  const [pageLoading, setPageLoading] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -118,11 +121,11 @@ export const LeadForm: React.FC = () => {
 
   // ── Load existing lead (edit mode) ───────────────────────────────────────
   const loadLead = useCallback(async () => {
-    if (!id) return;
+    if (!leadId) return;
     setPageLoading(true);
     setPageError(null);
     try {
-      const lead = await LeadApi.getLead(id);
+      const lead = await LeadApi.getLead(leadId);
       setFormData({
         clientId: lead.clientId ?? '',
         contactId: lead.contactId ?? '',
@@ -139,15 +142,23 @@ export const LeadForm: React.FC = () => {
     } finally {
       setPageLoading(false);
     }
-  }, [id]);
+  }, [leadId]);
 
   useEffect(() => {
-    if (isEditing) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      void loadLead();
+    if (isOpen) {
+      if (isEditing) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        void loadLead();
+      } else {
+        setFormData(initialFormData);
+        setFieldErrors({});
+        setPageError(null);
+        setApiError(null);
+        isDirtyRef.current = false;
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [isOpen, leadId, isEditing]);
 
   // ── Load contacts when client changes ────────────────────────────────────
   useEffect(() => {
@@ -246,12 +257,12 @@ export const LeadForm: React.FC = () => {
     try {
       setSaving(true);
       if (isEditing) {
-        await LeadApi.updateLead(id!, payload);
+        await LeadApi.updateLead(leadId!, payload);
       } else {
         await LeadApi.createLead(payload);
       }
       isDirtyRef.current = false;
-      navigate('/leads');
+      onSuccess();
     } catch (err) {
       const raw = (err as { response?: { data?: { message?: string } } })
         ?.response?.data?.message ?? '';
@@ -266,44 +277,45 @@ export const LeadForm: React.FC = () => {
     if (isDirtyRef.current) {
       if (!window.confirm('You have unsaved changes. Leave anyway?')) return;
     }
-    navigate('/leads');
+    onClose();
   };
-
-  // ── Render: loading / error states ──────────────────────────────────────
-  if (pageLoading) {
-    return <LoadingState message="Loading lead data…" />;
-  }
-
-  if (pageError) {
-    return (
-      <ErrorState
-        title="Could not load lead"
-        message={pageError}
-        onRetry={isEditing ? loadLead : undefined}
-      />
-    );
-  }
 
   // ── Render: form ─────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6">
-      {/* API error banner */}
-      {apiError && (
-        <Alert variant="error" style={{ marginBottom: '1rem' }}>{apiError}</Alert>
-      )}
+    <Modal
+      isOpen={isOpen}
+      onClose={handleCancel}
+      title={isEditing ? 'Edit Lead' : 'Create Lead'}
+      maxWidth="760px"
+    >
+      {pageLoading ? (
+        <LoadingState message="Loading lead data…" />
+      ) : pageError ? (
+        <ErrorState
+          title="Could not load lead"
+          message={pageError}
+          onRetry={isEditing ? loadLead : undefined}
+        />
+      ) : (
+        <>
+          {apiError && (
+            <Alert variant="error" style={{ marginBottom: '1rem' }}>{apiError}</Alert>
+          )}
 
-      <form
-        onSubmit={handleSubmit}
-        noValidate
-        aria-label={isEditing ? 'Edit Lead form' : 'Create Lead form'}
-        className="space-y-6"
-      >
-        {/* ── Section: Lead Information ── */}
-        <Card>
-          <h3 className="text-lg font-medium text-gray-900 mb-4 border-b border-gray-200 pb-2">Lead Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Title — full width */}
-            <div className="md:col-span-2">
+          <form
+            onSubmit={handleSubmit}
+            noValidate
+            aria-label={isEditing ? 'Edit Lead form' : 'Create Lead form'}
+            style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
+          >
+            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: '0.5rem' }}>
+              {/* ── Section: Lead Information ── */}
+              <div style={{ marginBottom: '0.75rem' }}>
+                <SectionHeader title="Lead Information" />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', columnGap: '1rem', rowGap: '0.5rem', marginBottom: '1.25rem' }}>
+                {/* Title — full width */}
+                <div style={{ gridColumn: '1 / -1' }}>
               <FormField label="Lead Title" required error={fieldErrors.title}>
                 <Input
                   type="text"
@@ -356,12 +368,12 @@ export const LeadForm: React.FC = () => {
               </Select>
             </FormField>
           </div>
-        </Card>
 
-        {/* ── Section: Client Information ── */}
-        <Card>
-          <h3 className="text-lg font-medium text-gray-900 mb-4 border-b border-gray-200 pb-2">Client Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* ── Section: Client Information ── */}
+          <div style={{ marginTop: '0.5rem', marginBottom: '0.75rem' }}>
+              <SectionHeader title="Client Information" />
+            </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', columnGap: '1rem', rowGap: '0.5rem', marginBottom: '1.25rem' }}>
             {/* Client */}
             <FormField 
               label="Client" 
@@ -440,12 +452,11 @@ export const LeadForm: React.FC = () => {
               </div>
             </FormField>
           </div>
-        </Card>
-
-        {/* ── Section: Inquiry Details ── */}
-        <Card>
-          <h3 className="text-lg font-medium text-gray-900 mb-4 border-b border-gray-200 pb-2">Inquiry Details</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* ── Section: Inquiry Details ── */}
+              <div style={{ marginTop: '0.5rem', marginBottom: '0.75rem' }}>
+                <SectionHeader title="Inquiry Details" />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', columnGap: '1rem', rowGap: '0.5rem', marginBottom: '1.25rem' }}>
             {/* Interested Product */}
             <FormField 
               label="Interested Product / Service"
@@ -479,7 +490,7 @@ export const LeadForm: React.FC = () => {
             </FormField>
 
             {/* Initial Request — full width */}
-            <div className="md:col-span-2">
+            <div style={{ gridColumn: '1 / -1' }}>
               <FormField 
                 label="Initial Request"
                 helpText="What the client initially requested or described."
@@ -496,7 +507,7 @@ export const LeadForm: React.FC = () => {
             </div>
 
             {/* Notes — full width */}
-            <div className="md:col-span-2">
+            <div style={{ gridColumn: '1 / -1' }}>
               <FormField 
                 label="Notes"
                 helpText="Internal notes or observations about this lead."
@@ -511,33 +522,35 @@ export const LeadForm: React.FC = () => {
                 />
               </FormField>
             </div>
-          </div>
-        </Card>
+            </div>
+            </div>
 
-        {/* ── Form actions ── */}
-        <div className="flex justify-end gap-3 mt-8 border-t border-gray-200 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-            disabled={saving}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            isLoading={saving}
-            disabled={saving}
-          >
-            {saving
-              ? 'Saving…'
-              : isEditing
-              ? 'Save Changes'
-              : 'Create Lead'}
-          </Button>
-        </div>
-      </form>
-    </div>
+            {/* ── Form actions ── */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #e2e8f0', flexShrink: 0 }}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleCancel}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                isLoading={saving}
+                disabled={saving}
+              >
+                {saving
+                  ? 'Saving…'
+                  : isEditing
+                  ? 'Save Changes'
+                  : 'Create Lead'}
+              </Button>
+            </div>
+          </form>
+        </>
+      )}
+    </Modal>
   );
 };

@@ -143,7 +143,7 @@ export const ClientsPage: React.FC = () => {
 
       alert(
         apiError.response?.data?.message ||
-          "Failed to update client status",
+        "Failed to update client status",
       );
     }
   };

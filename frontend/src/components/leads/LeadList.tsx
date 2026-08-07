@@ -4,7 +4,7 @@ import { ClientApi } from '../../services/ClientApi';
 import type { Lead } from '../../types/lead';
 import type { Client } from '../../types/client';
 import { useNavigate } from 'react-router-dom';
-import { Search, Eye, Edit, ShieldAlert, ShieldCheck, ArrowRightCircle } from 'lucide-react';
+import { Eye, Edit, ShieldAlert, ShieldCheck, X } from 'lucide-react';
 import { Button } from '../Button';
 import { IconButton } from '../IconButton';
 import { PermissionGuard } from '../PermissionGuard';
@@ -12,21 +12,22 @@ import { Input, Select } from '../Forms';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../Table';
 import { StatusBadge } from '../StatusBadge';
 import { ErrorState, EmptyState, LoadingState } from '../FeedbackStates';
-import { FilterBar } from '../FilterBar';
-import LeadConversionModal from './../LeadConversionModal';
+import { LeadForm } from './LeadForm';
+import { Card } from '../Card';
+
 interface LeadListProps {
   clientId?: string;
   hideFilters?: boolean;
   viewOnly?: boolean;
+  refreshTrigger?: number;
 }
 
-export const LeadList: React.FC<LeadListProps> = ({ clientId, hideFilters, viewOnly }) => {
+export const LeadList: React.FC<LeadListProps> = ({ clientId, hideFilters, viewOnly, refreshTrigger = 0 }) => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  const [convertingLead, setConvertingLead] = useState<Lead | null>(null);
-  
+  const [editLeadId, setEditLeadId] = useState<string | undefined>();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<string>('active');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -58,7 +59,7 @@ export const LeadList: React.FC<LeadListProps> = ({ clientId, hideFilters, viewO
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, statusFilter, activeFilter, clientFilter, page]);
+  }, [searchTerm, statusFilter, activeFilter, clientFilter, page, refreshTrigger]);
 
   useEffect(() => {
     ClientApi.searchClients(undefined, undefined, 0, 100)
@@ -88,23 +89,63 @@ export const LeadList: React.FC<LeadListProps> = ({ clientId, hideFilters, viewO
   return (
     <div>
       {!hideFilters && (
-        <FilterBar>
-          <div className="flex-1 min-w-[200px]">
-            <Input 
-              type="text" 
-              placeholder="Search leads..." 
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            width: '100%',
+            marginBottom: '0.5rem',
+            height: '44px',
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
+            <Input
+              type="text"
+              placeholder="Search leads..."
               value={searchTerm}
               onChange={e => { setSearchTerm(e.target.value); setPage(0); }}
-              label="Search"
+              style={{
+                width: '100%',
+                height: '44px',
+                paddingLeft: '16px',
+                paddingRight: searchTerm ? '40px' : '16px',
+                borderRadius: '9px',
+              }}
             />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchTerm('');
+                  setPage(0);
+                }}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '40%',
+                  transform: 'translateY(-50%)',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#64748b',
+                  padding: '4px',
+                }}
+                aria-label="Clear search"
+              >
+                <X size={16} />
+              </button>
+            )}
           </div>
-          
+
           {!clientId && (
-            <div className="w-full md:w-48">
-              <Select 
-                value={clientFilter} 
+            <div style={{ width: '210px', flexShrink: 0 }}>
+              <Select
+                value={clientFilter}
                 onChange={e => { setClientFilter(e.target.value); setPage(0); }}
-                label="Client"
               >
                 <option value="all">All Clients</option>
                 {clients.map(c => (
@@ -113,12 +154,11 @@ export const LeadList: React.FC<LeadListProps> = ({ clientId, hideFilters, viewO
               </Select>
             </div>
           )}
-          
-          <div className="w-full md:w-48">
-            <Select 
-              value={statusFilter} 
+
+          <div style={{ width: '210px', flexShrink: 0 }}>
+            <Select
+              value={statusFilter}
               onChange={e => { setStatusFilter(e.target.value); setPage(0); }}
-              label="Status"
             >
               <option value="all">All Status</option>
               <option value="NEW">New</option>
@@ -129,34 +169,40 @@ export const LeadList: React.FC<LeadListProps> = ({ clientId, hideFilters, viewO
               <option value="CLOSED_LOST">Closed Lost</option>
             </Select>
           </div>
-          
-          <div className="w-full md:w-48">
-            <Select 
-              value={activeFilter} 
+
+          <div style={{ width: '210px', flexShrink: 0 }}>
+            <Select
+              value={activeFilter}
               onChange={e => { setActiveFilter(e.target.value); setPage(0); }}
-              label="Active State"
             >
               <option value="all">All Active State</option>
               <option value="active">Active Only</option>
               <option value="inactive">Inactive Only</option>
             </Select>
           </div>
-        </FilterBar>
+        </div>
       )}
 
-      {error ? (
-        <ErrorState message={error} onRetry={loadLeads} />
-      ) : loading && leads.length === 0 ? (
-        <LoadingState message="Loading leads..." />
-      ) : leads.length === 0 ? (
-        <EmptyState 
-          icon={<Search size={48} />}
-          title="No leads found" 
-          message="Try adjusting your filters or search terms." 
-        />
-      ) : (
-        <>
-          <Table>
+      <Card>
+        {error ? (
+          <ErrorState message={error} onRetry={loadLeads} />
+        ) : loading && leads.length === 0 ? (
+          <LoadingState message="Loading leads..." />
+        ) : leads.length === 0 ? (
+          <EmptyState
+            title={clientId && hideFilters ? "No leads added" : "No leads found"}
+            message={
+              searchTerm !== "" || activeFilter !== "all" || statusFilter !== "all" || (clientFilter !== "all" && clientFilter !== clientId)
+                ? "No leads match your current search or filters."
+                : clientId && hideFilters
+                  ? "This client has no leads."
+                  : "No leads are available."
+            }
+          />
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <Table>
             <TableHead>
               <TableRow>
                 <TableHeader>Title</TableHeader>
@@ -170,7 +216,7 @@ export const LeadList: React.FC<LeadListProps> = ({ clientId, hideFilters, viewO
             <TableBody>
               {leads.map(lead => (
                 <TableRow key={lead.id}>
-                  <TableCell className="font-medium">{lead.title}</TableCell>
+                  <TableCell className="font-medium text-gray-900">{lead.title}</TableCell>
                   <TableCell>{lead.clientName}</TableCell>
                   <TableCell>{lead.inquirySource.replace('_', ' ')}</TableCell>
                   <TableCell>{lead.assignedToName || 'Unassigned'}</TableCell>
@@ -185,11 +231,11 @@ export const LeadList: React.FC<LeadListProps> = ({ clientId, hideFilters, viewO
                       {!viewOnly && (
                         <>
                           <PermissionGuard permission="LEAD_UPDATE">
-                            <IconButton onClick={() => navigate(`/leads/${lead.id}/edit`)} title="Edit Lead" aria-label="Edit Lead">
+                            <IconButton onClick={() => setEditLeadId(lead.id)} title="Edit Lead" aria-label="Edit Lead">
                               <Edit size={16} />
                             </IconButton>
                           </PermissionGuard>
-                          
+
                           {lead.active ? (
                             <PermissionGuard permission="LEAD_UPDATE">
                               <IconButton onClick={() => handleToggleActive(lead)} title="Deactivate" aria-label="Deactivate" className="text-red-600 hover:text-red-700 hover:bg-red-50">
@@ -203,28 +249,21 @@ export const LeadList: React.FC<LeadListProps> = ({ clientId, hideFilters, viewO
                               </IconButton>
                             </PermissionGuard>
                           )}
-                          
-                          {lead.status === 'QUALIFIED' && lead.active && (
-                            <PermissionGuard permission="OPPORTUNITY_CREATE">
-                              <IconButton onClick={() => setConvertingLead(lead)} title="Convert to Opportunity" aria-label="Convert to Opportunity" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50">
-                                <ArrowRightCircle size={16} />
-                              </IconButton>
-                            </PermissionGuard>
-                          )}
                         </>
                       )}
                     </div>
                   </TableCell>
                 </TableRow>
               ))}
-            </TableBody>
-          </Table>
+              </TableBody>
+            </Table>
+          </div>
 
           {totalPages > 1 && (
-            <div className="flex justify-center mt-6 space-x-4">
-              <Button 
-                variant="outline" 
-                disabled={page === 0 || loading} 
+            <div className="flex justify-center mt-6 space-x-4 border-t border-gray-200 pt-4">
+              <Button
+                variant="outline"
+                disabled={page === 0 || loading}
                 onClick={() => setPage(p => p - 1)}
               >
                 Previous
@@ -232,9 +271,9 @@ export const LeadList: React.FC<LeadListProps> = ({ clientId, hideFilters, viewO
               <span className="flex items-center text-gray-700 text-sm font-medium">
                 Page {page + 1} of {totalPages}
               </span>
-              <Button 
-                variant="outline" 
-                disabled={page >= totalPages - 1 || loading} 
+              <Button
+                variant="outline"
+                disabled={page >= totalPages - 1 || loading}
                 onClick={() => setPage(p => p + 1)}
               >
                 Next
@@ -243,18 +282,16 @@ export const LeadList: React.FC<LeadListProps> = ({ clientId, hideFilters, viewO
           )}
         </>
       )}
+      </Card>
 
-      {convertingLead && (
-        <LeadConversionModal
-          isOpen={true}
-          onClose={() => setConvertingLead(null)}
-          leadId={convertingLead.id}
-          leadTitle={convertingLead.title}
-          assignedTo={convertingLead.assignedTo}
-          onSuccess={(oppId) => {
-            setConvertingLead(null);
-            alert('Lead converted successfully!');
-            navigate(`/opportunities/${oppId}`);
+      {editLeadId && (
+        <LeadForm
+          isOpen={!!editLeadId}
+          leadId={editLeadId}
+          onClose={() => setEditLeadId(undefined)}
+          onSuccess={() => {
+            setEditLeadId(undefined);
+            void loadLeads();
           }}
         />
       )}

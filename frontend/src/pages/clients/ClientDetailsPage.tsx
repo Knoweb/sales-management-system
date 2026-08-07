@@ -1,19 +1,21 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ClientApi } from '../../services/ClientApi';
 import type { Client } from '../../types/client';
 import { PageHeader } from '../../components/PageHeader';
-import { Handshake, Briefcase, Users, FileText, Target } from 'lucide-react';
+import { Handshake, Briefcase, Users, FileText, Target, ArrowLeft } from 'lucide-react';
 import { ContactList } from '../../components/clients/ContactList';
 import { Tabs, type TabItem } from '../../components/Tabs';
 import { Card } from '../../components/Card';
 import { StatusBadge } from '../../components/StatusBadge';
 import { LeadList } from '../../components/leads/LeadList';
 import { LeadAttachments } from '../../components/leads/LeadAttachments';
+import { Button } from '../../components/Button';
 
 
 export const ClientDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [client, setClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,20 +62,46 @@ export const ClientDetailsPage: React.FC = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto w-full">
+      <div style={{ marginBottom: '20px' }}>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => navigate('/clients')}
+          style={{
+            height: '40px',
+            paddingInline: '12px',
+            backgroundColor: '#f8fafc',
+            color: '#475569',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: 600,
+            boxShadow: 'none',
+          }}
+        >
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            <ArrowLeft size={18} strokeWidth={2.2} />
+            Back to Clients
+          </span>
+        </Button>
+      </div>
+
       <PageHeader
-        title={
-          <div className="flex items-center gap-2">
-            {client.name}
-            <div className="ml-4">
-              <StatusBadge
-                status={client.active ? 'Active' : 'Inactive'}
-                variant={client.active ? 'success' : 'error'}
-              />
-            </div>
-          </div>
-        }
+        title={client.name}
         icon={<Handshake size={24} />}
         description={`Client Type: ${client.clientType.replace('_', ' ')}`}
+        actionElement={
+          <StatusBadge
+            status={client.active ? 'Active' : 'Inactive'}
+            variant={client.active ? 'success' : 'error'}
+          />
+        }
       />
 
       <div className="mb-6 mt-6">

@@ -5,7 +5,7 @@ import { Tabs } from '../Tabs';
 import { LeadTimeline } from './LeadTimeline';
 import { LeadFollowUps } from './LeadFollowUps';
 import { LeadAttachments } from './LeadAttachments';
-import { Briefcase, Building, Tag, User, Contact, Calendar } from 'lucide-react';
+import { Briefcase } from 'lucide-react';
 import type { FollowUp } from '../../types/lead';
 import LeadConversionModal from '../LeadConversionModal';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +14,7 @@ import { Card } from '../Card';
 import { Button } from '../Button';
 import { StatusBadge } from '../StatusBadge';
 import { LoadingState, ErrorState } from '../FeedbackStates';
+import { PageHeader } from '../PageHeader';
 
 interface LeadDetailsProps {
   leadId: string;
@@ -54,22 +55,23 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
   if (loading) return <LoadingState message="Loading lead details..." />;
   if (error || !lead) return <ErrorState message={error || 'Lead not found'} />;
 
+  const getSubtitlePrefix = () => {
+    if (lead.assignedToName) return `Assigned to ${lead.assignedToName}`;
+    if (lead.clientName) return `Client: ${lead.clientName}`;
+    return 'Unassigned';
+  };
+  
+  const descriptionStr = getSubtitlePrefix();
+
   return (
     <div className="space-y-6">
-      <Card>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xl font-bold">
-              {lead.title.charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 m-0">{lead.title}</h2>
-              <p className="text-gray-500 m-0 flex items-center gap-1 mt-1">
-                <Building size={14} /> {lead.clientName}
-              </p>
-            </div>
-          </div>
+      <PageHeader
+        title={lead.title}
+        icon={<Briefcase size={24} />}
+        description={descriptionStr}
+        actionElement={
           <div className="flex items-center gap-3">
+            <StatusBadge status={lead.status} />
             {lead.status === 'QUALIFIED' && lead.active && (
               <PermissionGuard permission="OPPORTUNITY_CREATE">
                 <Button
@@ -81,10 +83,9 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
                 </Button>
               </PermissionGuard>
             )}
-            <StatusBadge status={lead.status} />
           </div>
-        </div>
-      </Card>
+        }
+      />
 
       <LeadConversionModal
         isOpen={isConversionModalOpen}
@@ -112,63 +113,68 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
 
       <div className="mt-6">
         {activeTab === 'info' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-6 mb-6">
             <Card>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Lead Details</h3>
-              <div className="space-y-3">
-                <div className="flex items-start gap-2 text-gray-600">
-                  <Tag size={18} className="mt-0.5 text-gray-400" /> 
-                  <div>
-                    <span className="font-medium text-gray-900 block text-sm">Source</span>
-                    <span>{lead.inquirySource.replace('_', ' ')}</span>
-                  </div>
+              <div style={{ padding: '24px' }}>
+                <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0' }}>
+                  <h2 style={{ margin: 0, color: '#0f172a', fontSize: '20px', fontWeight: 700, lineHeight: 1.3 }}>
+                    Lead Information
+                  </h2>
+                  <p style={{ margin: '6px 0 0', color: '#64748b', fontSize: '14px', lineHeight: 1.5 }}>
+                    Basic lead details
+                  </p>
                 </div>
-                <div className="flex items-start gap-2 text-gray-600">
-                  <Contact size={18} className="mt-0.5 text-gray-400" /> 
-                  <div>
-                    <span className="font-medium text-gray-900 block text-sm">Contact</span>
-                    <span>{lead.contactName || 'N/A'}</span>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '14px' }}>
+                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Source</p>
+                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{lead.inquirySource ? lead.inquirySource.replace('_', ' ') : 'N/A'}</p>
                   </div>
-                </div>
-                <div className="flex items-start gap-2 text-gray-600">
-                  <Briefcase size={18} className="mt-0.5 text-gray-400" /> 
-                  <div>
-                    <span className="font-medium text-gray-900 block text-sm">Product</span>
-                    <span>{lead.interestedProduct || 'N/A'}</span>
+                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Contact</p>
+                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{lead.contactName || 'N/A'}</p>
                   </div>
-                </div>
-                <div className="flex items-start gap-2 text-gray-600">
-                  <User size={18} className="mt-0.5 text-gray-400" /> 
-                  <div>
-                    <span className="font-medium text-gray-900 block text-sm">Assigned To</span>
-                    <span>{lead.assignedToName || 'Unassigned'}</span>
+                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Product</p>
+                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{lead.interestedProduct || 'N/A'}</p>
                   </div>
-                </div>
-                <div className="flex items-start gap-2 text-gray-600">
-                  <Calendar size={18} className="mt-0.5 text-gray-400" /> 
-                  <div>
-                    <span className="font-medium text-gray-900 block text-sm">Next Follow-up</span>
-                    <span>{nextFollowUp ? new Date(nextFollowUp.followUpDate).toLocaleString() : 'None Scheduled'}</span>
+                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Assigned To</p>
+                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{lead.assignedToName || 'Unassigned'}</p>
+                  </div>
+                  <div style={{ gridColumn: '1 / -1', padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Next Follow-up</p>
+                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{nextFollowUp ? new Date(nextFollowUp.followUpDate).toLocaleString() : 'None Scheduled'}</p>
                   </div>
                 </div>
               </div>
             </Card>
             
-            <div className="space-y-6">
-              <Card>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Initial Request</h3>
-                <p className="text-gray-700 whitespace-pre-line bg-gray-50 p-4 rounded-md">
+            <Card>
+              <div style={{ padding: '24px' }}>
+                <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0' }}>
+                  <h2 style={{ margin: 0, color: '#0f172a', fontSize: '20px', fontWeight: 700, lineHeight: 1.3 }}>
+                    Initial Request
+                  </h2>
+                </div>
+                <p style={{ margin: 0, color: '#475569', fontSize: '15px', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
                   {lead.initialRequest || 'No initial request details provided.'}
                 </p>
-              </Card>
+              </div>
+            </Card>
 
-              <Card>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Notes</h3>
-                <p className="text-gray-700 whitespace-pre-line bg-gray-50 p-4 rounded-md">
+            <Card>
+              <div style={{ padding: '24px' }}>
+                <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0' }}>
+                  <h2 style={{ margin: 0, color: '#0f172a', fontSize: '20px', fontWeight: 700, lineHeight: 1.3 }}>
+                    Notes
+                  </h2>
+                </div>
+                <p style={{ margin: 0, color: '#475569', fontSize: '15px', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
                   {lead.notes || 'No additional notes.'}
                 </p>
-              </Card>
-            </div>
+              </div>
+            </Card>
           </div>
         )}
 
