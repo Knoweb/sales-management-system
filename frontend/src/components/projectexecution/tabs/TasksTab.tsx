@@ -7,7 +7,7 @@ import type { ProjectTaskDTO } from '../../../api/projectExecutionApi';
 import { Plus, Edit2 } from 'lucide-react';
 import { EmployeeSelector } from '../selectors/EmployeeSelector';
 
-interface Props { workspaceId: string; onRefreshSummary?: () => void; }
+interface Props { workspaceId: string; onRefreshSummary?: () => void;  canEdit?: boolean; }
 
 const modalStyle: React.CSSProperties = {
     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -22,7 +22,7 @@ const inputStyle: React.CSSProperties = {
     width: '100%', padding: '8px', marginBottom: '16px', border: '1px solid #ccc', borderRadius: '4px'
 };
 
-const TasksTab: React.FC<Props> = ({ workspaceId, onRefreshSummary }) => {
+const TasksTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = true }) => {
     const [tasks, setTasks] = useState<ProjectTaskDTO[]>([]);
     const [loading, setLoading] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -79,11 +79,11 @@ const TasksTab: React.FC<Props> = ({ workspaceId, onRefreshSummary }) => {
 
     return (
         <div>
-            <div style={{ marginBottom: 16 }}>
-                <button onClick={() => { setEditingTask(null); setForm({}); setIsModalVisible(true); }} className="execution-secondary-button">
-                    <Plus size={16} /> Add Task
-                </button>
-            </div>
+        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
+            {canEdit && <button onClick={() => { setEditingTask(null); setForm({}); setIsModalVisible(true); }} className="execution-secondary-button">
+                <Plus size={16} /> Create Task
+            </button>}
+        </div>
             {loading ? <p>Loading...</p> : (
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                     <thead>
@@ -95,7 +95,7 @@ const TasksTab: React.FC<Props> = ({ workspaceId, onRefreshSummary }) => {
                         {tasks.map((t: any) => (
                             <tr key={t.id} style={{ borderBottom: '1px solid #eee' }}>
                                 <td>{t.title}</td><td>{t.status}</td><td>{t.priority}</td><td>{t.completionPercentage || 0}%</td>
-                                <td><button onClick={() => { setEditingTask(t); setForm(t); setIsModalVisible(true); }}><Edit2 size={14}/></button></td>
+                                <td>{canEdit && <button onClick={() => { setEditingTask(t); setForm(t); setIsModalVisible(true); }}><Edit2 size={14}/></button>}</td>
                             </tr>
                         ))}
                     </tbody>

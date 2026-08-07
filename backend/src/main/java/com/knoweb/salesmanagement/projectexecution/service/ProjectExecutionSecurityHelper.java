@@ -1,5 +1,7 @@
 package com.knoweb.salesmanagement.projectexecution.service;
 
+import com.knoweb.salesmanagement.employee.entity.Employee;
+import com.knoweb.salesmanagement.employee.repository.EmployeeRepository;
 import com.knoweb.salesmanagement.projectexecution.entity.ProjectExecutionWorkspace;
 import com.knoweb.salesmanagement.projectexecution.repository.ProjectExecutionWorkspaceRepository;
 import org.springframework.security.access.AccessDeniedException;
@@ -13,9 +15,11 @@ import java.util.UUID;
 public class ProjectExecutionSecurityHelper {
     
     private final ProjectExecutionWorkspaceRepository workspaceRepository;
+    private final EmployeeRepository employeeRepository;
     
-    public ProjectExecutionSecurityHelper(ProjectExecutionWorkspaceRepository workspaceRepository) {
+    public ProjectExecutionSecurityHelper(ProjectExecutionWorkspaceRepository workspaceRepository, EmployeeRepository employeeRepository) {
         this.workspaceRepository = workspaceRepository;
+        this.employeeRepository = employeeRepository;
     }
     
     public ProjectExecutionWorkspace getWorkspaceAndVerifyWriteAccess(UUID workspaceId, UUID userId, Collection<? extends GrantedAuthority> authorities) {
@@ -27,7 +31,18 @@ public class ProjectExecutionSecurityHelper {
             return workspace; // Admin bypass
         }
         
-        boolean isProjectManager = workspace.getProjectManager() != null && workspace.getProjectManager().getId().equals(userId);
+        boolean hasWriteAuthority = authorities.stream().anyMatch(a -> a.getAuthority().equals("PROJECT_EXECUTION_WRITE"));
+        if (!hasWriteAuthority) {
+            throw new AccessDeniedException("User does not have write permission for project execution");
+        }
+        
+        boolean isProjectManager = false;
+        if (workspace.getProjectManager() != null) {
+            Employee employee = employeeRepository.findByUserId(userId).orElse(null);
+            if (employee != null) {
+                isProjectManager = workspace.getProjectManager().getId().equals(employee.getId());
+            }
+        }
         
         // Wait, what if they are an employee submitting their own daily progress? 
         // This method is for generic workspace write access (PM).

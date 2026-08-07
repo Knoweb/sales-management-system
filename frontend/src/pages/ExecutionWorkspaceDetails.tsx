@@ -37,9 +37,29 @@ export const ExecutionWorkspaceDetails: React.FC = () => {
     
     const hasWritePermission = user?.permissions?.includes('PROJECT_EXECUTION_WRITE');
 
-
     const [workspace, setWorkspace] = useState<ExtendedWorkspaceDTO | null>(null);
     const [summary, setSummary] = useState<ProjectExecutionSummary | null>(null);
+
+    const [currentEmployeeId, setCurrentEmployeeId] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (user) {
+            projectExecutionApi.lookups.employees()
+                .then(employees => {
+                    const myEmp = employees.find(e => e.userId === user.id);
+                    if (myEmp) {
+                        setCurrentEmployeeId(myEmp.employeeId);
+                    }
+                })
+                .catch(console.error);
+        }
+    }, [user]);
+
+    // Check if user is system admin or the assigned project manager
+    const canEdit = !!user && (
+        user.roles?.includes('SYSTEM_ADMIN') || 
+        (hasWritePermission && workspace?.projectManagerId === currentEmployeeId)
+    );
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -285,18 +305,18 @@ export const ExecutionWorkspaceDetails: React.FC = () => {
                         </div>
                     )}
 
-                    {activeTab === 'tasks' && <TasksTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} />}
-                    {activeTab === 'kanban' && <KanbanTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} />}
-                    {activeTab === 'allocations' && <AllocationsTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} />}
-                    {activeTab === 'progress' && <ProgressTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} />}
-                    {activeTab === 'labour' && <LabourTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} />}
-                    {activeTab === 'materials' && <MaterialsTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} />}
-                    {activeTab === 'issues' && <IssuesTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} />}
-                    {activeTab === 'delays' && <DelaysTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} />}
-                    {activeTab === 'documents' && <DocumentsTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} />}
-                    {activeTab === 'photos' && <PhotosTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} />}
-                    {activeTab === 'approvals' && <ApprovalsTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} />}
-                    {activeTab === 'changes' && <ChangeRequestsTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} />}
+                    {activeTab === 'tasks' && <TasksTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
+                    {activeTab === 'kanban' && <KanbanTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
+                    {activeTab === 'allocations' && <AllocationsTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
+                    {activeTab === 'progress' && <ProgressTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
+                    {activeTab === 'labour' && <LabourTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
+                    {activeTab === 'materials' && <MaterialsTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
+                    {activeTab === 'issues' && <IssuesTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
+                    {activeTab === 'delays' && <DelaysTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
+                    {activeTab === 'documents' && <DocumentsTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
+                    {activeTab === 'photos' && <PhotosTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
+                    {activeTab === 'approvals' && <ApprovalsTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
+                    {activeTab === 'changes' && <ChangeRequestsTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
                 </div>
             </div>
             

@@ -35,6 +35,14 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID>, JpaSp
         return findByDepartmentIdAndEmploymentStatus(departmentId, EmploymentStatus.ACTIVE);
     }
 
+    @Query("SELECT e FROM Employee e " +
+           "JOIN e.user u " +
+           "JOIN u.roles r " +
+           "WHERE e.employmentStatus = com.knoweb.salesmanagement.employee.enums.EmploymentStatus.ACTIVE " +
+           "AND u.active = true " +
+           "AND r.code = 'PROJECT_MANAGER'")
+    List<Employee> findEligibleProjectManagers();
+
     /** All employees with given status (no department filter). */
     List<Employee> findByEmploymentStatus(EmploymentStatus status);
 

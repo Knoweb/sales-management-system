@@ -15,6 +15,8 @@ import com.knoweb.salesmanagement.projectexecution.repository.ProjectTaskReposit
 import com.knoweb.salesmanagement.projectexecution.repository.TaskStatusHistoryRepository;
 import com.knoweb.salesmanagement.user.entity.User;
 import com.knoweb.salesmanagement.user.repository.UserRepository;
+import com.knoweb.salesmanagement.employee.repository.EmployeeRepository;
+import com.knoweb.salesmanagement.employee.entity.Employee;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.core.GrantedAuthority;
@@ -31,16 +33,18 @@ public class ProjectTaskService {
     private final ProjectExecutionWorkspaceRepository workspaceRepository;
     private final DepartmentRepository departmentRepository;
     private final UserRepository userRepository;
+    private final EmployeeRepository employeeRepository;
     private final ProjectTaskDependencyRepository dependencyRepository;
     private final TaskStatusHistoryRepository historyRepository;
     private final ProjectExecutionWorkspaceService workspaceService;
     private final ProjectExecutionSecurityHelper securityHelper;
 
-    public ProjectTaskService(ProjectTaskRepository taskRepository, ProjectExecutionWorkspaceRepository workspaceRepository, DepartmentRepository departmentRepository, UserRepository userRepository, ProjectTaskDependencyRepository dependencyRepository, TaskStatusHistoryRepository historyRepository, ProjectExecutionWorkspaceService workspaceService, ProjectExecutionSecurityHelper securityHelper) {
+    public ProjectTaskService(ProjectTaskRepository taskRepository, ProjectExecutionWorkspaceRepository workspaceRepository, DepartmentRepository departmentRepository, UserRepository userRepository, ProjectTaskDependencyRepository dependencyRepository, TaskStatusHistoryRepository historyRepository, ProjectExecutionWorkspaceService workspaceService, ProjectExecutionSecurityHelper securityHelper, EmployeeRepository employeeRepository) {
         this.taskRepository = taskRepository;
         this.workspaceRepository = workspaceRepository;
         this.departmentRepository = departmentRepository;
         this.userRepository = userRepository;
+        this.employeeRepository = employeeRepository;
         this.dependencyRepository = dependencyRepository;
         this.historyRepository = historyRepository;
         this.workspaceService = workspaceService;
@@ -48,6 +52,7 @@ public class ProjectTaskService {
     }
 
 
+    @Transactional(readOnly = true)
     public List<ProjectTaskDTO> getTasksByWorkspaceId(UUID workspaceId) {
         return taskRepository.findByWorkspaceId(workspaceId).stream()
                 .map(this::mapToDTO).collect(Collectors.toList());
@@ -69,7 +74,7 @@ public class ProjectTaskService {
         }
         
         if (dto.getAssigneeId() != null) {
-            User assignee = userRepository.findById(dto.getAssigneeId())
+            Employee assignee = employeeRepository.findById(dto.getAssigneeId())
                     .orElseThrow(() -> new RuntimeException("Assignee not found"));
             task.setAssignee(assignee);
         }
@@ -213,7 +218,7 @@ public class ProjectTaskService {
         task.setEstimatedHours(dto.getEstimatedHours());
         
         if (dto.getAssigneeId() != null) {
-            com.knoweb.salesmanagement.user.entity.User assignee = userRepository.findById(dto.getAssigneeId())
+            Employee assignee = employeeRepository.findById(dto.getAssigneeId())
                     .orElseThrow(() -> new RuntimeException("Assignee not found"));
             task.setAssignee(assignee);
         } else {

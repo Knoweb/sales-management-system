@@ -3,7 +3,7 @@ import { Modal } from '../Modal';
 import { Button } from '../Button';
 import { FormField, Input, Select, Textarea } from '../Forms';
 import { projectExecutionApi } from '../../api/projectExecutionApi';
-import { apiClient } from '../../services/Api';
+import { ProjectManagerSelector } from './selectors/ProjectManagerSelector';
 import { Alert } from '../Alert';
 
 interface SetupWorkspaceModalProps {
@@ -19,18 +19,11 @@ export const SetupWorkspaceModal: React.FC<SetupWorkspaceModalProps> = ({ isOpen
     const [plannedEndDate, setPlannedEndDate] = useState('');
     const [status, setStatus] = useState('PLANNED');
     const [executionNotes, setExecutionNotes] = useState('');
-    const [managers, setManagers] = useState<Array<{id: string, firstName: string, lastName: string}>>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     useEffect(() => {
-        if (isOpen) {
-            apiClient.get('/users?size=100').then(res => {
-                const allUsers = res.data.content || res.data;
-                const pms = allUsers.filter((u: { roles?: string[], active?: boolean }) => u.roles?.includes('PROJECT_MANAGER') && u.active);
-                setManagers(pms);
-            }).catch(console.error);
-        }
+        // managers are handled internally by ProjectManagerSelector now
     }, [isOpen]);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -60,12 +53,10 @@ export const SetupWorkspaceModal: React.FC<SetupWorkspaceModalProps> = ({ isOpen
             <form onSubmit={handleSubmit} className="space-y-4">
                 {error && <Alert variant="error">{error}</Alert>}
                 <FormField label="Project Manager" required id="pm">
-                    <Select id="pm" value={projectManagerId} onChange={e => setProjectManagerId(e.target.value)} required>
-                        <option value="">Select Project Manager</option>
-                        {managers.map(m => (
-                            <option key={m.id} value={m.id}>{m.firstName} {m.lastName}</option>
-                        ))}
-                    </Select>
+                    <ProjectManagerSelector 
+                        value={projectManagerId} 
+                        onChange={(val) => setProjectManagerId(val)} 
+                    />
                 </FormField>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     <FormField label="Planned Start Date" id="start">

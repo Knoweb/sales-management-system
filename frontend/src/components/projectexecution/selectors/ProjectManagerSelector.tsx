@@ -1,7 +1,7 @@
 import React from 'react';
 import { SearchableSelect } from './SearchableSelect';
 import type { Option } from './SearchableSelect';
-import { apiClient } from '../../../services/Api';
+import { projectExecutionApi } from '../../../api/projectExecutionApi';
 
 interface ProjectManagerSelectorProps {
     value?: string;
@@ -13,13 +13,12 @@ interface ProjectManagerSelectorProps {
 
 export const ProjectManagerSelector: React.FC<ProjectManagerSelectorProps> = (props) => {
     const fetchUsers = async (search: string): Promise<Option[]> => {
-        const res = await apiClient.get<{content: Array<{id: string, firstName: string, lastName: string, email: string, roles: string[]}>}>('/users', {
-            params: { roleCode: 'PROJECT_MANAGER', search }
-        });
-        return res.data.content.map(u => ({
-            id: u.id,
-            label: `${u.firstName} ${u.lastName}`,
-            subtitle: u.email,
+        const data = await projectExecutionApi.lookups.projectManagers();
+        const pms = data.filter(emp => emp.fullName.toLowerCase().includes(search.toLowerCase()) || emp.employeeNumber.toLowerCase().includes(search.toLowerCase()));
+        return pms.map(u => ({
+            id: u.employeeId,
+            label: `${u.employeeNumber} — ${u.fullName}`,
+            subtitle: u.departmentName || 'Unknown Department',
             originalData: u
         }));
     };

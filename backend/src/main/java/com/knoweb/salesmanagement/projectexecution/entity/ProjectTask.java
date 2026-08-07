@@ -5,6 +5,7 @@ import com.knoweb.salesmanagement.projectexecution.enums.TaskPriority;
 import com.knoweb.salesmanagement.projectexecution.enums.TaskStatus;
 import com.knoweb.salesmanagement.user.entity.User;
 import jakarta.persistence.*;
+import com.knoweb.salesmanagement.employee.entity.Employee;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -36,7 +37,7 @@ public class ProjectTask {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assignee_id")
-    private User assignee;
+    private Employee assignee;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "priority", nullable = false, length = 50)
@@ -93,8 +94,8 @@ public class ProjectTask {
     public void setDescription(String description) { this.description = description; }
     public Department getDepartment() { return department; }
     public void setDepartment(Department department) { this.department = department; }
-    public User getAssignee() { return assignee; }
-    public void setAssignee(User assignee) { this.assignee = assignee; }
+    public Employee getAssignee() { return assignee; }
+    public void setAssignee(Employee assignee) { this.assignee = assignee; }
     public TaskPriority getPriority() { return priority; }
     public void setPriority(TaskPriority priority) { this.priority = priority; }
     public TaskStatus getStatus() { return status; }

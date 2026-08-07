@@ -11,6 +11,8 @@ import com.knoweb.salesmanagement.user.entity.User;
 import com.knoweb.salesmanagement.user.repository.UserRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.GrantedAuthority;
+import com.knoweb.salesmanagement.employee.repository.EmployeeRepository;
+import com.knoweb.salesmanagement.employee.entity.Employee;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,13 +29,15 @@ public class ProjectLabourService {
     private final ProjectExecutionWorkspaceRepository workspaceRepository;
     private final ProjectTaskRepository taskRepository;
     private final UserRepository userRepository;
+    private final EmployeeRepository employeeRepository;
     private final ProjectExecutionSecurityHelper securityHelper;
 
-    public ProjectLabourService(ProjectLabourEntryRepository labourRepository, ProjectExecutionWorkspaceRepository workspaceRepository, ProjectTaskRepository taskRepository, UserRepository userRepository, ProjectExecutionSecurityHelper securityHelper) {
+    public ProjectLabourService(ProjectLabourEntryRepository labourRepository, ProjectExecutionWorkspaceRepository workspaceRepository, ProjectTaskRepository taskRepository, UserRepository userRepository, ProjectExecutionSecurityHelper securityHelper, EmployeeRepository employeeRepository) {
         this.labourRepository = labourRepository;
         this.workspaceRepository = workspaceRepository;
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
+        this.employeeRepository = employeeRepository;
         this.securityHelper = securityHelper;
     }
 
@@ -47,22 +51,12 @@ public class ProjectLabourService {
 
     @Transactional
     public ProjectLabourEntryDTO recordLabour(ProjectLabourEntryDTO dto, UUID userId, Collection<? extends GrantedAuthority> authorities) {
-        ProjectExecutionWorkspace workspace = workspaceRepository.findById(dto.getWorkspaceId())
-                .orElseThrow(() -> new RuntimeException("Workspace not found"));
-                
-        // Only assigned PM, SYSTEM_ADMIN, or the employee themselves can record
-        boolean isSystemAdmin = authorities.stream().anyMatch(a -> a.getAuthority().equals("SYSTEM_ADMIN"));
-        boolean isProjectManager = workspace.getProjectManager() != null && workspace.getProjectManager().getId().equals(userId);
-        boolean isEmployee = dto.getEmployeeId().equals(userId);
-        
-        if (!isSystemAdmin && !isProjectManager && !isEmployee) {
-            throw new AccessDeniedException("Cannot record labour for another employee");
-        }
+        ProjectExecutionWorkspace workspace = securityHelper.getWorkspaceAndVerifyWriteAccess(dto.getWorkspaceId(), userId, authorities);
         
         ProjectTask task = taskRepository.findById(dto.getTaskId())
                 .orElseThrow(() -> new RuntimeException("Task not found"));
                 
-        User employee = userRepository.findById(dto.getEmployeeId())
+        Employee employee = employeeRepository.findById(dto.getEmployeeId())
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
 
         ProjectLabourEntry entry = new ProjectLabourEntry();

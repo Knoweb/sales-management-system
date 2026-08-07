@@ -4,6 +4,7 @@ import com.knoweb.salesmanagement.projectexecution.enums.ExecutionWorkspaceStatu
 import com.knoweb.salesmanagement.technicalproject.entity.TechnicalProject;
 import com.knoweb.salesmanagement.user.entity.User;
 import jakarta.persistence.*;
+import com.knoweb.salesmanagement.employee.entity.Employee;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -25,7 +26,7 @@ public class ProjectExecutionWorkspace {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_manager_id")
-    private User projectManager;
+    private Employee projectManager;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 50)
@@ -72,8 +73,8 @@ public class ProjectExecutionWorkspace {
     public void setId(UUID id) { this.id = id; }
     public TechnicalProject getTechnicalProject() { return technicalProject; }
     public void setTechnicalProject(TechnicalProject technicalProject) { this.technicalProject = technicalProject; }
-    public User getProjectManager() { return projectManager; }
-    public void setProjectManager(User projectManager) { this.projectManager = projectManager; }
+    public Employee getProjectManager() { return projectManager; }
+    public void setProjectManager(Employee projectManager) { this.projectManager = projectManager; }
     public ExecutionWorkspaceStatus getStatus() { return status; }
     public void setStatus(ExecutionWorkspaceStatus status) { this.status = status; }
     public LocalDate getPlannedStartDate() { return plannedStartDate; }

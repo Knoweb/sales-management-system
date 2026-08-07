@@ -5,11 +5,11 @@ import React, { useState, useEffect } from 'react';
 import { projectExecutionApi } from '../../../api/projectExecutionApi';
 import type { } from '../../../api/projectExecutionApi';
 
-interface Props { workspaceId: string; onRefreshSummary?: () => void; }
+interface Props { workspaceId: string; onRefreshSummary?: () => void;  canEdit?: boolean; }
 
 const COLUMNS = ['TODO', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED', 'CANCELLED'];
 
-const KanbanTab: React.FC<Props> = ({ workspaceId, onRefreshSummary }) => {
+const KanbanTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = true }) => {
     const [loading, setLoading] = useState(false);
     const [tasks, setTasks] = useState<any[]>([]);
 
@@ -58,7 +58,7 @@ const KanbanTab: React.FC<Props> = ({ workspaceId, onRefreshSummary }) => {
                             <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px', marginBottom: '8px' }}>
                                 {task.completionPercentage || 0}% | {task.priority}
                             </div>
-                            <select value={task.status} onChange={(e: any) => handleStatusChange(task.id, e.target.value)} style={{ width: '100%', padding: '4px' }}>
+                            <select disabled={!canEdit} value={task.status} onChange={(e: any) => handleStatusChange(task.id, e.target.value)} style={{ width: '100%', padding: '4px' }}>
                                 {COLUMNS.map((s: any) => <option key={s} value={s}>{s}</option>)}
                             </select>
                         </div>

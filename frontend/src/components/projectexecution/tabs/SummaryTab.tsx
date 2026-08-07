@@ -5,7 +5,7 @@ import { LoadingState } from '../../FeedbackStates';
 
 interface Props {
     workspaceId: string;
-}
+ canEdit?: boolean; }
 
 const SummaryTab: React.FC<Props> = ({ workspaceId }) => { console.log(workspaceId);
     const [summary, setSummary] = useState<ProjectExecutionSummary | null>(null);

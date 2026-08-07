@@ -3,6 +3,7 @@ package com.knoweb.salesmanagement.projectexecution.entity;
 import com.knoweb.salesmanagement.department.entity.Department;
 import com.knoweb.salesmanagement.user.entity.User;
 import jakarta.persistence.*;
+import com.knoweb.salesmanagement.employee.entity.Employee;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -24,7 +25,7 @@ public class ProjectEmployeeAllocation {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id", nullable = false)
-    private User employee;
+    private Employee employee;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id", nullable = false)
@@ -68,8 +69,8 @@ public class ProjectEmployeeAllocation {
     public void setId(UUID id) { this.id = id; }
     public ProjectExecutionWorkspace getWorkspace() { return workspace; }
     public void setWorkspace(ProjectExecutionWorkspace workspace) { this.workspace = workspace; }
-    public User getEmployee() { return employee; }
-    public void setEmployee(User employee) { this.employee = employee; }
+    public Employee getEmployee() { return employee; }
+    public void setEmployee(Employee employee) { this.employee = employee; }
     public Department getDepartment() { return department; }
     public void setDepartment(Department department) { this.department = department; }
     public String getRoleDescription() { return roleDescription; }

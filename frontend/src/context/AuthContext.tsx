@@ -28,13 +28,113 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Module-level token — persists across React re-renders and HMR
 let inMemoryToken: string | null = null;
+
+// Module-level refresh state — so only one token refresh happens at a time
+// even if interceptors are re-registered
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (value?: unknown) => void; reject: (reason?: unknown) => void }> = [];
+
+const processQueue = (error: unknown, token: string | null = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+// Register interceptors once at module level so they are ALWAYS active,
+// regardless of React component lifecycle (StrictMode double-invoke, HMR, etc.)
+let _setUser: ((user: User | null) => void) | null = null;
+
+const requestInterceptorId = apiClient.interceptors.request.use(
+  (config) => {
+    if (inMemoryToken && config.headers) {
+      config.headers.set('Authorization', `Bearer ${inMemoryToken}`);
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+const responseInterceptorId = apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      originalRequest.url !== '/auth/login' &&
+      originalRequest.url !== '/auth/refresh' &&
+      originalRequest.url !== '/auth/logout'
+    ) {
+      if (isRefreshing) {
+        return new Promise(function (resolve, reject) {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(token => {
+            if (originalRequest.headers.set) {
+              originalRequest.headers.set('Authorization', 'Bearer ' + token);
+            } else {
+              originalRequest.headers.Authorization = 'Bearer ' + token;
+            }
+            return apiClient.request(originalRequest);
+          })
+          .catch(err => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const { data } = await apiClient.post<AuthResponse>('/auth/refresh');
+        inMemoryToken = data.accessToken;
+        if (_setUser) _setUser(data.user);
+        processQueue(null, data.accessToken);
+        if (originalRequest.headers.set) {
+          originalRequest.headers.set('Authorization', 'Bearer ' + data.accessToken);
+        } else {
+          originalRequest.headers.Authorization = 'Bearer ' + data.accessToken;
+        }
+        return apiClient.request(originalRequest);
+      } catch (err) {
+        processQueue(err, null);
+        inMemoryToken = null;
+        if (_setUser) _setUser(null);
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+        return Promise.reject(err);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Suppress unused variable warnings — interceptors are registered for their side effects
+void requestInterceptorId;
+void responseInterceptorId;
 
 let authInitialized = false;
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(!authInitialized);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Keep module-level setter in sync with the current component instance
+  useEffect(() => {
+    _setUser = setUser;
+    return () => {
+      // Don't null out on cleanup — the interceptor should still be able to call setUser
+      // if a request completes after unmount (edge case, but safer to keep it)
+    };
+  }, [setUser]);
 
   const login = (data: AuthResponse) => {
     inMemoryToken = data.accessToken;
@@ -53,6 +153,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   useEffect(() => {
+
     let isRefreshing = false;
     let failedQueue: Array<{ resolve: (value?: unknown) => void, reject: (reason?: unknown) => void }> = [];
 
@@ -91,12 +192,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       (response) => response,
       async (error) => {
         const originalRequest = error.config;
-        if (error.response?.status === 401 && !originalRequest._retry && 
-            originalRequest.url !== '/auth/login' && 
-            originalRequest.url !== '/auth/refresh' && 
-            originalRequest.url !== '/auth/logout') {
+        if (error.response?.status === 401 && !originalRequest._retry &&
+          originalRequest.url !== '/auth/login' &&
+          originalRequest.url !== '/auth/refresh' &&
+          originalRequest.url !== '/auth/logout') {
           if (isRefreshing) {
-            return new Promise(function(resolve, reject) {
+            return new Promise(function (resolve, reject) {
               failedQueue.push({ resolve, reject });
             }).then(token => {
               if (originalRequest.headers.set) {
@@ -140,10 +241,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const initializeAuth = async () => {
       try {
-        // Use a short timeout (e.g. 5000ms) for the initial refresh so the app doesn't hang if backend is down
-        const response = await apiClient.post<AuthResponse>('/auth/refresh', null, { 
+        const response = await apiClient.post<AuthResponse>('/auth/refresh', null, {
           timeout: 5000,
-          validateStatus: (status) => (status >= 200 && status < 300) || status === 401
+          validateStatus: (status) => (status >= 200 && status < 300) || status === 401,
         });
 
         if (response.status === 401) {
@@ -162,20 +262,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!authInitialized) {
       authInitialized = true;
       initializeAuth();
-    } else if (inMemoryToken && !user) {
-      // If already initialized but user state was lost (e.g., HMR), fetch it using token
-      // or just assume we're done loading.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsLoading(false);
     } else {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+      // Already initialized (e.g. StrictMode second mount) — no need to re-fetch
       setIsLoading(false);
     }
-
-    return () => {
-      apiClient.interceptors.request.eject(requestInterceptor);
-      apiClient.interceptors.response.eject(responseInterceptor);
-    };
   }, []);
 
   return (

@@ -13,6 +13,7 @@ import com.knoweb.salesmanagement.projectexecution.repository.ProjectExecutionWo
 import com.knoweb.salesmanagement.projectexecution.repository.ProjectLabourEntryRepository;
 import com.knoweb.salesmanagement.projectexecution.repository.ProjectMaterialUsageRepository;
 import com.knoweb.salesmanagement.projectexecution.repository.ProjectTaskRepository;
+import com.knoweb.salesmanagement.employee.repository.EmployeeRepository;
 import com.knoweb.salesmanagement.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,30 +33,37 @@ public class ProjectResourceService {
     private final ProjectExecutionWorkspaceRepository workspaceRepository;
     private final ProjectTaskRepository taskRepository;
     private final UserRepository userRepository;
+    private final EmployeeRepository employeeRepository;
     private final DepartmentRepository departmentRepository;
     private final ProjectExecutionSecurityHelper securityHelper;
 
-    public ProjectResourceService(ProjectEmployeeAllocationRepository allocationRepository, ProjectLabourEntryRepository labourEntryRepository, ProjectMaterialUsageRepository materialUsageRepository, ProjectExecutionWorkspaceRepository workspaceRepository, ProjectTaskRepository taskRepository, UserRepository userRepository, DepartmentRepository departmentRepository, ProjectExecutionSecurityHelper securityHelper) {
+    public ProjectResourceService(ProjectEmployeeAllocationRepository allocationRepository, ProjectLabourEntryRepository labourEntryRepository, ProjectMaterialUsageRepository materialUsageRepository, ProjectExecutionWorkspaceRepository workspaceRepository, ProjectTaskRepository taskRepository, UserRepository userRepository, DepartmentRepository departmentRepository, ProjectExecutionSecurityHelper securityHelper, EmployeeRepository employeeRepository) {
         this.allocationRepository = allocationRepository;
         this.labourEntryRepository = labourEntryRepository;
         this.materialUsageRepository = materialUsageRepository;
         this.workspaceRepository = workspaceRepository;
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
+        this.employeeRepository = employeeRepository;
         this.departmentRepository = departmentRepository;
         this.securityHelper = securityHelper;
     }
 
 
+    @Transactional(readOnly = true)
     public List<ProjectEmployeeAllocationDTO> getAllocationsByWorkspaceId(UUID workspaceId) {
         return allocationRepository.findByWorkspaceId(workspaceId).stream().map(a -> {
             ProjectEmployeeAllocationDTO dto = new ProjectEmployeeAllocationDTO();
             dto.setId(a.getId());
             dto.setWorkspaceId(a.getWorkspace().getId());
-            dto.setEmployeeId(a.getEmployee().getId());
-            dto.setEmployeeName(a.getEmployee().getFirstName() + " " + a.getEmployee().getLastName());
-            dto.setDepartmentId(a.getDepartment().getId());
-            dto.setDepartmentName(a.getDepartment().getName());
+            if (a.getEmployee() != null) {
+                dto.setEmployeeId(a.getEmployee().getId());
+                dto.setEmployeeName(a.getEmployee().getFirstName() + " " + a.getEmployee().getLastName());
+            }
+            if (a.getDepartment() != null) {
+                dto.setDepartmentId(a.getDepartment().getId());
+                dto.setDepartmentName(a.getDepartment().getName());
+            }
             dto.setRoleDescription(a.getRoleDescription());
             dto.setAllocationPercentage(a.getAllocationPercentage());
             dto.setAllocatedHours(a.getAllocatedHours());
@@ -72,7 +80,7 @@ public class ProjectResourceService {
         ProjectExecutionWorkspace workspace = workspaceRepository.findById(dto.getWorkspaceId()).orElseThrow();
         ProjectEmployeeAllocation allocation = new ProjectEmployeeAllocation();
         allocation.setWorkspace(workspace);
-        allocation.setEmployee(userRepository.findById(dto.getEmployeeId()).orElseThrow());
+        allocation.setEmployee(employeeRepository.findById(dto.getEmployeeId()).orElseThrow());
         allocation.setDepartment(departmentRepository.findById(dto.getDepartmentId()).orElseThrow());
         allocation.setRoleDescription(dto.getRoleDescription());
         allocation.setAllocationPercentage(dto.getAllocationPercentage());

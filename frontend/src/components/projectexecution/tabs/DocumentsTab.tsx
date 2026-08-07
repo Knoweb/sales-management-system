@@ -9,7 +9,7 @@ import { projectExecutionApi } from '../../../api/projectExecutionApi';
 import type { ProjectExecutionAttachmentDTO } from '../../../api/projectExecutionApi';
 import { Plus, Trash } from 'lucide-react';
 
-interface Props { workspaceId: string; onRefreshSummary?: () => void; }
+interface Props { workspaceId: string; onRefreshSummary?: () => void;  canEdit?: boolean; }
 
 const modalStyle: React.CSSProperties = {
     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -24,7 +24,7 @@ const inputStyle: React.CSSProperties = {
     width: '100%', padding: '8px', marginBottom: '16px', border: '1px solid #ccc', borderRadius: '4px'
 };
 
-const DocumentsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary }) => {
+const DocumentsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = true }) => {
     const [docs, setDocs] = useState<ProjectExecutionAttachmentDTO[]>([]);
     const [loading, setLoading] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -69,8 +69,8 @@ const DocumentsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary }) => {
 
     return (
         <div>
-            <div style={{ marginBottom: 16 }}>
-                <button onClick={() => { setForm({}); setIsModalVisible(true); }} className="execution-secondary-button"><Plus size={16} /> Upload Document</button>
+            <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
+                {canEdit && <button onClick={() => { setForm({}); setIsModalVisible(true); }} className="execution-secondary-button"><Plus size={16} /> Upload Document</button>}
             </div>
             {loading ? <p>Loading...</p> : (
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>

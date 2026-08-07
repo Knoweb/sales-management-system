@@ -17,6 +17,8 @@ import org.mockito.MockitoAnnotations;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -34,6 +36,8 @@ class ProjectTaskServiceTest {
     private TaskStatusHistoryRepository historyRepository;
     @Mock
     private ProjectExecutionWorkspaceService workspaceService;
+    @Mock
+    private ProjectExecutionSecurityHelper securityHelper;
 
     @InjectMocks
     private ProjectTaskService taskService;
@@ -48,11 +52,16 @@ class ProjectTaskServiceTest {
         UUID task1Id = UUID.randomUUID();
         UUID task2Id = UUID.randomUUID();
 
+        ProjectExecutionWorkspace workspace = new ProjectExecutionWorkspace();
+        workspace.setId(UUID.randomUUID());
+
         ProjectTask task1 = new ProjectTask();
         task1.setId(task1Id);
+        task1.setWorkspace(workspace);
 
         ProjectTask task2 = new ProjectTask();
         task2.setId(task2Id);
+        task2.setWorkspace(workspace);
 
         ProjectTaskDependency dep1to2 = new ProjectTaskDependency();
         dep1to2.setTask(task2);
@@ -65,8 +74,13 @@ class ProjectTaskServiceTest {
         // So if we try to make task1 depend on task2, it's circular
         when(dependencyRepository.findByTaskId(task2Id)).thenReturn(List.of(dep1to2));
 
+        when(securityHelper.getWorkspaceAndVerifyWriteAccess(any(), any(), any())).thenReturn(workspace);
+
+        UUID currentUserId = UUID.randomUUID();
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("PROJECT_EXECUTION_WRITE"));
+
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            taskService.addTaskDependency(task1Id, task2Id);
+            taskService.addTaskDependency(task1Id, task2Id, currentUserId, authorities);
         });
 
         assertEquals("Circular dependency detected", exception.getMessage());

@@ -2,6 +2,7 @@ package com.knoweb.salesmanagement.projectexecution.entity;
 
 import com.knoweb.salesmanagement.user.entity.User;
 import jakarta.persistence.*;
+import com.knoweb.salesmanagement.employee.entity.Employee;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -25,7 +26,7 @@ public class DailyProgressUpdate {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id", nullable = false)
-    private User employee;
+    private Employee employee;
 
     @Column(name = "progress_date", nullable = false)
     private LocalDate progressDate;
@@ -63,8 +64,8 @@ public class DailyProgressUpdate {
     public void setWorkspace(ProjectExecutionWorkspace workspace) { this.workspace = workspace; }
     public ProjectTask getTask() { return task; }
     public void setTask(ProjectTask task) { this.task = task; }
-    public User getEmployee() { return employee; }
-    public void setEmployee(User employee) { this.employee = employee; }
+    public Employee getEmployee() { return employee; }
+    public void setEmployee(Employee employee) { this.employee = employee; }
     public LocalDate getProgressDate() { return progressDate; }
     public void setProgressDate(LocalDate progressDate) { this.progressDate = progressDate; }
     public String getWorkCompleted() { return workCompleted; }

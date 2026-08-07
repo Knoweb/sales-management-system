@@ -1,7 +1,7 @@
 import React from 'react';
 import { SearchableSelect } from './SearchableSelect';
 import type { Option } from './SearchableSelect';
-import { EmployeeApi } from '../../../services/EmployeeApi';
+import { projectExecutionApi } from '../../../api/projectExecutionApi';
 
 interface EmployeeSelectorProps {
     value?: string;
@@ -13,11 +13,21 @@ interface EmployeeSelectorProps {
 
 export const EmployeeSelector: React.FC<EmployeeSelectorProps> = (props) => {
     const fetchEmployees = async (search: string): Promise<Option[]> => {
-        const res = await EmployeeApi.search(search);
-        return res.content.map(emp => ({
-            id: emp.id,
-            label: `${emp.employeeNumber || emp.id.substring(0,8)} — ${emp.firstName} ${emp.lastName}`,
-            subtitle: `${emp.jobTitle || 'No Title'}  ${(emp as any).department?.name || 'No Dept'}`,
+        const res = await projectExecutionApi.lookups.employees();
+        const searchLower = search.toLowerCase();
+        
+        let filtered = res;
+        if (searchLower) {
+            filtered = res.filter((emp: any) => 
+                emp.fullName.toLowerCase().includes(searchLower) || 
+                (emp.employeeNumber && emp.employeeNumber.toLowerCase().includes(searchLower))
+            );
+        }
+
+        return filtered.map((emp: any) => ({
+            id: emp.employeeId,
+            label: `${emp.employeeNumber || emp.employeeId.substring(0,8)} - ${emp.fullName}`,
+            subtitle: `${emp.departmentName || 'No Dept'}`,
             originalData: emp
         }));
     };

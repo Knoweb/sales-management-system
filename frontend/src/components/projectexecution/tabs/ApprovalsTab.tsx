@@ -9,7 +9,7 @@ import { projectExecutionApi } from '../../../api/projectExecutionApi';
 import type { ProjectApprovalRequestDTO } from '../../../api/projectExecutionApi';
 import { Plus, Edit2 } from 'lucide-react';
 
-interface Props { workspaceId: string; onRefreshSummary?: () => void; }
+interface Props { workspaceId: string; onRefreshSummary?: () => void;  canEdit?: boolean; }
 
 const modalStyle: React.CSSProperties = {
     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -24,7 +24,7 @@ const inputStyle: React.CSSProperties = {
     width: '100%', padding: '8px', marginBottom: '16px', border: '1px solid #ccc', borderRadius: '4px'
 };
 
-const ApprovalsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary }) => {
+const ApprovalsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = true }) => {
     const [requests, setRequests] = useState<ProjectApprovalRequestDTO[]>([]);
     const [loading, setLoading] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -63,9 +63,9 @@ const ApprovalsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary }) => {
 
     return (
         <div>
-            <div style={{ marginBottom: 16 }}>
-                <button onClick={() => { setForm({}); setIsModalVisible(true); }} className="execution-secondary-button"><Plus size={16} /> New Request</button>
-            </div>
+        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
+            {canEdit && <button onClick={() => { setForm({}); setIsModalVisible(true); }} className="execution-secondary-button"><Plus size={16} /> New Approval Request</button>}
+        </div>
             {loading ? <p>Loading...</p> : (
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                     <thead>
@@ -76,7 +76,7 @@ const ApprovalsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary }) => {
                             <tr key={r.id} style={{ borderBottom: '1px solid #eee' }}>
                                 <td>{r.title}</td><td>{r.approvalType}</td><td>{r.taskTitle}</td><td>{r.status}</td>
                                 <td>
-                                    {(r.status === 'SUBMITTED') && (
+                                    {(r.status === 'SUBMITTED') && canEdit && (
                                         <button onClick={() => { setForm({ isUpdate: true, id: r.id, status: 'APPROVED' }); setIsModalVisible(true); }}><Edit2 size={14}/></button>
                                     )}
                                 </td>

@@ -233,6 +233,20 @@ export const projectExecutionApi = {
         getByWorkspace: (workspaceId: string) => api.get<ProjectChangeRequestDTO[]>(`${API_BASE}/change-requests/workspace/${workspaceId}`),
         create: (workspaceId: string, data: Partial<ProjectChangeRequestDTO>) => api.post<ProjectChangeRequestDTO>(`${API_BASE}/change-requests`, { ...data, workspaceId }),
         review: (id: string, status: string, comment?: string) => api.put<ProjectChangeRequestDTO>(`${API_BASE}/change-requests/${id}/review`, null, { params: { status, comment } })
+    },
+    lookups: {
+        employees: async () => {
+            const res = await api.get<any[]>(`${API_BASE}/lookups/employees`);
+            return res.data;
+        },
+        projectManagers: async () => {
+            const res = await api.get<any[]>(`${API_BASE}/lookups/project-managers`);
+            return res.data;
+        },
+        departments: async () => {
+            const res = await api.get<any[]>(`${API_BASE}/lookups/departments`);
+            return res.data;
+        }
     }
 };
 

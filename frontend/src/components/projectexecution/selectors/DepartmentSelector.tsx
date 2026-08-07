@@ -1,7 +1,7 @@
 import React from 'react';
 import { SearchableSelect } from './SearchableSelect';
 import type { Option } from './SearchableSelect';
-import { DepartmentApi } from '../../../services/DepartmentApi';
+import { projectExecutionApi } from '../../../api/projectExecutionApi';
 
 interface DepartmentSelectorProps {
     value?: string;
@@ -13,11 +13,19 @@ interface DepartmentSelectorProps {
 
 export const DepartmentSelector: React.FC<DepartmentSelectorProps> = (props) => {
     const fetchDepartments = async (search: string): Promise<Option[]> => {
-        const res = await DepartmentApi.search(search);
-        return res.content.map(dept => ({
+        const res = await projectExecutionApi.lookups.departments();
+        const searchLower = search.toLowerCase();
+        
+        let filtered = res;
+        if (searchLower) {
+            filtered = res.filter((dept: any) => 
+                dept.name.toLowerCase().includes(searchLower)
+            );
+        }
+
+        return filtered.map((dept: any) => ({
             id: dept.id,
             label: dept.name,
-            subtitle: dept.code ? `Code: ${dept.code}` : undefined,
             originalData: dept
         }));
     };

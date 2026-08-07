@@ -3,6 +3,7 @@ package com.knoweb.salesmanagement.projectexecution.entity;
 import com.knoweb.salesmanagement.projectexecution.enums.ApprovalStatus;
 import com.knoweb.salesmanagement.user.entity.User;
 import jakarta.persistence.*;
+import com.knoweb.salesmanagement.employee.entity.Employee;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -28,7 +29,7 @@ public class ProjectLabourEntry {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id", nullable = false)
-    private User employee;
+    private Employee employee;
 
     @Column(name = "work_date", nullable = false)
     private LocalDate workDate;
@@ -69,8 +70,8 @@ public class ProjectLabourEntry {
     public void setWorkspace(ProjectExecutionWorkspace workspace) { this.workspace = workspace; }
     public ProjectTask getTask() { return task; }
     public void setTask(ProjectTask task) { this.task = task; }
-    public User getEmployee() { return employee; }
-    public void setEmployee(User employee) { this.employee = employee; }
+    public Employee getEmployee() { return employee; }
+    public void setEmployee(Employee employee) { this.employee = employee; }
     public LocalDate getWorkDate() { return workDate; }
     public void setWorkDate(LocalDate workDate) { this.workDate = workDate; }
     public BigDecimal getHours() { return hours; }

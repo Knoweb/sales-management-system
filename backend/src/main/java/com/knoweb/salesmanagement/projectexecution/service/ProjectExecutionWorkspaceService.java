@@ -11,10 +11,13 @@ import com.knoweb.salesmanagement.projectexecution.repository.ProjectTaskReposit
 import com.knoweb.salesmanagement.quotation.entity.Quotation;
 import com.knoweb.salesmanagement.quotation.enums.QuotationStatus;
 import com.knoweb.salesmanagement.quotation.repository.QuotationRepository;
+import com.knoweb.salesmanagement.projectexecution.entity.ProjectTask;
 import com.knoweb.salesmanagement.technicalproject.entity.TechnicalProject;
 import com.knoweb.salesmanagement.technicalproject.repository.TechnicalProjectRepository;
 import com.knoweb.salesmanagement.user.entity.User;
 import com.knoweb.salesmanagement.user.repository.UserRepository;
+import com.knoweb.salesmanagement.employee.repository.EmployeeRepository;
+import com.knoweb.salesmanagement.employee.entity.Employee;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,15 +35,19 @@ public class ProjectExecutionWorkspaceService {
     private final QuotationRepository quotationRepository;
     private final ConsolidatedTechnicalEstimateRepository estimateRepository;
     private final UserRepository userRepository;
+    private final EmployeeRepository employeeRepository;
     private final ProjectTaskRepository taskRepository;
+    private final com.knoweb.salesmanagement.projectexecution.repository.DailyProgressUpdateRepository progressRepository;
 
-    public ProjectExecutionWorkspaceService(ProjectExecutionWorkspaceRepository workspaceRepository, TechnicalProjectRepository technicalProjectRepository, QuotationRepository quotationRepository, ConsolidatedTechnicalEstimateRepository estimateRepository, UserRepository userRepository, ProjectTaskRepository taskRepository) {
+    public ProjectExecutionWorkspaceService(ProjectExecutionWorkspaceRepository workspaceRepository, TechnicalProjectRepository technicalProjectRepository, QuotationRepository quotationRepository, ConsolidatedTechnicalEstimateRepository estimateRepository, UserRepository userRepository, ProjectTaskRepository taskRepository, EmployeeRepository employeeRepository, com.knoweb.salesmanagement.projectexecution.repository.DailyProgressUpdateRepository progressRepository) {
         this.workspaceRepository = workspaceRepository;
         this.technicalProjectRepository = technicalProjectRepository;
         this.quotationRepository = quotationRepository;
         this.estimateRepository = estimateRepository;
         this.userRepository = userRepository;
+        this.employeeRepository = employeeRepository;
         this.taskRepository = taskRepository;
+        this.progressRepository = progressRepository;
     }
 
 
@@ -75,7 +82,7 @@ public class ProjectExecutionWorkspaceService {
         workspace.setTechnicalProject(project);
 
         if (projectManagerId != null) {
-            User manager = userRepository.findById(projectManagerId)
+            Employee manager = employeeRepository.findById(projectManagerId)
                     .orElseThrow(() -> new RuntimeException("Project manager not found"));
             workspace.setProjectManager(manager);
         }
@@ -142,14 +149,14 @@ public class ProjectExecutionWorkspaceService {
             }
         }
 
-        User manager = userRepository.findById(dto.getProjectManagerId())
+        Employee manager = employeeRepository.findById(dto.getProjectManagerId())
                 .orElseThrow(() -> new IllegalArgumentException("Project manager not found"));
 
-        if (!manager.isActive()) {
+        if (!manager.getUser().isActive()) {
             throw new IllegalArgumentException("Selected project manager is not active");
         }
 
-        boolean isProjectManager = manager.getRoles().stream()
+        boolean isProjectManager = manager.getUser().getRoles().stream()
                 .anyMatch(r -> "PROJECT_MANAGER".equals(r.getCode()));
         if (!isProjectManager) {
             throw new IllegalArgumentException("Selected user does not have the PROJECT_MANAGER role");
@@ -171,13 +178,60 @@ public class ProjectExecutionWorkspaceService {
                 .orElseThrow(() -> new RuntimeException("Workspace not found"));
                 
         var tasks = taskRepository.findByWorkspaceId(workspaceId);
+        
+        // Sync each task from its latest daily progress
+        for (ProjectTask task : tasks) {
+            final UUID taskId = task.getId();
+            java.util.List<com.knoweb.salesmanagement.projectexecution.entity.DailyProgressUpdate> taskUpdates = progressRepository.findByWorkspaceId(workspaceId)
+                .stream()
+                .filter(p -> p.getTask() != null && p.getTask().getId().equals(taskId))
+                .sorted((a, b) -> {
+                    int dateCompare = b.getProgressDate().compareTo(a.getProgressDate());
+                    if (dateCompare != 0) return dateCompare;
+                    return b.getSubmittedAt().compareTo(a.getSubmittedAt());
+                })
+                .collect(Collectors.toList());
+
+            if (!taskUpdates.isEmpty()) {
+                BigDecimal latestPct = taskUpdates.get(0).getCompletionPercentage();
+                if (latestPct == null) latestPct = BigDecimal.ZERO;
+                if (latestPct.compareTo(new BigDecimal("100")) > 0) latestPct = new BigDecimal("100");
+                if (latestPct.compareTo(BigDecimal.ZERO) < 0) latestPct = BigDecimal.ZERO;
+                
+                if (task.getCompletionPercentage() == null || task.getCompletionPercentage().compareTo(latestPct) != 0) {
+                    task.setCompletionPercentage(latestPct);
+                    taskRepository.save(task);
+                }
+            }
+        }
+        
         if (tasks.isEmpty()) {
             workspace.setOverallProgress(BigDecimal.ZERO);
         } else {
-            BigDecimal totalPercentage = tasks.stream()
-                    .map(t -> t.getCompletionPercentage() != null ? t.getCompletionPercentage() : BigDecimal.ZERO)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            BigDecimal avg = totalPercentage.divide(new BigDecimal(tasks.size()), 2, RoundingMode.HALF_UP);
+            BigDecimal totalPercentage = BigDecimal.ZERO;
+            BigDecimal sumEstimated = tasks.stream()
+                .map(t -> t.getEstimatedHours() != null ? t.getEstimatedHours() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, (a, b) -> a.add(b));
+            
+            BigDecimal avg;
+            if (sumEstimated.compareTo(BigDecimal.ZERO) > 0) {
+                for (ProjectTask t : tasks) {
+                    BigDecimal weight = t.getEstimatedHours() != null ? t.getEstimatedHours() : BigDecimal.ZERO;
+                    BigDecimal p = t.getCompletionPercentage() != null ? t.getCompletionPercentage() : BigDecimal.ZERO;
+                    totalPercentage = totalPercentage.add(p.multiply(weight));
+                }
+                avg = totalPercentage.divide(sumEstimated, 2, RoundingMode.HALF_UP);
+            } else {
+                for (ProjectTask t : tasks) {
+                    BigDecimal p = t.getCompletionPercentage() != null ? t.getCompletionPercentage() : BigDecimal.ZERO;
+                    totalPercentage = totalPercentage.add(p);
+                }
+                avg = totalPercentage.divide(new BigDecimal(tasks.size()), 2, RoundingMode.HALF_UP);
+            }
+            
+            if (avg.compareTo(new BigDecimal("100")) > 0) avg = new BigDecimal("100");
+            if (avg.compareTo(BigDecimal.ZERO) < 0) avg = BigDecimal.ZERO;
+
             workspace.setOverallProgress(avg);
             
             if (avg.compareTo(new BigDecimal("100")) >= 0) {
