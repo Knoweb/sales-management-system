@@ -31,7 +31,6 @@ public class ProjectBrief {
     @Column(nullable = false, length = 50)
     private ProjectBriefStatus status;
 
-    @Version
     @Column(name = "current_version_number", nullable = false)
     private Integer currentVersionNumber = 0;
 

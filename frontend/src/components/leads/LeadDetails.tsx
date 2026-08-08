@@ -8,7 +8,6 @@ import { LeadAttachments } from './LeadAttachments';
 import { Briefcase } from 'lucide-react';
 import type { FollowUp } from '../../types/lead';
 import LeadConversionModal from '../LeadConversionModal';
-import { useNavigate } from 'react-router-dom';
 import { PermissionGuard } from '../PermissionGuard';
 import { Card } from '../Card';
 import { Button } from '../Button';
@@ -26,29 +25,28 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isConversionModalOpen, setIsConversionModalOpen] = useState(false);
-  const navigate = useNavigate();
   
   const [activeTab, setActiveTab] = useState<'info' | 'timeline' | 'followups' | 'attachments'>('info');
 
+  const loadLead = async () => {
+    try {
+      setLoading(true);
+      const data = await LeadApi.getLead(leadId);
+      setLead(data);
+      
+      const followUps = await LeadApi.getFollowUps(leadId);
+      const pending = followUps
+        .filter(f => f.status === 'PENDING')
+        .sort((a, b) => new Date(a.followUpDate).getTime() - new Date(b.followUpDate).getTime());
+      setNextFollowUp(pending[0] || null);
+    } catch {
+      setError('Failed to load lead details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadLead = async () => {
-      try {
-        setLoading(true);
-        const data = await LeadApi.getLead(leadId);
-        setLead(data);
-        
-        const followUps = await LeadApi.getFollowUps(leadId);
-        const pending = followUps
-          .filter(f => f.status === 'PENDING')
-          .sort((a, b) => new Date(a.followUpDate).getTime() - new Date(b.followUpDate).getTime());
-        setNextFollowUp(pending[0] || null);
-      } catch {
-        setError('Failed to load lead details');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     void loadLead();
   }, [leadId]);
 
@@ -72,7 +70,7 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
         actionElement={
           <div className="flex items-center gap-3">
             <StatusBadge status={lead.status} />
-            {lead.status === 'QUALIFIED' && lead.active && (
+            {lead.status === 'QUALIFIED' && lead.active && !lead.hasOpportunity && (
               <PermissionGuard permission="OPPORTUNITY_CREATE">
                 <Button
                   variant="primary"
@@ -82,6 +80,25 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
                   Convert to Opportunity
                 </Button>
               </PermissionGuard>
+            )}
+            {lead.hasOpportunity && (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  width: 'fit-content',
+                  padding: '6px 12px',
+                  borderRadius: '9999px',
+                  background: '#ecfdf5',
+                  color: '#047857',
+                  border: '1px solid #a7f3d0',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  lineHeight: 1
+                }}
+              >
+                Converted to Opportunity
+              </span>
             )}
           </div>
         }
@@ -93,10 +110,10 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
         leadId={lead.id}
         leadTitle={lead.title}
         assignedTo={lead.assignedTo}
-        onSuccess={(oppId) => {
+        onSuccess={() => {
           setIsConversionModalOpen(false);
           alert('Lead converted successfully!');
-          navigate(`/opportunities/${oppId}`);
+          void loadLead();
         }}
       />
 

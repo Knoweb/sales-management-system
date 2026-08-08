@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  getProjectBrief, 
-  updateProjectBriefDraft, 
-  saveProjectBriefVersion, 
+import {
+  getProjectBrief,
+  updateProjectBriefDraft,
   submitProjectBrief,
   getProjectBriefVersions,
   getProjectBriefAttachments,
@@ -20,31 +19,29 @@ import { PageHeader } from '../components/PageHeader';
 import { Card } from '../components/Card';
 import { Input, Textarea, Checkbox } from '../components/Forms';
 import { Button } from '../components/Button';
-import { ErrorState, LoadingState } from '../components/FeedbackStates';
-import { StatusBadge } from '../components/StatusBadge';
+import { ErrorState, LoadingState, EmptyState } from '../components/FeedbackStates';
+import { StatusBadge, getStatusVariant } from '../components/StatusBadge';
 import { Tabs, type TabItem } from '../components/Tabs';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/Table';
-import { FileText, Save, Send, History, Paperclip, Upload, Trash2, Download, AlertTriangle, X } from 'lucide-react';
+import { FileText, Send, History, Paperclip, Upload, Trash2, Download, AlertTriangle, ArrowLeft } from 'lucide-react';
 
 const ProjectBriefEditor: React.FC = () => {
   const { id, opportunityId } = useParams<{ id?: string, opportunityId?: string }>();
   const navigate = useNavigate();
   const [brief, setBrief] = useState<ProjectBriefDTO | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [conflictError, setConflictError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState('edit');
 
   const [allDepartments, setAllDepartments] = useState<Department[]>([]);
   const [versions, setVersions] = useState<ProjectBriefVersionDTO[]>([]);
   const [attachments, setAttachments] = useState<ProjectBriefAttachmentDTO[]>([]);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -54,13 +51,8 @@ const ProjectBriefEditor: React.FC = () => {
     projectScope: '',
     technicalRequirements: '',
     expectedBudget: 0,
-    currency: 'USD',
+    currency: 'LKR',
     expectedDeadline: '',
-    siteName: '',
-    siteAddress: '',
-    siteInformation: '',
-    meetingNotes: '',
-    specialConditions: '',
     requiredDepartmentIds: [] as string[]
   });
 
@@ -91,20 +83,15 @@ const ProjectBriefEditor: React.FC = () => {
         projectScope: data.projectScope || '',
         technicalRequirements: data.technicalRequirements || '',
         expectedBudget: data.expectedBudget || 0,
-        currency: data.currency || 'USD',
+        currency: data.currency || 'LKR',
         expectedDeadline: data.expectedDeadline ? data.expectedDeadline.substring(0, 10) : '',
-        siteName: data.siteName || '',
-        siteAddress: data.siteAddress || '',
-        siteInformation: data.siteInformation || '',
-        meetingNotes: data.meetingNotes || '',
-        specialConditions: data.specialConditions || '',
         requiredDepartmentIds: data.requiredDepartments ? data.requiredDepartments.map(d => d.id) : []
       });
 
       // Load auxiliary data asynchronously
-      DepartmentApi.search().then(res => setAllDepartments(res.content || [])).catch(() => {});
-      getProjectBriefVersions(data.id).then(setVersions).catch(() => {});
-      getProjectBriefAttachments(data.id).then(setAttachments).catch(() => {});
+      DepartmentApi.search().then(res => setAllDepartments(res.content || [])).catch(() => { });
+      getProjectBriefVersions(data.id).then(setVersions).catch(() => { });
+      getProjectBriefAttachments(data.id).then(setAttachments).catch(() => { });
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
       setError(e.response?.data?.message || 'Failed to load project brief');
@@ -133,69 +120,13 @@ const ProjectBriefEditor: React.FC = () => {
       const exists = prev.requiredDepartmentIds.includes(deptId);
       return {
         ...prev,
-        requiredDepartmentIds: exists 
+        requiredDepartmentIds: exists
           ? prev.requiredDepartmentIds.filter(i => i !== deptId)
           : [...prev.requiredDepartmentIds, deptId]
       };
     });
   };
 
-  const handleSaveDraft = async () => {
-    if (!brief?.id) return;
-    const currentId = brief.id;
-    try {
-      setSaving(true);
-      setError(null);
-      setConflictError(null);
-      setSuccessMessage(null);
-      const updated = await updateProjectBriefDraft(currentId, {
-        ...formData,
-        expectedDeadline: formData.expectedDeadline ? new Date(formData.expectedDeadline).toISOString() : undefined,
-      });
-      setBrief(updated);
-      setLastSaved(new Date());
-      setSuccessMessage('Draft saved successfully');
-      setTimeout(() => setSuccessMessage(null), 3000);
-    } catch (err: unknown) {
-      const e = err as { response?: { status?: number, data?: { message?: string } } };
-      if (e.response?.status === 409) {
-        setConflictError(e.response?.data?.message ?? 'This action is not allowed in the current workflow state.');
-      } else {
-        setError(e.response?.data?.message || 'Failed to save draft');
-      }
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSaveVersion = async () => {
-    if (!brief?.id) return;
-    const currentId = brief.id;
-    try {
-      setSaving(true);
-      setError(null);
-      setConflictError(null);
-      setSuccessMessage(null);
-      const updated = await saveProjectBriefVersion(currentId, {
-        ...formData,
-        expectedDeadline: formData.expectedDeadline ? new Date(formData.expectedDeadline).toISOString() : undefined,
-      });
-      setBrief(updated);
-      const vers = await getProjectBriefVersions(currentId);
-      setVersions(vers);
-      setSuccessMessage(`Version ${updated.currentVersionNumber} created successfully`);
-      setTimeout(() => setSuccessMessage(null), 3000);
-    } catch (err: unknown) {
-      const e = err as { response?: { status?: number, data?: { message?: string } } };
-      if (e.response?.status === 409) {
-        setConflictError(e.response?.data?.message ?? 'This action is not allowed in the current workflow state.');
-      } else {
-        setError(e.response?.data?.message || 'Failed to save version');
-      }
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
@@ -208,7 +139,7 @@ const ProjectBriefEditor: React.FC = () => {
     if (formData.expectedBudget <= 0) errors.expectedBudget = 'Expected Budget must be greater than 0';
     if (!formData.currency) errors.currency = 'Currency is required';
     if (formData.requiredDepartmentIds.length === 0) errors.requiredDepartmentIds = 'At least one department is required';
-    
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -216,7 +147,7 @@ const ProjectBriefEditor: React.FC = () => {
   const handleSubmit = async () => {
     if (!brief?.id) return;
     const currentId = brief.id;
-    
+
     if (!validateForm()) {
       setError('Please fill in all required fields before submitting.');
       return;
@@ -230,7 +161,7 @@ const ProjectBriefEditor: React.FC = () => {
       setError(null);
       setConflictError(null);
       setSuccessMessage(null);
-      
+
       // Save draft first
       await updateProjectBriefDraft(currentId, {
         ...formData,
@@ -252,14 +183,15 @@ const ProjectBriefEditor: React.FC = () => {
     }
   };
 
-  const handleUploadFile = async () => {
-    if (!brief?.id || !selectedFile) return;
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!brief?.id || !file) return;
     const currentId = brief.id;
     try {
       setUploading(true);
       setError(null);
-      await uploadProjectBriefAttachment(currentId, selectedFile);
-      setSelectedFile(null);
+      await uploadProjectBriefAttachment(currentId, file);
+      if (fileInputRef.current) fileInputRef.current.value = '';
       const atts = await getProjectBriefAttachments(currentId);
       setAttachments(atts);
     } catch (err: unknown) {
@@ -297,13 +229,38 @@ const ProjectBriefEditor: React.FC = () => {
 
   return (
     <div className="p-6 max-w-5xl mx-auto w-full space-y-6">
-      <PageHeader 
+      <div style={{ marginBottom: '20px' }}>
+        <button
+          type="button"
+          onClick={() => opportunityId ? navigate(`/opportunities/${opportunityId}`) : navigate(-1)}
+          style={{
+            height: '40px',
+            paddingInline: '12px',
+            backgroundColor: '#f8fafc',
+            color: '#475569',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: 600,
+            boxShadow: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            cursor: 'pointer'
+          }}
+        >
+          <ArrowLeft size={18} strokeWidth={2.2} />
+          Back to Opportunity
+        </button>
+      </div>
+
+      <PageHeader
         title={`Project Brief: ${brief.projectTitle || 'Untitled'}`}
         icon={<FileText size={24} />}
         description={`Version: v${brief.currentVersionNumber}`}
         actionElement={
           <div className="ml-4 flex gap-3 items-center">
-            <StatusBadge status={brief.status} variant={brief.status === 'SUBMITTED' ? 'success' : 'neutral'} />
+            <StatusBadge status={brief.status} variant={getStatusVariant(brief.status)} />
           </div>
         }
       />
@@ -320,311 +277,396 @@ const ProjectBriefEditor: React.FC = () => {
 
       {error && <ErrorState message={error} />}
 
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <Tabs
-          tabs={tabs}
-          activeTab={activeTab}
-          onChange={setActiveTab}
-        />
-
-
-      </div>
+      <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
       <div className="mt-6">
         {activeTab === 'edit' && (
           <>
             <Card>
-              <div className="flex flex-col gap-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Input
-                    label="Project Title"
-                    type="text"
-                    name="projectTitle"
-                    value={formData.projectTitle}
-                    onChange={handleChange}
-                    disabled={isReadOnly}
-                    error={validationErrors.projectTitle}
-                    required
-                  />
-                  <Input
-                    label="Expected Deadline"
-                    type="date"
-                    name="expectedDeadline"
-                    value={formData.expectedDeadline}
-                    onChange={handleChange}
-                    disabled={isReadOnly}
-                    error={validationErrors.expectedDeadline}
-                    required
-                  />
-                </div>
+              <div className="flex flex-col gap-10 p-2">
 
-                <Textarea
-                  label="Business Problem"
-                  name="businessProblem"
-                  value={formData.businessProblem}
-                  onChange={handleChange}
-                  disabled={isReadOnly}
-                  error={validationErrors.businessProblem}
-                  rows={3}
-                  placeholder="Describe the business problem..."
-                  required
-                />
-
-                <Textarea
-                  label="Required Solution"
-                  name="requiredSolution"
-                  value={formData.requiredSolution}
-                  onChange={handleChange}
-                  disabled={isReadOnly}
-                  error={validationErrors.requiredSolution}
-                  rows={3}
-                  placeholder="Describe the required solution..."
-                  required
-                />
-
-                <Textarea
-                  label="Project Scope"
-                  name="projectScope"
-                  value={formData.projectScope}
-                  onChange={handleChange}
-                  disabled={isReadOnly}
-                  error={validationErrors.projectScope}
-                  rows={3}
-                  placeholder="Detail the scope of work..."
-                  required
-                />
-
-                <Textarea
-                  label="Technical Requirements"
-                  name="technicalRequirements"
-                  value={formData.technicalRequirements}
-                  onChange={handleChange}
-                  disabled={isReadOnly}
-                  error={validationErrors.technicalRequirements}
-                  rows={3}
-                  placeholder="List technical constraints and stack..."
-                  required
-                />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Input
-                    label="Expected Budget"
-                    type="number"
-                    name="expectedBudget"
-                    value={formData.expectedBudget}
-                    onChange={handleChange}
-                    disabled={isReadOnly}
-                    error={validationErrors.expectedBudget}
-                    required
-                    min="0"
-                  />
-                  <Input
-                    label="Currency"
-                    type="text"
-                    name="currency"
-                    value={formData.currency}
-                    onChange={handleChange}
-                    disabled={isReadOnly}
-                    error={validationErrors.currency}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="form-label mb-2 block">Required Departments <span className="form-required">*</span></label>
-                  <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 p-4 border rounded-md ${validationErrors.requiredDepartmentIds ? 'border-danger bg-danger-bg' : 'border-border bg-surface-secondary'}`}>
-                    {allDepartments.map(dept => {
-                      const checked = formData.requiredDepartmentIds.includes(dept.id);
-                      return (
-                        <Checkbox
-                          key={dept.id}
-                          label={dept.name}
-                          checked={checked}
-                          onChange={() => !isReadOnly && handleDepartmentToggle(dept.id)}
-                          disabled={isReadOnly}
-                        />
-                      );
-                    })}
+                {/* Project Information */}
+                <section>
+                  <div style={{ marginBottom: '20px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
+                    <h3 style={{ margin: 0, color: '#0f172a', fontSize: '18px', fontWeight: 600 }}>Project Information</h3>
                   </div>
-                  {validationErrors.requiredDepartmentIds && (
-                    <p className="form-error mt-2">
-                      <AlertTriangle size={12} className="inline mr-1" />
-                      {validationErrors.requiredDepartmentIds}
-                    </p>
-                  )}
-                </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', columnGap: '1.5rem', rowGap: '1rem' }}>
+                    <Input
+                      label="Project Title"
+                      type="text"
+                      name="projectTitle"
+                      value={formData.projectTitle}
+                      onChange={handleChange}
+                      disabled={isReadOnly}
+                      error={validationErrors.projectTitle}
+                      required
+                    />
+                    <Input
+                      label="Expected Deadline"
+                      type="date"
+                      name="expectedDeadline"
+                      value={formData.expectedDeadline}
+                      onChange={handleChange}
+                      disabled={isReadOnly}
+                      error={validationErrors.expectedDeadline}
+                      required
+                    />
+                    <Input
+                      label="Expected Budget"
+                      type="number"
+                      name="expectedBudget"
+                      value={formData.expectedBudget}
+                      onChange={handleChange}
+                      disabled={isReadOnly}
+                      error={validationErrors.expectedBudget}
+                      required
+                      min="0"
+                    />
+                    <Input
+                      label="Currency"
+                      type="text"
+                      name="currency"
+                      value={formData.currency}
+                      onChange={handleChange}
+                      disabled={isReadOnly}
+                      error={validationErrors.currency}
+                      required
+                    />
+                  </div>
+                </section>
+
+                {/* Requirements */}
+                <section>
+                  <div style={{ marginBottom: '20px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
+                    <h3 style={{ margin: 0, color: '#0f172a', fontSize: '18px', fontWeight: 600 }}>Requirements</h3>
+                  </div>
+                  <div className="flex flex-col gap-6">
+                    <Textarea
+                      label="Business Problem"
+                      name="businessProblem"
+                      value={formData.businessProblem}
+                      onChange={handleChange}
+                      disabled={isReadOnly}
+                      error={validationErrors.businessProblem}
+                      rows={4}
+                      placeholder="Describe the business problem..."
+                      required
+                      style={{ minHeight: '120px' }}
+                    />
+                    <Textarea
+                      label="Required Solution"
+                      name="requiredSolution"
+                      value={formData.requiredSolution}
+                      onChange={handleChange}
+                      disabled={isReadOnly}
+                      error={validationErrors.requiredSolution}
+                      rows={4}
+                      placeholder="Describe the required solution..."
+                      required
+                      style={{ minHeight: '120px' }}
+                    />
+                    <Textarea
+                      label="Project Scope"
+                      name="projectScope"
+                      value={formData.projectScope}
+                      onChange={handleChange}
+                      disabled={isReadOnly}
+                      error={validationErrors.projectScope}
+                      rows={4}
+                      placeholder="Detail the scope of work..."
+                      required
+                      style={{ minHeight: '120px' }}
+                    />
+                    <Textarea
+                      label="Technical Requirements"
+                      name="technicalRequirements"
+                      value={formData.technicalRequirements}
+                      onChange={handleChange}
+                      disabled={isReadOnly}
+                      error={validationErrors.technicalRequirements}
+                      rows={4}
+                      placeholder="List technical constraints and stack..."
+                      required
+                      style={{ minHeight: '120px' }}
+                    />
+                    <div>
+                      <label className="form-label mb-2 block">Required Departments <span className="form-required">*</span></label>
+                      <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 p-4 border rounded-md ${validationErrors.requiredDepartmentIds ? 'border-danger bg-danger-bg' : 'border-border bg-surface-secondary'}`}>
+                        {allDepartments.map(dept => {
+                          const checked = formData.requiredDepartmentIds.includes(dept.id);
+                          return (
+                            <Checkbox
+                              key={dept.id}
+                              label={dept.name}
+                              checked={checked}
+                              onChange={() => !isReadOnly && handleDepartmentToggle(dept.id)}
+                              disabled={isReadOnly}
+                            />
+                          );
+                        })}
+                      </div>
+                      {validationErrors.requiredDepartmentIds && (
+                        <p className="form-error mt-2">
+                          <AlertTriangle size={12} className="inline mr-1" />
+                          {validationErrors.requiredDepartmentIds}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </section>
+
+
+
               </div>
+
+              {/* Actions Footer */}
+              {!isReadOnly && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    marginTop: '2rem',
+                    paddingTop: '1rem',
+                    borderTop: '1px solid #e2e8f0',
+                    flexWrap: 'wrap',
+                    gap: '1rem'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    <StatusBadge
+                      status={`Status: ${brief.status}`}
+                      variant={(() => {
+                        const s = brief.status.toUpperCase().replace(/\s+/g, '_');
+                        if (['SUBMITTED', 'PENDING', 'RETURNED_FOR_REVISION'].includes(s)) return 'warning';
+                        if (['APPROVED'].includes(s)) return 'success';
+                        if (['REJECTED'].includes(s)) return 'error';
+                        return 'neutral';
+                      })()}
+                    />
+                    <span className="badge badge-neutral">
+                      Version: v{brief.currentVersionNumber}
+                    </span>
+                    {successMessage && <span className="text-success text-xs font-medium ml-2">{successMessage}</span>}
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        padding: '0.875rem 1rem',
+                        backgroundColor: '#fffbeb',
+                        border: '1px solid #fbbf24',
+                        borderRadius: '0.75rem',
+                        color: '#92400e',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                        marginRight: '0.5rem',
+                        fontSize: '14px',
+                        fontWeight: 500,
+                      }}
+                      className="hidden md:flex"
+                    >
+                      <div
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '9999px',
+                          backgroundColor: '#fef3c7',
+                          color: '#d97706',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <AlertTriangle size={18} />
+                      </div>
+                      Make sure all required attachments are uploaded before submitting.
+                    </div>
+                    <Button variant="secondary" onClick={() => navigate(-1)} disabled={submitting}>
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="primary"
+                      onClick={handleSubmit}
+                      isLoading={submitting}
+                      disabled={submitting}
+                      icon={<Send size={18} />}
+                    >
+                      {submitting ? 'Submitting...' : 'Submit Brief'}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </Card>
-
-            {!isReadOnly && (
-              <div className="mt-8 sticky bottom-0 z-10 bg-surface border-t border-border p-4 flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 shadow-[0_-4px_10px_-4px_rgba(0,0,0,0.05)]">
-                <div className="flex flex-col gap-1 text-sm text-text-secondary">
-                  <div className="flex items-center gap-6">
-                    <span>Status: <strong className="text-text-primary font-semibold">{brief.status}</strong></span>
-                    <span>Current Version: <strong className="text-text-primary font-semibold">{brief.currentVersionNumber}</strong></span>
-                  </div>
-                  <div className="flex items-center gap-4 min-h-[20px]">
-                    {lastSaved && <span className="text-text-muted text-xs">Last saved: {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
-                    {successMessage && <span className="text-success text-xs font-medium">{successMessage}</span>}
-                  </div>
-                </div>
-                
-                <div className="flex flex-wrap justify-end gap-3 items-center">
-                  <Button variant="outline" onClick={() => navigate(-1)} disabled={saving || submitting} icon={<X size={18} />}>
-                    Cancel
-                  </Button>
-                  <Button variant="primary" onClick={handleSaveDraft} isLoading={saving} disabled={submitting} icon={<Save size={18} />}>
-                    {saving ? 'Saving Draft...' : 'Save Draft'}
-                  </Button>
-                  <Button variant="outline" onClick={handleSaveVersion} isLoading={saving} disabled={submitting} icon={<History size={18} />}>
-                    {saving ? 'Saving Version...' : 'Save Version'}
-                  </Button>
-                  <Button 
-                    variant="primary"
-                    onClick={handleSubmit} 
-                    isLoading={submitting} 
-                    disabled={saving} 
-                    icon={<Send size={18} />}
-                  >
-                    {submitting ? 'Submitting...' : 'Submit Brief'}
-                  </Button>
-                </div>
-              </div>
-            )}
           </>
         )}
 
         {activeTab === 'versions' && (
           <Card>
-            <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2 border-b border-border pb-4">
-              <History className="text-primary" /> Version History
-            </h3>
-            {versions.length === 0 ? (
-              <div className="text-center py-8 text-text-muted">
-                No historical versions saved yet.
-              </div>
-            ) : (
-              <div className="table-container">
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableHeader>Version</TableHeader>
-                      <TableHeader>Type</TableHeader>
-                      <TableHeader>Summary</TableHeader>
-                      <TableHeader>Saved By</TableHeader>
-                      <TableHeader align="right">Date</TableHeader>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {versions.map(ver => (
-                      <TableRow key={ver.id}>
-                        <TableCell className="font-semibold text-text-primary">v{ver.versionNumber}</TableCell>
-                        <TableCell>
-                          <StatusBadge 
-                            status={ver.submittedVersion ? 'Submitted' : 'Draft'} 
-                            variant={ver.submittedVersion ? 'success' : 'neutral'} 
-                          />
-                        </TableCell>
-                        <TableCell className="text-text-secondary">{ver.changeSummary || 'Version snapshot'}</TableCell>
-                        <TableCell className="text-text-secondary">{ver.createdByName || 'System'}</TableCell>
-                        <TableCell align="right" className="text-text-muted whitespace-nowrap">{new Date(ver.createdAt).toLocaleString()}</TableCell>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                width: "100%",
+                marginBottom: "0.7rem",
+              }}
+            >
+              <h3 className="text-lg font-medium text-gray-900" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <History size={18} className="text-primary" />
+                Version History
+              </h3>
+            </div>
+
+            <div className="card-body">
+              {versions.length === 0 ? (
+                <EmptyState
+                  title="No versions saved"
+                  message="This project brief has no version history yet."
+                />
+              ) : (
+                <div className="table-container">
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableHeader>Version</TableHeader>
+                        <TableHeader>Type</TableHeader>
+                        <TableHeader>Summary</TableHeader>
+                        <TableHeader>Saved By</TableHeader>
+                        <TableHeader align="right">Date</TableHeader>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
+                    </TableHead>
+                    <TableBody>
+                      {versions.map(ver => (
+                        <TableRow key={ver.id}>
+                          <TableCell className="font-semibold text-text-primary">v{ver.versionNumber}</TableCell>
+                          <TableCell>
+                            <StatusBadge
+                              status={ver.submittedVersion ? 'Submitted' : 'Draft'}
+                              variant={ver.submittedVersion ? 'success' : 'neutral'}
+                            />
+                          </TableCell>
+                          <TableCell className="text-text-secondary">{ver.changeSummary || 'Version snapshot'}</TableCell>
+                          <TableCell className="text-text-secondary">{ver.createdByName || 'System'}</TableCell>
+                          <TableCell align="right" className="text-text-muted whitespace-nowrap">{new Date(ver.createdAt).toLocaleString()}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
           </Card>
         )}
 
         {activeTab === 'attachments' && (
           <Card>
-            <div className="flex justify-between items-center mb-6 border-b border-border pb-4">
-              <h3 className="text-lg font-semibold text-text-primary flex items-center gap-2">
-                <Paperclip className="text-primary" /> Project Brief Attachments
-              </h3>
-            </div>
-
-            {!isReadOnly && (
-              <div className="mb-8 p-6 border-2 border-dashed border-border rounded-lg bg-surface-secondary flex flex-col items-center justify-center text-center">
-                <Upload className="text-text-muted mb-3" />
-                <p className="text-body font-medium mb-1">Upload a new attachment</p>
-                <p className="text-body-small text-text-muted mb-4">Supported files: PDF, DOCX, XLSX, Images (Max 10MB)</p>
-                <div className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-sm">
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                width: "100%",
+                marginBottom: "1rem",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", width: "100%", marginBottom: !isReadOnly ? "0.75rem" : "0" }}>
+                <h3 className="text-lg font-medium text-gray-900">
+                  Attachments
+                </h3>
+                <div style={{ marginLeft: "auto" }}>
                   <input
                     type="file"
-                    onChange={e => setSelectedFile(e.target.files?.[0] || null)}
-                    className="block w-full text-sm text-text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
+                    ref={fileInputRef}
+                    style={{ display: 'none' }}
+                    onChange={handleFileChange}
+                    disabled={isReadOnly}
                   />
-                  <Button 
-                    variant="primary" 
-                    onClick={handleUploadFile} 
-                    disabled={!selectedFile} 
-                    isLoading={uploading}
-                    icon={<Upload />}
-                  >
-                    Upload
-                  </Button>
+                  <div title={isReadOnly ? "Attachments cannot be added after the Project Brief is submitted." : undefined} style={{ display: 'inline-block' }}>
+                    <Button onClick={() => fileInputRef.current?.click()} disabled={uploading || isReadOnly}>
+                      {uploading ? 'Uploading...' : <><Upload size={16} className="mr-2" /> Upload File</>}
+                    </Button>
+                  </div>
                 </div>
               </div>
-            )}
+            </div>
 
-            {attachments.length === 0 ? (
-              <div className="text-center py-8 text-text-muted">
-                No attachments uploaded yet.
-              </div>
-            ) : (
-              <div className="table-container">
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableHeader>File Name</TableHeader>
-                      <TableHeader>Type</TableHeader>
-                      <TableHeader>Size</TableHeader>
-                      <TableHeader>Uploaded By</TableHeader>
-                      <TableHeader align="right">Actions</TableHeader>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {attachments.map(att => (
-                      <TableRow key={att.id}>
-                        <TableCell className="font-medium text-text-primary">
-                          <div className="flex items-center gap-2">
-                            <FileText className="text-text-muted" />
-                            {att.fileName}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-text-secondary">{att.fileType || '-'}</TableCell>
-                        <TableCell className="text-text-secondary">{att.fileSize ? `${(att.fileSize / 1024).toFixed(1)} KB` : '-'}</TableCell>
-                        <TableCell className="text-text-secondary">{att.createdByName || 'System'}</TableCell>
-                        <TableCell align="right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              icon={<Download />}
-                              onClick={() => window.open(att.fileUrl, '_blank')}
-                            >
-                              Download
-                            </Button>
-                            {!isReadOnly && (
-                              <Button
-                                variant="outline"
-                                className="text-danger border-danger/30 hover:bg-danger-bg hover:text-danger hover:border-danger"
-                                icon={<Trash2 />}
-                                onClick={() => handleDeleteAttachment(att.id)}
-                                aria-label="Delete attachment"
-                              >
-                                Delete
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
+            <div className="card-body">
+              {attachments.length === 0 ? (
+                <EmptyState
+                  title="No attachments added"
+                  message="This project brief has no attachments."
+                />
+              ) : (
+                <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                  <Table>
+                    <TableHead>
+                      <TableRow className="bg-slate-50 border-b border-slate-200">
+                        <TableHeader className="text-xs uppercase font-medium text-slate-500 py-3 px-4">File Name</TableHeader>
+                        <TableHeader className="text-xs uppercase font-medium text-slate-500 py-3 px-4">Type</TableHeader>
+                        <TableHeader className="text-xs uppercase font-medium text-slate-500 py-3 px-4">Size</TableHeader>
+                        <TableHeader className="text-xs uppercase font-medium text-slate-500 py-3 px-4">Uploaded By</TableHeader>
+                        <TableHeader align="right" className="text-xs uppercase font-medium text-slate-500 py-3 px-4">Actions</TableHeader>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
+                    </TableHead>
+                    <TableBody>
+                      {attachments.map(att => (
+                        <TableRow key={att.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors last:border-b-0">
+                          <TableCell className="py-3 px-4 align-middle">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                                <FileText size={16} />
+                              </div>
+                              <span className="font-medium text-sm text-slate-900 whitespace-nowrap">{att.fileName}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-3 px-4 align-middle">
+                            <span className="badge badge-neutral text-[10px] uppercase font-semibold">
+                              {(() => {
+                                const mime = att.fileType || '';
+                                if (mime.toLowerCase().includes('pdf')) return 'PDF';
+                                if (mime.toLowerCase().includes('png')) return 'PNG';
+                                if (mime.toLowerCase().includes('jpeg') || mime.toLowerCase().includes('jpg')) return 'JPG';
+                                return mime.split('/').pop()?.toUpperCase() || '-';
+                              })()}
+                            </span>
+                          </TableCell>
+                          <TableCell className="py-3 px-4 align-middle whitespace-nowrap text-sm text-slate-600">
+                            {att.fileSize ? `${(att.fileSize / 1024 / 1024).toFixed(2)} MB` : '-'}
+                          </TableCell>
+                          <TableCell className="py-3 px-4 align-middle text-sm text-slate-700 whitespace-nowrap">
+                            {att.createdByName || 'System'}
+                          </TableCell>
+                          <TableCell align="right" className="py-3 px-4 align-middle">
+                            <div className="flex justify-end gap-2 items-center">
+                              <Button
+                                variant="secondary"
+                                onClick={() => window.open(att.fileUrl, '_blank')}
+                                className="py-1 px-3 text-xs bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 h-auto"
+                              >
+                                <Download size={14} className="mr-1.5 inline" /> Download
+                              </Button>
+                              {!isReadOnly && (
+                                <Button
+                                  variant="ghost"
+                                  className="text-red-600 py-1 px-3 text-xs h-auto bg-red-50 hover:bg-red-100 hover:text-red-700 rounded-lg border border-transparent"
+                                  onClick={() => handleDeleteAttachment(att.id)}
+                                  aria-label="Delete attachment"
+                                >
+                                  <Trash2 size={14} className="mr-1.5 inline" /> Delete
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
           </Card>
         )}
       </div>

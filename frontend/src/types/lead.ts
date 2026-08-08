@@ -21,6 +21,9 @@ export interface Lead {
   assignedToName: string | null;
   notes: string | null;
   active: boolean;
+  hasOpportunity?: boolean;
+  opportunityId?: string;
+  opportunityTitle?: string;
   createdAt: string;
   updatedAt: string;
 }

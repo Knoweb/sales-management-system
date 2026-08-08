@@ -35,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -129,8 +130,9 @@ public class ProjectBriefService {
         
         validateWriteAccess(opp);
 
-        if (projectBriefRepository.findByOpportunityId(opportunityId).isPresent()) {
-            throw new IllegalStateException("Project brief already exists for this opportunity");
+        Optional<ProjectBrief> existing = projectBriefRepository.findByOpportunityId(opportunityId);
+        if (existing.isPresent()) {
+            return mapToDTO(existing.get());
         }
 
         ProjectBrief brief = new ProjectBrief();

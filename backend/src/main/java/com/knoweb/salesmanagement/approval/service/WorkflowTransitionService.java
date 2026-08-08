@@ -44,7 +44,7 @@ public class WorkflowTransitionService {
         }
         
         String previousState = brief.getStatus().name();
-        brief.setStatus(ProjectBriefStatus.BDM_APPROVED);
+        brief.setStatus(ProjectBriefStatus.AWAITING_CLIENT_VERIFICATION);
 
         recordHistory(brief.getOpportunity(), brief, actor, "BDM_APPROVE", previousState, brief.getStatus().name(), comments);
     }

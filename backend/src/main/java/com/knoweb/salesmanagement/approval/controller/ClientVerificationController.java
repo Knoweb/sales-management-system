@@ -12,15 +12,20 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 @RestController
 @RequestMapping("/api/v1")
 public class ClientVerificationController {
 
     private final ClientVerificationService clientVerificationService;
+    private final com.knoweb.salesmanagement.approval.service.ClientApprovalDocumentService clientApprovalDocumentService;
 
-    public ClientVerificationController(ClientVerificationService clientVerificationService) {
+    public ClientVerificationController(ClientVerificationService clientVerificationService,
+                                        com.knoweb.salesmanagement.approval.service.ClientApprovalDocumentService clientApprovalDocumentService) {
         this.clientVerificationService = clientVerificationService;
+        this.clientApprovalDocumentService = clientApprovalDocumentService;
     }
 
     @PreAuthorize("hasAuthority('CLIENT_VERIFICATION_CREATE')")
@@ -51,6 +56,27 @@ public class ClientVerificationController {
     public ResponseEntity<Map<String, String>> getVerificationLink(@PathVariable UUID id) {
         String token = clientVerificationService.getVerificationLink(id);
         return ResponseEntity.ok(Map.of("token", token));
+    }
+
+    @PreAuthorize("hasAuthority('CLIENT_VERIFICATION_CREATE')")
+    @GetMapping("/opportunities/{opportunityId}/client-approval-document")
+    public ResponseEntity<byte[]> getClientApprovalDocument(@PathVariable UUID opportunityId) {
+        byte[] pdfBytes = clientApprovalDocumentService.generateClientApprovalDocument(opportunityId);
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "OPP-" + opportunityId.toString().substring(0, 8) + "-client-approval.pdf");
+        
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    @PreAuthorize("hasAuthority('CLIENT_VERIFICATION_CREATE')")
+    @PostMapping("/opportunities/{opportunityId}/mark-client-confirmed")
+    public ResponseEntity<ClientVerificationDTO> markClientConfirmed(@PathVariable UUID opportunityId) {
+        ClientVerificationDTO dto = clientVerificationService.markClientConfirmed(opportunityId);
+        return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/opportunities/{opportunityId}/client-verifications")

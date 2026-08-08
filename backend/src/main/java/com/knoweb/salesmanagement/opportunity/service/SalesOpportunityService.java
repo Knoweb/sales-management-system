@@ -134,7 +134,7 @@ public class SalesOpportunityService {
         }
 
         if (opportunityRepository.existsByLeadId(leadId)) {
-            throw new ResourceConflictException("Lead has already been converted to an opportunity");
+            throw new ResourceConflictException("This lead has already been converted to an opportunity.");
         }
 
         ProductCategory category = productCategoryRepository.findById(request.getProductCategoryId())
@@ -175,21 +175,6 @@ public class SalesOpportunityService {
         leadRepository.save(lead);
 
         logActivity(opportunity, "CONVERTED", "Lead converted to Sales Opportunity");
-
-        ProjectBrief brief = new ProjectBrief();
-        brief.setOpportunity(opportunity);
-        brief.setStatus(ProjectBriefStatus.DRAFT);
-        brief.setProjectTitle(opportunity.getTitle());
-        brief.setExpectedDeadline(opportunity.getExpectedCloseDate());
-        
-        OffsetDateTime initialMeeting = lead.getInitialMeetingAt();
-        if (initialMeeting != null) {
-            brief.setDueAt(initialMeeting.plusHours(24));
-        } else {
-            brief.setDueAt(OffsetDateTime.now().plusHours(24));
-        }
-        
-        projectBriefRepository.save(brief);
 
         return mapToDTO(opportunity);
     }
@@ -271,17 +256,30 @@ public class SalesOpportunityService {
         dto.setStage(entity.getStage());
         dto.setCreatedAt(entity.getCreatedAt());
 
-        Optional<ProjectBrief> brief = projectBriefRepository.findByOpportunityId(entity.getId());
-        if (brief.isPresent()) {
-            ProjectBriefSummaryDTO briefDto = new ProjectBriefSummaryDTO();
-            briefDto.setId(brief.get().getId());
-            briefDto.setStatus(brief.get().getStatus());
-            briefDto.setDueAt(brief.get().getDueAt());
-            briefDto.setOverdue(ProjectBriefDeadlineUtil.isOverdue(brief.get()));
-            briefDto.setOverdueHours(ProjectBriefDeadlineUtil.calculateOverdueHours(brief.get()));
-            briefDto.setDeadlineStatus(ProjectBriefDeadlineUtil.calculateDeadlineStatus(brief.get()));
-            dto.setProjectBrief(briefDto);
+        Optional<ProjectBrief> briefOpt = projectBriefRepository.findByOpportunityId(entity.getId());
+        ProjectBrief brief;
+        if (briefOpt.isPresent()) {
+            brief = briefOpt.get();
+        } else {
+            brief = new ProjectBrief();
+            brief.setStatus(ProjectBriefStatus.DRAFT);
+            OffsetDateTime initialMeeting = entity.getLead() != null ? entity.getLead().getInitialMeetingAt() : null;
+            if (initialMeeting != null) {
+                brief.setDueAt(initialMeeting.plusHours(24));
+            } else {
+                brief.setDueAt(entity.getCreatedAt() != null ? entity.getCreatedAt().plusHours(24) : OffsetDateTime.now().plusHours(24));
+            }
         }
+        
+        ProjectBriefSummaryDTO briefDto = new ProjectBriefSummaryDTO();
+        briefDto.setId(brief.getId());
+        briefDto.setStatus(brief.getStatus());
+        briefDto.setDueAt(brief.getDueAt());
+        briefDto.setOverdue(ProjectBriefDeadlineUtil.isOverdue(brief));
+        briefDto.setOverdueHours(ProjectBriefDeadlineUtil.calculateOverdueHours(brief));
+        briefDto.setDeadlineStatus(ProjectBriefDeadlineUtil.calculateDeadlineStatus(brief));
+        briefDto.setCurrentVersionNumber(brief.getCurrentVersionNumber());
+        dto.setProjectBrief(briefDto);
 
         return dto;
     }
@@ -334,17 +332,30 @@ public class SalesOpportunityService {
             }).collect(java.util.stream.Collectors.toList());
         dto.setActivities(activityDTOs);
         
-        Optional<ProjectBrief> brief = projectBriefRepository.findByOpportunityId(entity.getId());
-        if (brief.isPresent()) {
-            ProjectBriefSummaryDTO briefDto = new ProjectBriefSummaryDTO();
-            briefDto.setId(brief.get().getId());
-            briefDto.setStatus(brief.get().getStatus());
-            briefDto.setDueAt(brief.get().getDueAt());
-            briefDto.setOverdue(ProjectBriefDeadlineUtil.isOverdue(brief.get()));
-            briefDto.setOverdueHours(ProjectBriefDeadlineUtil.calculateOverdueHours(brief.get()));
-            briefDto.setDeadlineStatus(ProjectBriefDeadlineUtil.calculateDeadlineStatus(brief.get()));
-            dto.setProjectBrief(briefDto);
+        Optional<ProjectBrief> briefOpt = projectBriefRepository.findByOpportunityId(entity.getId());
+        ProjectBrief brief;
+        if (briefOpt.isPresent()) {
+            brief = briefOpt.get();
+        } else {
+            brief = new ProjectBrief();
+            brief.setStatus(ProjectBriefStatus.DRAFT);
+            OffsetDateTime initialMeeting = entity.getLead() != null ? entity.getLead().getInitialMeetingAt() : null;
+            if (initialMeeting != null) {
+                brief.setDueAt(initialMeeting.plusHours(24));
+            } else {
+                brief.setDueAt(entity.getCreatedAt() != null ? entity.getCreatedAt().plusHours(24) : OffsetDateTime.now().plusHours(24));
+            }
         }
+        
+        ProjectBriefSummaryDTO briefDto = new ProjectBriefSummaryDTO();
+        briefDto.setId(brief.getId());
+        briefDto.setStatus(brief.getStatus());
+        briefDto.setDueAt(brief.getDueAt());
+        briefDto.setOverdue(ProjectBriefDeadlineUtil.isOverdue(brief));
+        briefDto.setOverdueHours(ProjectBriefDeadlineUtil.calculateOverdueHours(brief));
+        briefDto.setDeadlineStatus(ProjectBriefDeadlineUtil.calculateDeadlineStatus(brief));
+        briefDto.setCurrentVersionNumber(brief.getCurrentVersionNumber());
+        dto.setProjectBrief(briefDto);
         
         return dto;
     }

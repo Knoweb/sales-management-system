@@ -118,10 +118,9 @@ const LeadConversionModal: React.FC<LeadConversionModalProps> = ({ isOpen, onClo
       title="Convert Lead to Opportunity"
       maxWidth="600px"
     >
-      <div className="p-6">
-        {error && <Alert variant="error" style={{ marginBottom: '1.5rem' }}>{error}</Alert>}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', paddingBottom: '1rem' }}>
+          {error && <Alert variant="error" style={{ marginBottom: '0.5rem' }}>{error}</Alert>}
           <FormField label="Opportunity Title" required error={formErrors.title}>
             <Input
               type="text"
@@ -134,7 +133,7 @@ const LeadConversionModal: React.FC<LeadConversionModalProps> = ({ isOpen, onClo
             />
           </FormField>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
             <FormField label="Product Category" required error={formErrors.productCategoryId}>
               <Select
                 name="productCategoryId"
@@ -166,8 +165,8 @@ const LeadConversionModal: React.FC<LeadConversionModalProps> = ({ isOpen, onClo
             </FormField>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField label="Estimated Value (USD)" required error={formErrors.estimatedValue}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+            <FormField label="Estimated Value (LKN)" required error={formErrors.estimatedValue}>
               <Input
                 type="number"
                 name="estimatedValue"
@@ -192,16 +191,48 @@ const LeadConversionModal: React.FC<LeadConversionModalProps> = ({ isOpen, onClo
             </FormField>
           </div>
 
-          <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-border">
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary" disabled={loading} isLoading={loading}>
-              Convert to Opportunity
-            </Button>
-          </div>
-        </form>
-      </div>
+        </div>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'flex-end', 
+          gap: '1rem', 
+          borderTop: '1px solid var(--color-border)',
+          paddingTop: '1.25rem',
+          marginTop: '0.5rem'
+        }}>
+          <Button 
+            type="button" 
+            variant="ghost" 
+            onClick={onClose} 
+            disabled={loading}
+            style={{
+              minWidth: '110px',
+              height: '42px',
+              backgroundColor: '#f1f5f9',
+              color: '#475569',
+              border: '1px solid #cbd5e1',
+              borderRadius: '9px',
+              fontWeight: 600,
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="submit" 
+            variant="primary" 
+            disabled={loading} 
+            isLoading={loading}
+            style={{
+              minWidth: '110px',
+              height: '42px',
+              borderRadius: '9px',
+              fontWeight: 600,
+            }}
+          >
+            Convert to Opportunity
+          </Button>
+        </div>
+      </form>
     </Modal>
   );
 };

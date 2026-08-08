@@ -188,9 +188,9 @@ public class BdmApprovalIntegrationTest {
         bdmApprovalService.approve(brief.getId(), decisionReq);
 
 
-        // test approval updates the Brief to BDM_APPROVED
-        ProjectBrief updatedBrief = projectBriefRepository.findById(brief.getId()).orElseThrow();
-        assertEquals(ProjectBriefStatus.BDM_APPROVED, updatedBrief.getStatus());
+        // test approval updates the Brief to AWAITING_CLIENT_VERIFICATION
+        ProjectBrief updatedBrief = projectBriefRepository.findById(brief.getId()).get();
+        assertEquals(ProjectBriefStatus.AWAITING_CLIENT_VERIFICATION, updatedBrief.getStatus());
 
         // Test Client Verification can be created after approval (and exact version is referenced)
         com.knoweb.salesmanagement.approval.dto.ClientVerificationRequest cvReq = new com.knoweb.salesmanagement.approval.dto.ClientVerificationRequest();

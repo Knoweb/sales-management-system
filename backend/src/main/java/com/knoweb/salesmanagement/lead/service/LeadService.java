@@ -17,6 +17,7 @@ import com.knoweb.salesmanagement.lead.repository.LeadActivityRepository;
 import com.knoweb.salesmanagement.lead.repository.LeadRepository;
 import com.knoweb.salesmanagement.user.entity.User;
 import com.knoweb.salesmanagement.user.repository.UserRepository;
+import com.knoweb.salesmanagement.opportunity.repository.SalesOpportunityRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -45,6 +46,7 @@ public class LeadService {
     private final EmployeeRepository employeeRepository;
     private final UserRepository userRepository;
     private final LeadMapper leadMapper;
+    private final SalesOpportunityRepository salesOpportunityRepository;
 
     public LeadService(LeadRepository leadRepository,
                        LeadActivityRepository leadActivityRepository,
@@ -53,7 +55,8 @@ public class LeadService {
                        com.knoweb.salesmanagement.client.repository.ClientContactRepository clientContactRepository,
                        EmployeeRepository employeeRepository,
                        UserRepository userRepository,
-                       LeadMapper leadMapper) {
+                       LeadMapper leadMapper,
+                       SalesOpportunityRepository salesOpportunityRepository) {
         this.leadRepository = leadRepository;
         this.leadActivityRepository = leadActivityRepository;
         this.followUpRepository = followUpRepository;
@@ -62,6 +65,7 @@ public class LeadService {
         this.employeeRepository = employeeRepository;
         this.userRepository = userRepository;
         this.leadMapper = leadMapper;
+        this.salesOpportunityRepository = salesOpportunityRepository;
     }
 
     private User getAuthenticatedUser() {
@@ -152,14 +156,34 @@ public class LeadService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        return leadRepository.findAll(spec, pageable).map(leadMapper::toDto);
+        return leadRepository.findAll(spec, pageable).map(lead -> {
+            LeadDTO dto = leadMapper.toDto(lead);
+            java.util.Optional<com.knoweb.salesmanagement.opportunity.entity.SalesOpportunity> oppOpt = salesOpportunityRepository.findByLeadId(lead.getId());
+            if (oppOpt.isPresent()) {
+                dto.setHasOpportunity(true);
+                dto.setOpportunityId(oppOpt.get().getId());
+                dto.setOpportunityTitle(oppOpt.get().getTitle());
+            } else {
+                dto.setHasOpportunity(false);
+            }
+            return dto;
+        });
     }
 
     @Transactional(readOnly = true)
     public LeadDTO getLeadById(UUID id) {
         Lead lead = leadRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Lead not found"));
         validateLeadReadAccess(lead);
-        return leadMapper.toDto(lead);
+        LeadDTO dto = leadMapper.toDto(lead);
+        java.util.Optional<com.knoweb.salesmanagement.opportunity.entity.SalesOpportunity> oppOpt = salesOpportunityRepository.findByLeadId(lead.getId());
+        if (oppOpt.isPresent()) {
+            dto.setHasOpportunity(true);
+            dto.setOpportunityId(oppOpt.get().getId());
+            dto.setOpportunityTitle(oppOpt.get().getTitle());
+        } else {
+            dto.setHasOpportunity(false);
+        }
+        return dto;
     }
 
     @Transactional

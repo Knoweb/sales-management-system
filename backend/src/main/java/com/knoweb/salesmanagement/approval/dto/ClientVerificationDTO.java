@@ -20,6 +20,7 @@ public class ClientVerificationDTO {
     private OffsetDateTime createdAt;
     private Boolean recoverable;
     private String projectBriefSnapshot;
+    private String recordedByName;
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -51,4 +52,6 @@ public class ClientVerificationDTO {
     public void setRecoverable(Boolean recoverable) { this.recoverable = recoverable; }
     public String getProjectBriefSnapshot() { return projectBriefSnapshot; }
     public void setProjectBriefSnapshot(String projectBriefSnapshot) { this.projectBriefSnapshot = projectBriefSnapshot; }
+    public String getRecordedByName() { return recordedByName; }
+    public void setRecordedByName(String recordedByName) { this.recordedByName = recordedByName; }
 }

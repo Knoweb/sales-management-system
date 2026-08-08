@@ -66,6 +66,7 @@ export interface ClientVerificationDTO {
   createdAt: string;
   recoverable?: boolean;
   projectBriefSnapshot?: string;
+  recordedByName?: string;
 }
 
 export interface WorkflowHistoryDTO {
@@ -176,5 +177,17 @@ export const revokeClientVerification = async (id: string): Promise<void> => {
 
 export const getVerificationLink = async (id: string): Promise<{ token: string }> => {
   const response = await apiClient.get(`/client-verifications/${id}/link`);
+  return response.data;
+};
+
+export const downloadClientApprovalDocument = async (opportunityId: string): Promise<Blob> => {
+  const response = await apiClient.get(`/opportunities/${opportunityId}/client-approval-document`, {
+    responseType: 'blob',
+  });
+  return response.data;
+};
+
+export const markClientConfirmed = async (opportunityId: string): Promise<ClientVerificationDTO> => {
+  const response = await apiClient.post(`/opportunities/${opportunityId}/mark-client-confirmed`);
   return response.data;
 };

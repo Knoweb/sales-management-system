@@ -3,15 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { getPendingBdmApprovals, type BdmApprovalDTO } from '../services/ApprovalApi';
 import { PageHeader } from '../components/PageHeader';
-import { SearchInput } from '../components/SearchInput';
-import { FilterBar } from '../components/FilterBar';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/Table';
 import { StatusBadge } from '../components/StatusBadge';
 import { ErrorState, EmptyState, LoadingState } from '../components/FeedbackStates';
-import { Button } from '../components/Button';
 import { IconButton } from '../components/IconButton';
-import { Select } from '../components/Forms';
-import { Search, FileCheck, Eye } from 'lucide-react';
+import { Input, Select } from '../components/Forms';
+import { Card } from '../components/Card';
+import { FileCheck, Eye, X } from 'lucide-react';
 
 export const BdmApprovalsPage: React.FC = () => {
   const [approvals, setApprovals] = useState<BdmApprovalDTO[]>([]);
@@ -83,10 +81,6 @@ export const BdmApprovalsPage: React.FC = () => {
     setStatusFilter(e.target.value);
   };
 
-  const handleClearFilters = () => {
-    setSearch('');
-    setStatusFilter('');
-  };
 
   const getWaitingTime = (createdAt: string) => {
     const submittedDate = new Date(createdAt);
@@ -118,49 +112,84 @@ export const BdmApprovalsPage: React.FC = () => {
         icon={<FileCheck size={24} />}
       />
 
-      <FilterBar>
-        <SearchInput
-          placeholder="Search approvals..."
-          value={search}
-          onSearch={handleSearchChange}
-        />
-        <div className="w-full md:w-56">
-          <Select
-            value={statusFilter}
-            onChange={handleStatusChange}
-            aria-label="Filter by Status"
-          >
-            <option value="">All Pending</option>
-            <option value="PENDING">Awaiting BDM Review</option>
-          </Select>
-        </div>
-      </FilterBar>
+      {!error && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            width: '100%',
+            marginBottom: '0.5rem',
+            height: '44px',
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
+            <Input
+              type="text"
+              placeholder="Search approvals..."
+              value={search}
+              onChange={e => handleSearchChange(e.target.value)}
+              style={{
+                width: '100%',
+                height: '44px',
+                paddingLeft: '16px',
+                paddingRight: search ? '40px' : '16px',
+                borderRadius: '9px',
+              }}
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => handleSearchChange('')}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '40%',
+                  transform: 'translateY(-50%)',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#64748b',
+                  padding: '4px',
+                }}
+                aria-label="Clear search"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
 
-      <div className="mt-6">
+          <div style={{ width: '210px', flexShrink: 0 }}>
+            <Select
+              value={statusFilter}
+              onChange={handleStatusChange}
+            >
+              <option value="">All Pending</option>
+              <option value="PENDING">Awaiting BDM Review</option>
+            </Select>
+          </div>
+        </div>
+      )}
+
+      <Card>
         {error ? (
           <ErrorState message={error} onRetry={fetchApprovals} />
         ) : loading && approvals.length === 0 ? (
           <LoadingState message="Loading approvals..." />
-        ) : approvals.length === 0 ? (
+        ) : approvals.length === 0 || filteredApprovals.length === 0 ? (
           <EmptyState 
-            icon={<FileCheck size={48} />}
-            title="No pending BDM approvals found." 
-            message="There are no project briefs currently waiting for BDM review."
-          />
-        ) : filteredApprovals.length === 0 ? (
-          <EmptyState 
-            icon={<Search size={48} />}
-            title="No approvals match your search." 
-            message="Try adjusting your search terms or status filter."
-            action={<Button variant="outline" onClick={handleClearFilters}>Clear Filters</Button>}
+            title="No pending approvals" 
+            message={
+              search !== "" || statusFilter !== ""
+                ? "No approvals match your current search or filters."
+                : "There are no BDM approvals waiting for review."
+            }
           />
         ) : (
-          <div className="table-container relative overflow-x-auto">
-            {loading && (
-              <div className="absolute inset-0 bg-surface/50 z-10 flex items-center justify-center backdrop-blur-[1px]">
-                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            )}
+          <div className="overflow-x-auto">
             <Table>
               <TableHead>
                 <TableRow>
@@ -176,33 +205,28 @@ export const BdmApprovalsPage: React.FC = () => {
               </TableHead>
               <TableBody>
                 {filteredApprovals.map((approval) => (
-                  <TableRow key={approval.id} onClick={() => navigate(`/bdm-approvals/${approval.id}`)}>
+                  <TableRow key={approval.id}>
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="font-semibold text-text-primary mb-1">{approval.opportunityTitle}</span>
-                        <span className="text-xs font-mono text-text-muted">{approval.opportunityNumber}</span>
+                        <span className="text-xs text-gray-500 font-mono">{approval.opportunityNumber}</span>
                       </div>
                     </TableCell>
+                    <TableCell>{approval.clientName}</TableCell>
                     <TableCell>
-                      <span className="font-medium text-text-secondary">{approval.clientName}</span>
+                      {approval.assignedSalesOfficerName || "Unassigned"}
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm text-text-secondary">
-                        {approval.assignedSalesOfficerName || "Unassigned"}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-medium text-text-primary">
+                      <span className="font-medium text-gray-900">
                         v{approval.projectBriefVersionNumber}
                       </span>
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm text-text-secondary whitespace-nowrap">
+                      <span className="text-sm text-gray-900 whitespace-nowrap">
                         {format(new Date(approval.createdAt), 'dd MMM yyyy, hh:mm a')}
                       </span>
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm text-text-secondary">
+                      <span className="text-sm text-gray-900">
                         {getWaitingTime(approval.createdAt)}
                       </span>
                     </TableCell>
@@ -213,15 +237,18 @@ export const BdmApprovalsPage: React.FC = () => {
                       />
                     </TableCell>
                     <TableCell align="right">
-                      <IconButton 
-                        icon={<Eye size={18} />} 
-                        aria-label={`Review approval for ${approval.opportunityTitle}`} 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/bdm-approvals/${approval.id}`);
-                        }}
-                        variant="ghost"
-                      />
+                      <div className="flex justify-end gap-2">
+                        <IconButton 
+                          title="Review Approval" 
+                          aria-label={`Review approval for ${approval.opportunityTitle}`} 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/bdm-approvals/${approval.id}`);
+                          }}
+                        >
+                          <Eye size={16} />
+                        </IconButton>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -229,7 +256,7 @@ export const BdmApprovalsPage: React.FC = () => {
             </Table>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 };

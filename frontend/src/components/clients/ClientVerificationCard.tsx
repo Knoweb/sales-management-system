@@ -1,27 +1,22 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { CheckCircle2, Clock, XCircle, RefreshCw, Link2, Copy, AlertTriangle, Shield } from 'lucide-react';
+import { CheckCircle2, Download, Check, FileText } from 'lucide-react';
 import { Button } from '../Button';
 import { StatusBadge } from '../StatusBadge';
+import { Card } from '../Card';
+import { EmptyState } from '../FeedbackStates';
 import type { ClientVerificationDTO } from '../../services/ApprovalApi';
 import {
-  createClientVerification,
-  getVerificationLink,
-  regenerateClientVerification,
+  downloadClientApprovalDocument,
+  markClientConfirmed,
 } from '../../services/ApprovalApi';
 
 interface ClientVerificationCardProps {
   verifications: ClientVerificationDTO[];
-  projectBriefId: string | undefined;
   opportunityId: string;
   canCreate: boolean;
   onRefresh: () => void;
-}
-
-interface LinkModalState {
-  isOpen: boolean;
-  url: string;
-  isNew: boolean;
+  isBdmApprovedForCurrentVersion: boolean;
 }
 
 const statusVariant = (status: string): 'success' | 'warning' | 'error' | 'neutral' | 'info' => {
@@ -36,18 +31,6 @@ const statusVariant = (status: string): 'success' | 'warning' | 'error' | 'neutr
   }
 };
 
-const statusIcon = (status: string) => {
-  switch (status) {
-    case 'CONFIRMED': return <CheckCircle2 size={18} className="text-success" />;
-    case 'PENDING': return <Clock size={18} className="text-warning" />;
-    case 'CHANGES_REQUESTED': return <AlertTriangle size={18} className="text-info" />;
-    case 'REJECTED':
-    case 'REVOKED': return <XCircle size={18} className="text-danger" />;
-    case 'EXPIRED': return <AlertTriangle size={18} className="text-danger" />;
-    default: return <Shield size={18} className="text-text-muted" />;
-  }
-};
-
 const fmtDate = (d: string | undefined | null) => {
   if (!d) return 'N/A';
   try { return format(new Date(d), 'MMM d, yyyy h:mm a'); }
@@ -56,318 +39,243 @@ const fmtDate = (d: string | undefined | null) => {
 
 export const ClientVerificationCard: React.FC<ClientVerificationCardProps> = ({
   verifications,
-  projectBriefId,
   opportunityId,
   canCreate,
   onRefresh,
+  isBdmApprovedForCurrentVersion,
 }) => {
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [linkModal, setLinkModal] = useState<LinkModalState>({ isOpen: false, url: '', isNew: false });
-  const [copySuccess, setCopySuccess] = useState(false);
 
   // The latest verification record (if any)
   const latest = verifications.length > 0 ? verifications[0] : null;
   const status: string = latest?.status ?? 'NOT_GENERATED';
 
-  const buildUrl = (token: string) => `${window.location.origin}/client-verification/${token}`;
-
-  const handleCopy = async (url: string) => {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2500);
-    } catch {
-      // clipboard may be blocked in http
-      setCopySuccess(false);
-    }
-  };
-
-  const handleGenerate = async () => {
-    if (!projectBriefId) return;
+  const handleDownloadPdf = async () => {
     setActionLoading(true);
     setActionError(null);
     try {
-      const res = await createClientVerification(projectBriefId, { opportunityId });
-      setLinkModal({ isOpen: true, url: buildUrl(res.token), isNew: true });
-      onRefresh();
+      const blob = await downloadClientApprovalDocument(opportunityId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `OPP-${opportunityId.substring(0, 8)}-client-approval.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } } };
-      setActionError(e.response?.data?.message || 'Failed to generate verification link.');
-    } finally {
-      setActionLoading(false);
-    }
-  };
+      const e = err as { response?: { data?: Blob } };
 
-  const handleRegenerate = async (id: string) => {
-    if (!window.confirm('Regenerate the verification link? The current link will be permanently invalidated.')) return;
-    setActionLoading(true);
-    setActionError(null);
-    try {
-      const res = await regenerateClientVerification(id);
-      setLinkModal({ isOpen: true, url: buildUrl(res.token), isNew: true });
-      onRefresh();
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string }; status?: number } };
-      setActionError(e.response?.data?.message || 'Failed to regenerate link.');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleCopyExisting = async (id: string) => {
-    setActionLoading(true);
-    setActionError(null);
-    try {
-      const res = await getVerificationLink(id);
-      const url = buildUrl(res.token);
-      setLinkModal({ isOpen: true, url, isNew: false });
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string }; status?: number } };
-      if (e.response?.status === 409) {
-        setActionError(e.response.data?.message || 'Link is no longer accessible at this stage.');
+      if (e.response?.data instanceof Blob) {
+        // Blob error reading
+        try {
+          const text = await e.response.data.text();
+          const json = JSON.parse(text);
+          setActionError(json.message || 'Failed to download document.');
+        } catch {
+          setActionError('Failed to download document.');
+        }
       } else {
-        setActionError(e.response?.data?.message || 'Failed to fetch verification link.');
+        setActionError('Failed to download document.');
       }
     } finally {
       setActionLoading(false);
     }
   };
 
-  const closeLinkModal = () => {
-    setLinkModal({ isOpen: false, url: '', isNew: false });
-    setCopySuccess(false);
+  const handleViewPdf = async () => {
+    setActionLoading(true);
+    setActionError(null);
+    try {
+      const blob = await downloadClientApprovalDocument(opportunityId);
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      window.open(url, '_blank');
+      setTimeout(() => window.URL.revokeObjectURL(url), 5000);
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: Blob } };
+      if (e.response?.data instanceof Blob) {
+        try {
+          const text = await e.response.data.text();
+          const json = JSON.parse(text);
+          setActionError(json.message || 'Failed to view document.');
+        } catch {
+          setActionError('Failed to view document.');
+        }
+      } else {
+        setActionError('Failed to view document.');
+      }
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleMarkConfirmed = async () => {
+    setActionLoading(true);
+    setActionError(null);
+    try {
+      await markClientConfirmed(opportunityId);
+      onRefresh();
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      setActionError(e.response?.data?.message || 'Failed to confirm client verification.');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   return (
     <>
-      <div className="border border-border rounded-lg overflow-hidden">
-        {/* Card Header */}
-        <div className="flex items-center justify-between px-5 py-4 bg-surface-secondary border-b border-border">
-          <div className="flex items-center gap-2">
-            {statusIcon(status)}
-            <h3 className="font-semibold text-text-primary">Client Verification</h3>
-          </div>
+      <Card>
+        <div className="flex-between border-b border-border pb-4" style={{ marginBottom: '20px' }}>
+          <h3 className="text-lg font-semibold text-text-primary">Client Verification</h3>
           <StatusBadge
-            status={status === 'NOT_GENERATED' ? 'Not Generated' : status}
-            variant={statusVariant(status)}
+            status={status === 'NOT_GENERATED' && !isBdmApprovedForCurrentVersion ? 'Pending BDM Approval' :
+              status === 'NOT_GENERATED' ? 'Pending Client Approval' :
+                status === 'CONFIRMED' ? 'Approved' :
+                  status}
+            variant={statusVariant(status === 'NOT_GENERATED' ? 'neutral' : status)}
           />
         </div>
 
-        {/* Card Body */}
-        <div className="p-5 space-y-4">
+        <div className="space-y-4">
           {actionError && (
             <div className="text-sm text-danger bg-red-50 border border-red-200 rounded px-3 py-2">
               {actionError}
             </div>
           )}
 
-          {status === 'NOT_GENERATED' && (
-            <div className="text-center py-6 text-text-muted">
-              <Shield size={32} className="mx-auto mb-3 opacity-40" />
-              <p className="text-sm">No verification link has been generated yet.</p>
-              {canCreate && projectBriefId && (
-                <Button
-                  variant="primary"
-                  className="mt-4"
-                  icon={<Link2 size={16} />}
-                  onClick={handleGenerate}
-                  isLoading={actionLoading}
-                >
-                  Generate Verification Link
-                </Button>
-              )}
-              {canCreate && !projectBriefId && (
-                <p className="text-xs text-text-muted mt-3 italic">A project brief must exist before generating a verification link.</p>
-              )}
+          {!isBdmApprovedForCurrentVersion && status !== 'CONFIRMED' && (
+            <EmptyState
+              title="BDM Approval Required"
+              message="The project brief must be approved by a BDM before generating the client approval document."
+            />
+          )}
+
+          {isBdmApprovedForCurrentVersion && status !== 'CONFIRMED' && (
+            <div className="space-y-4">
+              <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px' }}>
+                <p style={{ margin: '0 0 16px', color: '#64748b', fontSize: '14px', lineHeight: 1.5 }}>
+                  Download the approved project document and send it to the client. After receiving the client's approval externally, record it here.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    variant="outline"
+                    icon={<FileText size={16} />}
+                    onClick={handleViewPdf}
+                    isLoading={actionLoading}
+                    className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300"
+                  >
+                    View Client Approval Document
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    icon={<Download size={16} />}
+                    onClick={handleDownloadPdf}
+                    isLoading={actionLoading}
+                  >
+                    Download Document
+                  </Button>
+
+                  {canCreate && (
+                    <Button
+                      variant="primary"
+                      icon={<Check size={16} />}
+                      onClick={handleMarkConfirmed}
+                      disabled={actionLoading}
+                      isLoading={actionLoading}
+                      className="!bg-green-600 hover:!bg-green-700 !text-white !border-transparent"
+                    >
+                      {actionLoading ? 'Confirming...' : 'Confirm Client Approval'}
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
           {status === 'CONFIRMED' && latest && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-success font-medium">
+            <div className="space-y-4">
+              <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '8px', color: '#166534', fontWeight: 500 }}>
                 <CheckCircle2 size={18} />
-                <span>Client has confirmed this project brief.</span>
+                <span>Client has approved this project brief.</span>
               </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-text-secondary">Generated</p>
-                  <p className="font-medium text-text-primary">{fmtDate(latest.createdAt?.toString())}</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+                <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                  <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Approved On</p>
+                  <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '15px', fontWeight: 500 }}>{fmtDate(latest.decisionDate?.toString())}</p>
                 </div>
-                <div>
-                  <p className="text-text-secondary">Verified On</p>
-                  <p className="font-medium text-text-primary">{fmtDate(latest.decisionDate?.toString())}</p>
-                </div>
-                {latest.verifierName && (
-                  <div>
-                    <p className="text-text-secondary">Verified By</p>
-                    <p className="font-medium text-text-primary">{latest.verifierName}</p>
+                {latest.recordedByName && (
+                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Recorded By</p>
+                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '15px', fontWeight: 500 }}>{latest.recordedByName}</p>
                   </div>
                 )}
-                {latest.verifierEmail && (
-                  <div>
-                    <p className="text-text-secondary">Client Email</p>
-                    <p className="font-medium text-text-primary">{latest.verifierEmail}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {(status === 'PENDING' || status === 'CHANGES_REQUESTED') && latest && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-text-secondary">Generated</p>
-                  <p className="font-medium text-text-primary">{fmtDate(latest.createdAt?.toString())}</p>
-                </div>
-                <div>
-                  <p className="text-text-secondary">Expires</p>
-                  <p className={`font-medium ${latest.expiresAt && new Date(latest.expiresAt) < new Date() ? 'text-danger' : 'text-text-primary'}`}>
-                    {fmtDate(latest.expiresAt?.toString())}
-                  </p>
-                </div>
-                {latest.verifierName && (
-                  <div>
-                    <p className="text-text-secondary">Verifier Name</p>
-                    <p className="font-medium text-text-primary">{latest.verifierName}</p>
-                  </div>
-                )}
-                {latest.verifierEmail && (
-                  <div>
-                    <p className="text-text-secondary">Client Email</p>
-                    <p className="font-medium text-text-primary">{latest.verifierEmail}</p>
+                {latest.projectBriefVersionNumber && (
+                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Brief Version</p>
+                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '15px', fontWeight: 500 }}>Version {latest.projectBriefVersionNumber}</p>
                   </div>
                 )}
               </div>
 
-              {latest.recoverable === false && (
-                <p className="text-xs text-amber-600 italic bg-amber-50 border border-amber-200 rounded px-3 py-2">
-                  The original link token is not recoverable (only its hash was stored). Please regenerate a new link.
-                </p>
-              )}
-
-              {canCreate && (
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {latest.recoverable !== false && (
-                    <Button
-                      variant="outline"
-                      icon={<Copy size={15} />}
-                      onClick={() => handleCopyExisting(latest.id)}
-                      isLoading={actionLoading}
-                    >
-                      Copy Verification Link
-                    </Button>
-                  )}
+              {isBdmApprovedForCurrentVersion && (
+                <div className="pt-2 flex flex-wrap gap-3">
                   <Button
                     variant="outline"
-                    icon={<RefreshCw size={15} />}
-                    onClick={() => handleRegenerate(latest.id)}
+                    icon={<FileText size={16} />}
+                    onClick={handleViewPdf}
+                    isLoading={actionLoading}
+                    className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300"
+                  >
+                    View Client Approval Document
+                  </Button>
+                  <Button
+                    variant="outline"
+                    icon={<Download size={16} />}
+                    onClick={handleDownloadPdf}
                     isLoading={actionLoading}
                   >
-                    Regenerate Link
+                    Download Document
                   </Button>
                 </div>
               )}
             </div>
           )}
 
-          {(status === 'EXPIRED' || status === 'REVOKED' || status === 'REJECTED') && latest && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-text-secondary">Generated</p>
-                  <p className="font-medium text-text-primary">{fmtDate(latest.createdAt?.toString())}</p>
+          {/* Legacy statuses, handle gracefully */}
+          {(status === 'PENDING' || status === 'CHANGES_REQUESTED' || status === 'EXPIRED' || status === 'REVOKED' || status === 'REJECTED') && latest && (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-500 italic">This opportunity has legacy client verification records.</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+                <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                  <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Generated</p>
+                  <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '15px', fontWeight: 500 }}>{fmtDate(latest.createdAt?.toString())}</p>
                 </div>
-                {latest.expiresAt && (
-                  <div>
-                    <p className="text-text-secondary">Expiry</p>
-                    <p className="font-medium text-danger">{fmtDate(latest.expiresAt?.toString())}</p>
-                  </div>
-                )}
-                {latest.verifierEmail && (
-                  <div>
-                    <p className="text-text-secondary">Client Email</p>
-                    <p className="font-medium text-text-primary">{latest.verifierEmail}</p>
-                  </div>
-                )}
               </div>
-
-              {canCreate && projectBriefId && (
-                <Button
-                  variant="primary"
-                  icon={<Link2 size={16} />}
-                  onClick={handleGenerate}
-                  isLoading={actionLoading}
-                >
-                  Generate New Link
-                </Button>
-              )}
             </div>
           )}
 
-          {/* Version history (if multiple) */}
           {verifications.length > 1 && (
-            <details className="mt-2">
-              <summary className="text-xs text-text-muted cursor-pointer hover:text-text-secondary select-none">
+            <details className="mt-2" style={{ paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
+              <summary className="text-sm font-medium text-text-muted cursor-pointer hover:text-text-secondary select-none">
                 Show {verifications.length - 1} older record{verifications.length > 2 ? 's' : ''}
               </summary>
-              <ul className="mt-2 space-y-2">
+              <ul className="mt-3 space-y-3">
                 {verifications.slice(1).map(v => (
-                  <li key={v.id} className="text-xs text-text-muted border-l-2 border-border pl-3">
-                    <StatusBadge status={v.status} variant={statusVariant(v.status)} className="text-xs" />
-                    <span className="ml-2">{fmtDate(v.createdAt?.toString())}</span>
-                    {v.verifierEmail && <span className="ml-2">— {v.verifierEmail}</span>}
+                  <li key={v.id} className="text-sm text-text-muted border-l-2 border-border pl-3 flex items-center">
+                    <StatusBadge status={v.status === 'CONFIRMED' ? 'Approved' : v.status} variant={statusVariant(v.status)} />
+                    <span className="ml-3 font-medium">Version {v.projectBriefVersionNumber}</span>
+                    <span className="ml-3 font-medium">{fmtDate(v.createdAt?.toString())}</span>
+                    {v.recordedByName && <span className="ml-2">— by {v.recordedByName}</span>}
                   </li>
                 ))}
               </ul>
             </details>
           )}
         </div>
-      </div>
-
-      {/* Link display modal */}
-      {linkModal.isOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black bg-opacity-50 px-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900">
-              {linkModal.isNew ? '✅ Verification Link Generated' : 'Verification Link'}
-            </h2>
-
-            {linkModal.isNew && (
-              <div className="text-sm text-green-700 bg-green-50 border border-green-200 rounded px-3 py-2">
-                Link generated successfully! Share this with your client to confirm the project brief.
-              </div>
-            )}
-
-            <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg break-all text-sm font-mono text-gray-800 select-all">
-              {linkModal.url}
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Button
-                variant="primary"
-                icon={<Copy size={15} />}
-                className="w-full"
-                onClick={() => handleCopy(linkModal.url)}
-              >
-                {copySuccess ? '✓ Copied!' : 'Copy Link'}
-              </Button>
-              <a
-                href={linkModal.url}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full inline-flex justify-center items-center gap-2 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-              >
-                <Link2 size={15} /> Open Verification Page
-              </a>
-              <Button variant="outline" className="w-full" onClick={closeLinkModal}>
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      </Card>
     </>
   );
 };

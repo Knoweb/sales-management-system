@@ -11,4 +11,5 @@ import java.util.UUID;
 public interface SalesOpportunityRepository extends JpaRepository<SalesOpportunity, UUID>, JpaSpecificationExecutor<SalesOpportunity> {
     boolean existsByOpportunityNumber(String opportunityNumber);
     boolean existsByLeadId(UUID leadId);
+    java.util.Optional<SalesOpportunity> findByLeadId(UUID leadId);
 }

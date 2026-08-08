@@ -145,6 +145,7 @@ public class ClientVerificationService {
         return plainToken;
     }
 
+    @Transactional
     public ClientVerificationDTO getVerificationByToken(String token) {
         String tokenHash = hashToken(token);
         ClientVerification verification = clientVerificationRepository.findByTokenHash(tokenHash)
@@ -218,6 +219,95 @@ public class ClientVerificationService {
         workflowHistoryRepository.save(history);
         
         return plainToken;
+    }
+
+    @PreAuthorize("hasAuthority('CLIENT_VERIFICATION_CREATE')")
+    @Transactional
+    public ClientVerificationDTO markClientConfirmed(UUID opportunityId) {
+        User user = getAuthenticatedUser();
+        com.knoweb.salesmanagement.opportunity.entity.SalesOpportunity opp = 
+            projectBriefRepository.findByOpportunityId(opportunityId)
+                .map(ProjectBrief::getOpportunity)
+                .orElseThrow(() -> new ResourceNotFoundException("Opportunity or Project Brief not found"));
+
+        ProjectBrief brief = projectBriefRepository.findByOpportunityId(opportunityId)
+            .orElseThrow(() -> new ResourceNotFoundException("Project Brief not found"));
+
+        // Verify exact BDM approved version
+        List<com.knoweb.salesmanagement.approval.entity.BdmApproval> approvals = 
+            bdmApprovalRepository.findByOpportunityIdOrderByCreatedAtDesc(opportunityId);
+        
+        com.knoweb.salesmanagement.approval.entity.BdmApproval latestApproval = approvals.stream()
+            .filter(a -> a.getProjectBrief().getId().equals(brief.getId()))
+            .findFirst()
+            .orElseThrow(() -> new com.knoweb.salesmanagement.common.exception.ResourceConflictException("No BDM approval found for this brief."));
+
+        if (latestApproval.getStatus() != BdmApprovalStatus.APPROVED) {
+            throw new com.knoweb.salesmanagement.common.exception.ResourceConflictException("Cannot mark client confirmed. BDM Approval is not APPROVED.");
+        }
+
+        int approvedVersion = latestApproval.getProjectBriefVersionNumber();
+
+        // Backward compatibility: If an old brief is stuck in BDM_APPROVED, transition it safely.
+        if (brief.getStatus() == com.knoweb.salesmanagement.projectbrief.enums.ProjectBriefStatus.BDM_APPROVED 
+            && java.util.Objects.equals(latestApproval.getProjectBriefVersionNumber(), brief.getCurrentVersionNumber())) {
+            brief.setStatus(com.knoweb.salesmanagement.projectbrief.enums.ProjectBriefStatus.AWAITING_CLIENT_VERIFICATION);
+        }
+
+        // Check if a client verification exists for this exact version
+        List<ClientVerification> exactVersionVerifications = clientVerificationRepository.findByProjectBriefIdOrderByCreatedAtDesc(brief.getId())
+            .stream()
+            .filter(cv -> cv.getProjectBriefVersionNumber() != null && cv.getProjectBriefVersionNumber() == approvedVersion)
+            .collect(Collectors.toList());
+
+        ClientVerification verification = exactVersionVerifications.stream()
+            .findFirst()
+            .orElse(null);
+
+        if (verification != null && verification.getStatus() == ClientVerificationStatus.CONFIRMED) {
+            throw new com.knoweb.salesmanagement.common.exception.ResourceConflictException("Client Verification is already confirmed for this version.");
+        }
+
+        String previousState = verification != null ? verification.getStatus().name() : "NONE";
+
+        if (verification == null) {
+            verification = new ClientVerification();
+            verification.setOpportunity(opp);
+            verification.setProjectBrief(brief);
+            verification.setProjectBriefVersionNumber(approvedVersion);
+            
+            // Dummy token to satisfy non-null constraints
+            String plainToken = UUID.randomUUID().toString() + "-" + UUID.randomUUID().toString();
+            verification.setTokenHash(hashToken(plainToken));
+            verification.setEncryptedToken(encryptionService.encrypt(plainToken));
+            verification.setExpiresAt(OffsetDateTime.now().plusYears(1));
+        }
+
+        verification.setStatus(ClientVerificationStatus.CONFIRMED);
+        verification.setDecisionDate(OffsetDateTime.now());
+        verification.setCreatedBy(user);
+        
+        clientVerificationRepository.save(verification);
+
+        // Record Workflow History
+        WorkflowHistory history = new WorkflowHistory();
+        history.setOpportunity(opp);
+        history.setProjectBrief(brief);
+        history.setProjectBriefVersionNumber(approvedVersion);
+        history.setActor(user);
+        if (user != null) {
+            history.setActorName(user.getFirstName() + " " + user.getLastName());
+        }
+        history.setAction("MARK_CLIENT_CONFIRMED");
+        history.setPreviousState(previousState);
+        history.setNewState("CONFIRMED");
+        history.setComments("Manual client confirmation recorded by internal user.");
+        workflowHistoryRepository.save(history);
+
+        // Update overall workflow using transition service if necessary
+        transitionService.confirmClientVerification(brief, user.getFirstName() + " " + user.getLastName(), "Manually marked as confirmed");
+
+        return mapToDTO(verification);
     }
 
     @PreAuthorize("hasAuthority('CLIENT_VERIFICATION_CREATE') or hasAuthority('CLIENT_VERIFICATION_READ_LINK')")
@@ -369,6 +459,7 @@ public class ClientVerificationService {
     }
 
     @PreAuthorize("hasAuthority('CLIENT_VERIFICATION_READ')")
+    @Transactional(readOnly = true)
     public List<ClientVerificationDTO> getVerificationsForOpportunity(UUID opportunityId) {
         return clientVerificationRepository.findByOpportunityIdOrderByCreatedAtDesc(opportunityId).stream()
                 .map(this::mapToDTO)
@@ -446,6 +537,9 @@ public class ClientVerificationService {
                 .filter(v -> v.isSubmittedVersion() && v.getSnapshot() != null)
                 .findFirst()
                 .ifPresent(v -> dto.setProjectBriefSnapshot(v.getSnapshot()));
+        }
+        if (entity.getCreatedBy() != null) {
+            dto.setRecordedByName(entity.getCreatedBy().getFirstName() + " " + entity.getCreatedBy().getLastName());
         }
         return dto;
     }

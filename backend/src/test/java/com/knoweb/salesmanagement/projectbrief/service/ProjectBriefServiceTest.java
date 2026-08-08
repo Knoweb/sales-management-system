@@ -146,6 +146,31 @@ class ProjectBriefServiceTest {
     }
 
     @Test
+    void testInitializeProjectBrief_CreatesDraftIfNoneExists() {
+        when(opportunityRepository.findById(opportunity.getId())).thenReturn(Optional.of(opportunity));
+        when(projectBriefRepository.findByOpportunityId(opportunity.getId())).thenReturn(Optional.empty());
+        when(projectBriefRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        ProjectBriefDTO result = projectBriefService.initializeProjectBrief(opportunity.getId());
+
+        assertNotNull(result);
+        verify(projectBriefRepository).save(any());
+        verify(opportunityRepository).save(any());
+    }
+
+    @Test
+    void testInitializeProjectBrief_ReturnsExistingIfAlreadyExists() {
+        when(opportunityRepository.findById(opportunity.getId())).thenReturn(Optional.of(opportunity));
+        when(projectBriefRepository.findByOpportunityId(opportunity.getId())).thenReturn(Optional.of(draftBrief));
+
+        ProjectBriefDTO result = projectBriefService.initializeProjectBrief(opportunity.getId());
+
+        assertNotNull(result);
+        assertEquals(draftBrief.getId(), result.getId());
+        verify(projectBriefRepository, never()).save(any());
+    }
+
+    @Test
     void testSubmitProjectBrief_SendsNotificationToBDMWithDeduplicationKey() throws Exception {
         draftBrief.setProjectTitle("Complete Brief");
         draftBrief.setBusinessProblem("Problem statement");

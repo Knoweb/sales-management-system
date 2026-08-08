@@ -20,6 +20,9 @@ public class LeadDTO {
     private String assignedToName;
     private String notes;
     private boolean active;
+    private boolean hasOpportunity;
+    private UUID opportunityId;
+    private String opportunityTitle;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
     private OffsetDateTime initialMeetingAt;
@@ -53,6 +56,12 @@ public class LeadDTO {
     public void setNotes(String notes) { this.notes = notes; }
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
+    public boolean getHasOpportunity() { return hasOpportunity; }
+    public void setHasOpportunity(boolean hasOpportunity) { this.hasOpportunity = hasOpportunity; }
+    public UUID getOpportunityId() { return opportunityId; }
+    public void setOpportunityId(UUID opportunityId) { this.opportunityId = opportunityId; }
+    public String getOpportunityTitle() { return opportunityTitle; }
+    public void setOpportunityTitle(String opportunityTitle) { this.opportunityTitle = opportunityTitle; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }

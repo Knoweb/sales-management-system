@@ -118,7 +118,12 @@ class SalesOpportunityServiceTest {
         assertEquals("Big Software Deal", result.getTitle());
         assertEquals(LeadStatus.QUALIFIED, lead.getStatus());
         verify(opportunityRepository).save(any());
-        verify(projectBriefRepository).save(any());
+        verify(projectBriefRepository, never()).save(any());
+        
+        // Ensure the null-id transient ProjectBriefSummaryDTO is correctly mapped
+        assertNotNull(result.getProjectBrief());
+        assertNull(result.getProjectBrief().getId());
+        assertNotNull(result.getProjectBrief().getDueAt());
     }
 
     @Test

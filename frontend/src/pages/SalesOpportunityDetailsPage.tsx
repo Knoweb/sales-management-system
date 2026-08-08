@@ -9,11 +9,18 @@ import { PageHeader } from '../components/PageHeader';
 import { Card } from '../components/Card';
 import { Tabs, type TabItem } from '../components/Tabs';
 import { StatusBadge, getStatusVariant } from '../components/StatusBadge';
-import { LoadingState, ErrorState } from '../components/FeedbackStates';
-import { FileText, Activity, Paperclip, LayoutDashboard, TrendingUp, CheckCircle, Edit2, ExternalLink, History } from 'lucide-react';
+import { LoadingState, ErrorState, EmptyState } from '../components/FeedbackStates';
+import { FileText, Activity, LayoutDashboard, TrendingUp, CheckCircle, ExternalLink, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { Button } from '../components/Button';
 import { ClientVerificationCard } from '../components/clients/ClientVerificationCard';
+
+const getWorkflowVariant = (status: string) => {
+  const s = status.toUpperCase().replace(/\s+/g, '_');
+  if (['APPROVED', 'VERIFIED', 'COMPLETED', 'CONFIRMED'].includes(s)) return 'success';
+  if (['PENDING', 'IN_REVIEW', 'SUBMITTED', 'CHANGES_REQUIRED', 'RETURNED_FOR_REVISION'].includes(s)) return 'warning';
+  if (['REJECTED', 'FAILED'].includes(s)) return 'error';
+  return 'neutral';
+};
 
 const SalesOpportunityDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -31,7 +38,6 @@ const SalesOpportunityDetailsPage: React.FC = () => {
   const { user } = useAuth();
   const canReadBrief = !!user?.permissions?.includes('PROJECT_BRIEF_READ');
   const canCreateBrief = !!user?.permissions?.includes('PROJECT_BRIEF_CREATE');
-  const canEditOpportunity = !!user?.permissions?.includes('OPPORTUNITY_UPDATE');
   const canCreateVerification = !!user?.permissions?.includes('CLIENT_VERIFICATION_CREATE');
 
   const loadData = useCallback(async (oppId: string) => {
@@ -74,10 +80,17 @@ const SalesOpportunityDetailsPage: React.FC = () => {
     try {
       setInitializingBrief(true);
       await initializeProjectBrief(id);
+      await loadData(id);
       navigate(`/opportunities/${id}/project-brief`);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
-      setError(e.response?.data?.message || 'Failed to initialize project brief');
+      const msg = e.response?.data?.message || '';
+      if (msg.includes('already exists')) {
+        await loadData(id);
+        navigate(`/opportunities/${id}/project-brief`);
+      } else {
+        setError(msg || 'Failed to initialize project brief');
+      }
     } finally {
       setInitializingBrief(false);
     }
@@ -95,74 +108,123 @@ const SalesOpportunityDetailsPage: React.FC = () => {
   const tabs: TabItem[] = [
     { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={18} /> },
     { id: 'activity', label: 'Activity Timeline', icon: <Activity size={18} /> },
-    { id: 'approvals', label: 'Approvals & Verification', icon: <CheckCircle size={18} /> },
-    { id: 'attachments', label: 'Attachments', icon: <Paperclip size={18} /> }
+    { id: 'approvals', label: 'Approvals & Verification', icon: <CheckCircle size={18} /> }
   ];
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6 w-full">
+      <div style={{ marginBottom: '20px' }}>
+        <button
+          type="button"
+          onClick={() => navigate('/opportunities')}
+          style={{
+            height: '40px',
+            paddingInline: '12px',
+            backgroundColor: '#f8fafc',
+            color: '#475569',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: 600,
+            boxShadow: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            cursor: 'pointer'
+          }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m12 19-7-7 7-7"/>
+            <path d="M19 12H5"/>
+          </svg>
+          Back to Opportunities
+        </button>
+      </div>
+
       <PageHeader 
         title={opportunity.title}
         icon={<TrendingUp size={24} />}
         description={`Opportunity Number: ${opportunity.opportunityNumber}`}
         actionElement={
-          <div className="flex gap-2">
-            {canEditOpportunity && (
-              <Button 
-                variant="outline" 
-                icon={<Edit2 size={18} />} 
-                onClick={() => navigate(`/opportunities/${id}/edit`)}
-              >
-                Edit Opportunity
-              </Button>
-            )}
+          <div className="flex items-center gap-3">
+            <StatusBadge status={opportunity.stage} variant={getStatusVariant(opportunity.stage)} />
             
-            {!opportunity.projectBrief?.id && canCreateBrief && opportunity.stage === 'OPPORTUNITY' && (
-              <Button 
-                variant="primary" 
-                icon={<FileText size={18} />} 
-                onClick={handleStartBrief} 
-                isLoading={initializingBrief}
-              >
-                Start Project Brief
-              </Button>
-            )}
+            {(() => {
+              const hasProjectBriefRecord = Boolean((opportunity as any).projectBriefId) || Boolean(opportunity.projectBrief?.id);
+              const hasStartedBrief = hasProjectBriefRecord && Boolean(opportunity.projectBrief && (
+                (opportunity.projectBrief.currentVersionNumber && opportunity.projectBrief.currentVersionNumber > 0) || 
+                opportunity.projectBrief.status !== 'DRAFT'
+              ));
+              
+              if (!hasStartedBrief && canCreateBrief) {
+                return (
+                  <button
+                    type="button"
+                    onClick={handleStartBrief}
+                    disabled={initializingBrief}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      width: 'fit-content',
+                      padding: '6px 12px',
+                      borderRadius: '9999px',
+                      background: '#eff6ff',
+                      color: '#1d4ed8',
+                      border: '1px solid #bfdbfe',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      lineHeight: 1,
+                      cursor: 'pointer',
+                      gap: '6px'
+                    }}
+                  >
+                    {initializingBrief ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
+                    Open Project Brief
+                  </button>
+                );
+              }
 
-            {!!opportunity.projectBrief?.id && canReadBrief && (
-              <>
-                <Button 
-                  variant="outline" 
-                  icon={<History size={18} />} 
-                  onClick={() => navigate(`/opportunities/${id}/project-brief`)} // the user can click versions tab there
-                >
-                  View Version History
-                </Button>
-                <Button 
-                  variant="outline" 
-                  icon={<CheckCircle size={18} />} 
-                  onClick={() => setActiveTab('approvals')}
-                >
-                  Approval History
-                </Button>
-                <Button 
-                  variant="primary" 
-                  icon={<ExternalLink size={18} />} 
-                  onClick={handleOpenBrief}
-                >
-                  Open Project Brief
-                </Button>
-              </>
-            )}
+              if (hasStartedBrief && canReadBrief) {
+                return (
+                  <button
+                    type="button"
+                    onClick={handleOpenBrief}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      width: 'fit-content',
+                      padding: '6px 12px',
+                      borderRadius: '9999px',
+                      background: '#eff6ff',
+                      color: '#1d4ed8',
+                      border: '1px solid #bfdbfe',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      lineHeight: 1,
+                      cursor: 'pointer',
+                      gap: '6px'
+                    }}
+                  >
+                    <ExternalLink size={14} />
+                    View Project Brief
+                  </button>
+                );
+              }
+
+              return null;
+            })()}
           </div>
         }
       />
 
+
+
       {['BRIEF_IN_PROGRESS', 'BRIEF_SUBMITTED'].includes(opportunity.stage) && (
-        <div className="bg-info-bg text-info border border-info-border px-4 py-3 rounded-md flex items-start gap-3">
-          <FileText className="mt-0.5 flex-shrink-0" size={18} />
+        <div style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', padding: '16px', display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '16px' }}>
+          <FileText size={20} style={{ color: '#d97706', marginTop: '2px', flexShrink: 0 }} />
           <div>
-            <p className="font-medium">Project Brief is active</p>
-            <p className="text-sm mt-1">This opportunity has a project brief in progress or submitted. You can access it via the project briefs section.</p>
+            <p style={{ margin: 0, color: '#1e293b', fontSize: '15px', fontWeight: 600 }}>Project Brief is active</p>
+            <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '13px', lineHeight: 1.5 }}>This opportunity has a project brief in progress or submitted. You can access it via the project briefs section.</p>
           </div>
         </div>
       )}
@@ -171,117 +233,173 @@ const SalesOpportunityDetailsPage: React.FC = () => {
 
       <div className="mt-6">
         {activeTab === 'overview' && (
-          <Card>
-            <h2 className="text-lg font-semibold text-text-primary mb-6 border-b border-border pb-4">Opportunity Overview</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div>
-                <p className="text-sm font-medium text-text-secondary">Client</p>
-                <p className="mt-1 font-medium text-text-primary">{opportunity.clientName}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-text-secondary">Value</p>
-                <p className="mt-1 font-medium text-text-primary">
-                  {opportunity.currency} {opportunity.estimatedValue.toLocaleString()}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-text-secondary">Stage</p>
-                <div className="mt-1">
-                  <StatusBadge status={opportunity.stage} variant={getStatusVariant(opportunity.stage)} />
+          <div className="space-y-6">
+            <Card>
+              <div style={{ padding: '24px' }}>
+                <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0' }}>
+                  <h2 style={{ margin: 0, color: '#0f172a', fontSize: '20px', fontWeight: 700, lineHeight: 1.3 }}>
+                    Opportunity Overview
+                  </h2>
+                  <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '14px' }}>
+                    Basic opportunity details
+                  </p>
                 </div>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-text-secondary">Expected Close Date</p>
-                <p className={`mt-1 font-medium ${opportunity.expectedCloseDate && new Date(opportunity.expectedCloseDate) < new Date() && opportunity.stage !== 'WON' && opportunity.stage !== 'LOST' ? 'text-danger' : 'text-text-primary'}`}>
-                  {opportunity.expectedCloseDate ? format(new Date(opportunity.expectedCloseDate), 'MMM d, yyyy') : 'N/A'}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-text-secondary">Product Category</p>
-                <p className="mt-1 font-medium text-text-primary">{opportunity.productCategoryName || 'N/A'}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-text-secondary">Assigned Sales Officer</p>
-                <p className="mt-1 font-medium text-text-primary">{opportunity.assignedSalesOfficerName || 'Unassigned'}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-text-secondary">BDM Approval</p>
-                <div className="mt-1">
-                  {bdmApprovals.length > 0 ? (
-                    bdmApprovals[0].projectBriefVersionNumber === opportunity.projectBrief?.currentVersionNumber ? (
-                      <StatusBadge status={bdmApprovals[0].status} variant={bdmApprovals[0].status === 'APPROVED' ? 'success' : bdmApprovals[0].status === 'REJECTED' ? 'error' : 'warning'} />
-                    ) : (
-                      <StatusBadge status="RE-APPROVAL REQUIRED" variant="warning" />
-                    )
-                  ) : (
-                    <span className="text-text-muted italic">Not Started</span>
-                  )}
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Client</p>
+                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{opportunity.clientName}</p>
+                  </div>
+                  
+                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Value</p>
+                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>LKR {opportunity.estimatedValue.toLocaleString()}</p>
+                  </div>
+                  
+                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Product Category</p>
+                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{opportunity.productCategoryName || 'N/A'}</p>
+                  </div>
+                  
+                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Assigned Sales Officer</p>
+                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{opportunity.assignedSalesOfficerName || 'Unassigned'}</p>
+                  </div>
+                  
+                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Expected Close Date</p>
+                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>
+                      {opportunity.expectedCloseDate ? format(new Date(opportunity.expectedCloseDate), 'MMM d, yyyy') : 'N/A'}
+                    </p>
+                  </div>
+                  
+                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Stage</p>
+                    <div style={{ margin: '7px 0 0' }}>
+                      <StatusBadge status={opportunity.stage} variant={getStatusVariant(opportunity.stage)} />
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-text-secondary">Client Verification</p>
-                <div className="mt-1">
-                  {clientVerifications.length > 0 ? (
-                    clientVerifications[0].projectBriefVersionNumber === opportunity.projectBrief?.currentVersionNumber ? (
-                      <StatusBadge status={clientVerifications[0].status} variant={clientVerifications[0].status === 'CONFIRMED' ? 'success' : clientVerifications[0].status === 'REJECTED' ? 'error' : 'warning'} />
-                    ) : (
-                      <StatusBadge status="RE-VERIFICATION REQUIRED" variant="warning" />
-                    )
-                  ) : (
-                    <span className="text-text-muted italic">Not Started</span>
-                  )}
+                
+                <div style={{ marginTop: '40px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0' }}>
+                  <h2 style={{ margin: 0, color: '#0f172a', fontSize: '18px', fontWeight: 700, lineHeight: 1.3 }}>
+                    Workflow Status
+                  </h2>
                 </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>BDM Approval</p>
+                    <div style={{ margin: '7px 0 0' }}>
+                      {(() => {
+                        const currentVersion = opportunity.projectBrief?.currentVersionNumber || 0;
+                        const relevantApproval = bdmApprovals.find(a => a.projectBriefVersionNumber === currentVersion) || (bdmApprovals.length > 0 ? bdmApprovals[0] : null);
+                        
+                        if (relevantApproval) {
+                          let statusLabel = relevantApproval.status;
+                          if (statusLabel === 'APPROVED') statusLabel = 'Approved';
+                          else if (statusLabel === 'PENDING') statusLabel = 'Pending';
+                          else if (statusLabel === 'RETURNED_FOR_REVISION') statusLabel = 'Returned for Revision';
+                          else if (statusLabel === 'REJECTED') statusLabel = 'Rejected';
+                          
+                          const variant = getWorkflowVariant(statusLabel === 'Approved' ? 'APPROVED' : relevantApproval.status);
+                          return <StatusBadge status={statusLabel} variant={variant} />;
+                        }
+                        
+                        return <StatusBadge status="Not Started" variant="neutral" />;
+                      })()}
+                    </div>
+                  </div>
+                  
+                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Client Verification</p>
+                    <div style={{ margin: '7px 0 0' }}>
+                      {(() => {
+                        const currentVersion = opportunity.projectBrief?.currentVersionNumber || 0;
+                        const relevantVerification = clientVerifications.find(v => v.projectBriefVersionNumber === currentVersion) || (clientVerifications.length > 0 ? clientVerifications[0] : null);
+                        
+                        if (relevantVerification) {
+                          let statusLabel = relevantVerification.status;
+                          if (statusLabel === 'CONFIRMED' || statusLabel === 'CLIENT_VERIFIED' || statusLabel === 'APPROVED') {
+                            statusLabel = 'Approved';
+                          } else if (statusLabel === 'PENDING') {
+                            statusLabel = 'Pending Client Approval';
+                          }
+                          
+                          const variant = getWorkflowVariant(statusLabel === 'Approved' ? 'APPROVED' : relevantVerification.status);
+                          return <StatusBadge status={statusLabel} variant={variant} />;
+                        }
+                        
+                        return <StatusBadge status="Not Started" variant="neutral" />;
+                      })()}
+                    </div>
+                  </div>
+                </div>
+
+                {opportunity.description && (
+                  <>
+                    <div style={{ marginTop: '40px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0' }}>
+                      <h2 style={{ margin: 0, color: '#0f172a', fontSize: '18px', fontWeight: 700, lineHeight: 1.3 }}>
+                        Description
+                      </h2>
+                    </div>
+                    <p style={{ margin: 0, color: '#475569', fontSize: '15px', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+                      {opportunity.description}
+                    </p>
+                  </>
+                )}
               </div>
-            </div>
-            
-            {opportunity.description && (
-              <div className="mt-8 pt-6 border-t border-border">
-                <p className="text-sm font-medium text-text-secondary mb-2">Description</p>
-                <p className="text-body whitespace-pre-wrap">{opportunity.description}</p>
-              </div>
-            )}
-          </Card>
+            </Card>
+          </div>
         )}
 
         {activeTab === 'activity' && (
           <Card>
-            <h2 className="text-lg font-semibold text-text-primary mb-6 border-b border-border pb-4">Activity Timeline</h2>
+            <div className="flex-between border-b border-border pb-4" style={{ marginBottom: '2rem' }}>
+              <h3 className="text-lg font-semibold text-text-primary">Activity Timeline</h3>
+            </div>
+            
             {opportunity.activities.length === 0 ? (
-              <div className="text-center py-8 text-text-muted">
-                No activity recorded for this opportunity yet.
-              </div>
+              <EmptyState 
+                title="No activities added"
+                message="This opportunity has no activity history."
+              />
             ) : (
-              <div className="flow-root">
-                <ul className="-mb-8">
-                  {opportunity.activities.map((activity, activityIdx) => (
-                    <li key={activity.id}>
-                      <div className="relative pb-8">
-                        {activityIdx !== opportunity.activities.length - 1 ? (
-                          <span className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-border" aria-hidden="true" />
-                        ) : null}
-                        <div className="relative flex space-x-3">
-                          <div>
-                            <span className="h-8 w-8 rounded-full bg-primary flex items-center justify-center ring-4 ring-surface">
-                              <span className="text-white text-xs font-bold">
-                                {activity.createdByName.charAt(0).toUpperCase()}
-                              </span>
-                            </span>
-                          </div>
-                          <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                            <div>
-                              <p className="text-sm text-text-secondary">
-                                {activity.description} <span className="font-semibold text-text-primary">by {activity.createdByName}</span>
-                              </p>
-                            </div>
-                            <div className="text-right text-xs font-medium whitespace-nowrap text-text-muted">
-                              {format(new Date(activity.createdAt), 'MMM d, yyyy h:mm a')}
-                            </div>
-                          </div>
-                        </div>
+              <div style={{ display: 'flex', overflowX: 'auto', paddingBottom: '16px' }}>
+                {opportunity.activities.map((activity, index) => {
+                  const isLast = index === opportunity.activities.length - 1;
+                  return (
+                    <div key={activity.id} style={{ minWidth: '280px', flex: '0 0 25%', position: 'relative' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+                        <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#3b82f6', zIndex: 1, flexShrink: 0 }} />
+                        <div style={{ flex: 1, height: '2px', backgroundColor: isLast ? 'transparent' : '#e2e8f0' }} />
                       </div>
-                    </li>
-                  ))}
-                </ul>
+                      
+                      <div style={{ paddingRight: '24px' }}>
+                        <span style={{ 
+                          display: 'inline-block', 
+                          padding: '4px 8px', 
+                          backgroundColor: '#e0f2fe', 
+                          color: '#0369a1', 
+                          borderRadius: '6px', 
+                          fontSize: '11px', 
+                          fontWeight: 700, 
+                          letterSpacing: '0.04em',
+                          textTransform: 'uppercase',
+                          marginBottom: '12px' 
+                        }}>
+                          SYSTEM EVENT
+                        </span>
+                        <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#0f172a', fontWeight: 500, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+                          {activity.description}
+                        </p>
+                        <p style={{ margin: 0, fontSize: '12px', color: '#64748b', fontWeight: 500 }}>
+                          {format(new Date(activity.createdAt), 'MMM d, yyyy • h:mm a')}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </Card>
@@ -290,54 +408,110 @@ const SalesOpportunityDetailsPage: React.FC = () => {
         {activeTab === 'approvals' && (
           <div className="space-y-6">
             <Card>
-              <h2 className="text-lg font-semibold text-text-primary mb-6 border-b border-border pb-4">BDM Approvals</h2>
-              {bdmApprovals.length === 0 ? <p className="text-gray-500">No BDM approvals found.</p> : (
-                <ul className="space-y-4">
+              <div className="flex-between border-b border-border pb-4" style={{ marginBottom: '20px' }}>
+                <h3 className="text-lg font-semibold text-text-primary">BDM Approvals</h3>
+              </div>
+              {bdmApprovals.length === 0 ? (
+                <EmptyState 
+                  title="No approval history"
+                  message="No BDM approval records are available."
+                />
+              ) : (
+                <div className="space-y-4">
                   {bdmApprovals.map(a => (
-                    <li key={a.id} className="border p-4 rounded bg-gray-50">
-                      <div className="flex justify-between">
-                        <span className="font-medium text-gray-800">Status: {a.status}</span>
-                        <span className="text-sm text-gray-500">{new Date(a.createdAt).toLocaleString()}</span>
+                    <div key={a.id} style={{ padding: '20px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                      <div style={{ marginBottom: '16px' }}>
+                        <StatusBadge status={a.status} variant={getWorkflowVariant(a.status)} />
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">Decision by: {a.decisionMakerName || 'Pending'}</p>
-                    </li>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+                        <div>
+                          <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Decision Date</p>
+                          <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '15px', fontWeight: 500 }}>
+                            {a.createdAt ? format(new Date(a.createdAt), 'MMM d, yyyy • h:mm a') : 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Decision By</p>
+                          <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '15px', fontWeight: 500 }}>
+                            {a.decisionMakerName || 'Pending'}
+                          </p>
+                        </div>
+                      </div>
+                      {a.comments && a.comments.length > 0 && (
+                        <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
+                          <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Comments</p>
+                          {a.comments.map(c => (
+                            <p key={c.id} style={{ margin: '7px 0 0', color: '#475569', fontSize: '14px', lineHeight: 1.5 }}>
+                              {c.comment} <span style={{ fontSize: '12px', color: '#94a3b8' }}>— {c.createdByName}</span>
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   ))}
-                </ul>
+                </div>
               )}
             </Card>
+            
+            {(() => {
+              const currentVersion = opportunity?.projectBrief?.currentVersionNumber || 0;
+              const isBdmApprovedForCurrentVersion = bdmApprovals.length > 0 
+                && bdmApprovals[0].projectBriefVersionNumber === currentVersion 
+                && bdmApprovals[0].status === 'APPROVED';
+
+              return (
+                <ClientVerificationCard
+                  verifications={clientVerifications}
+                  opportunityId={opportunity.id}
+                  canCreate={canCreateVerification}
+                  onRefresh={() => id && loadData(id)}
+                  isBdmApprovedForCurrentVersion={isBdmApprovedForCurrentVersion}
+                />
+              );
+            })()}
+            
             <Card>
-              <ClientVerificationCard
-                verifications={clientVerifications}
-                projectBriefId={opportunity?.projectBrief?.id}
-                opportunityId={opportunity.id}
-                canCreate={canCreateVerification}
-                onRefresh={() => id && loadData(id)}
-              />
-            </Card>
-            <Card>
-              <h2 className="text-lg font-semibold text-text-primary mb-6 border-b border-border pb-4">Workflow History</h2>
-              {workflowHistory.length === 0 ? <p className="text-gray-500">No workflow history.</p> : (
-                <ul className="space-y-4 text-sm">
-                  {workflowHistory.map(h => (
-                    <li key={h.id} className="border-b pb-2">
-                      <span className="font-semibold">{h.action}</span> by {h.actorName || 'System'} on {new Date(h.createdAt).toLocaleString()}
-                      {h.comments && <p className="mt-1 italic text-gray-600">"{h.comments}"</p>}
-                    </li>
-                  ))}
-                </ul>
+              <div className="flex-between border-b border-border pb-4" style={{ marginBottom: '20px' }}>
+                <h3 className="text-lg font-semibold text-text-primary">Workflow History</h3>
+              </div>
+              {workflowHistory.length === 0 ? (
+                <EmptyState 
+                  title="No workflow history"
+                  message="No workflow events are available."
+                />
+              ) : (
+                <div style={{ paddingLeft: '8px' }}>
+                  {workflowHistory.map((h, index) => {
+                    const isLast = index === workflowHistory.length - 1;
+                    return (
+                      <div key={h.id} style={{ display: 'flex', position: 'relative' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: '16px' }}>
+                          <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#3b82f6', marginTop: '6px', zIndex: 1 }} />
+                          <div style={{ width: '2px', flex: 1, backgroundColor: isLast ? 'transparent' : '#e2e8f0', marginTop: '4px', marginBottom: '4px' }} />
+                        </div>
+                        <div style={{ paddingBottom: '24px', flex: 1 }}>
+                          <p style={{ margin: '0 0 4px', fontSize: '14px', color: '#0f172a', fontWeight: 600 }}>
+                            {h.action}
+                          </p>
+                          <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+                            by {h.actorName || 'System'}
+                          </p>
+                          <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94a3b8' }}>
+                            {h.createdAt ? format(new Date(h.createdAt), 'MMM d, yyyy • h:mm a') : 'N/A'}
+                          </p>
+                          {h.comments && (
+                            <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#475569', fontStyle: 'italic', backgroundColor: '#f8fafc', padding: '8px 12px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                              "{h.comments}"
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </Card>
           </div>
-        )}
-
-        {activeTab === 'attachments' && (
-          <Card>
-            <h2 className="text-lg font-semibold text-text-primary mb-6 border-b border-border pb-4">Attachments</h2>
-            <div className="text-center py-12 text-text-muted bg-surface-secondary rounded-lg border border-dashed border-border">
-              <Paperclip size={32} className="mx-auto mb-3 opacity-50" />
-              <p>Attachment management will be available soon.</p>
-            </div>
-          </Card>
         )}
       </div>
     </div>
