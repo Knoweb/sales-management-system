@@ -4,6 +4,7 @@ import com.knoweb.salesmanagement.lead.dto.ConvertLeadRequest;
 import com.knoweb.salesmanagement.opportunity.dto.OpportunityActivityDTO;
 import com.knoweb.salesmanagement.opportunity.dto.SalesOpportunityDTO;
 import com.knoweb.salesmanagement.opportunity.dto.SalesOpportunitySummaryDTO;
+import com.knoweb.salesmanagement.opportunity.dto.UpdateOpportunityRequest;
 import com.knoweb.salesmanagement.opportunity.enums.OpportunityStage;
 import com.knoweb.salesmanagement.opportunity.service.SalesOpportunityService;
 import jakarta.validation.Valid;
@@ -48,5 +49,13 @@ public class SalesOpportunityController {
     @PreAuthorize("hasAuthority('OPPORTUNITY_READ')")
     public SalesOpportunityDTO getOpportunity(@PathVariable UUID id) {
         return opportunityService.getOpportunity(id);
+    }
+
+    @PutMapping("/opportunities/{id}")
+    @PreAuthorize("hasAuthority('OPPORTUNITY_UPDATE')")
+    public SalesOpportunityDTO updateOpportunity(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateOpportunityRequest request) {
+        return opportunityService.updateOpportunity(id, request);
     }
 }

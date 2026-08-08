@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getOpportunities } from '../api/opportunityApi';
-import type { SalesOpportunitySummaryDTO } from '../api/opportunityApi';
+import { getOpportunities } from '../../api/opportunityApi';
+import type { SalesOpportunitySummaryDTO } from '../../api/opportunityApi';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { PageHeader } from '../components/PageHeader';
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/Table';
-import { StatusBadge, getStatusVariant } from '../components/StatusBadge';
-import { ErrorState, EmptyState, LoadingState } from '../components/FeedbackStates';
-import { Button } from '../components/Button';
-import { IconButton } from '../components/IconButton';
-import { Input, Select } from '../components/Forms';
-import { Card } from '../components/Card';
+import { PageHeader } from '../../components/PageHeader';
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../components/Table';
+import { StatusBadge, getStatusVariant } from '../../components/StatusBadge';
+import { ErrorState, EmptyState, LoadingState } from '../../components/FeedbackStates';
+import { Button } from '../../components/Button';
+import { IconButton } from '../../components/IconButton';
+import { Input, Select } from '../../components/Forms';
+import { Card } from '../../components/Card';
 import { Eye, TrendingUp, X, Edit2 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import EditOpportunityModal from '../../components/opportunities/EditOpportunityModal';
+import { useAuth } from '../../context/AuthContext';
 
 const SalesOpportunitiesPage: React.FC = () => {
   const { user } = useAuth();
@@ -20,6 +21,9 @@ const SalesOpportunitiesPage: React.FC = () => {
   const [opportunities, setOpportunities] = useState<SalesOpportunitySummaryDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [selectedOpportunity, setSelectedOpportunity] = useState<SalesOpportunitySummaryDTO | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Pagination and filtering state
   const [page, setPage] = useState(0);
@@ -200,7 +204,8 @@ const SalesOpportunitiesPage: React.FC = () => {
                               aria-label={`Edit opportunity ${opp.opportunityNumber}`} 
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/opportunities/${opp.id}/edit`);
+                                setSelectedOpportunity(opp);
+                                setIsEditModalOpen(true);
                               }}
                             >
                               <Edit2 size={16} />
@@ -238,6 +243,18 @@ const SalesOpportunitiesPage: React.FC = () => {
           </>
         )}
       </Card>
+      
+      {isEditModalOpen && selectedOpportunity && (
+        <EditOpportunityModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          opportunityId={selectedOpportunity.id}
+          onSuccess={() => {
+            setIsEditModalOpen(false);
+            loadOpportunities();
+          }}
+        />
+      )}
     </div>
   );
 };

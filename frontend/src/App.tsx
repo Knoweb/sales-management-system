@@ -14,8 +14,8 @@ import { DepartmentDetailsPage } from './pages/departments/DepartmentDetailsPage
 import { SkillsPage } from './pages/skills/SkillsPage';
 import { EmployeesPage } from './pages/employees/EmployeesPage';
 import { EmployeeDetailsPage } from './pages/employees/EmployeeDetailsPage';
-import SalesOpportunitiesPage from './pages/SalesOpportunitiesPage';
-import SalesOpportunityDetailsPage from './pages/SalesOpportunityDetailsPage';
+import SalesOpportunitiesPage from './pages/opportunities/SalesOpportunitiesPage';
+import SalesOpportunityDetailsPage from './pages/opportunities/SalesOpportunityDetailsPage';
 import { BdmApprovalsPage } from './pages/BdmApprovalsPage';
 import { BdmReviewPage } from './pages/BdmReviewPage';
 import { ClientVerificationPage } from './pages/clients/ClientVerificationPage';

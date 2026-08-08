@@ -65,6 +65,14 @@ export interface ConvertLeadRequest {
   assignedSalesOfficerId: string;
 }
 
+export interface UpdateOpportunityRequest {
+  title: string;
+  productCategoryId: string;
+  assignedSalesOfficerId: string;
+  estimatedValue: number;
+  expectedCloseDate: string;
+}
+
 export const convertLeadToOpportunity = async (leadId: string, data: ConvertLeadRequest): Promise<SalesOpportunityDTO> => {
   const response = await api.post(`/leads/${leadId}/convert-to-opportunity`, data);
   return response.data;
@@ -88,5 +96,10 @@ export const getOpportunities = async (
 
 export const getOpportunity = async (id: string): Promise<SalesOpportunityDTO> => {
   const response = await api.get(`/opportunities/${id}`);
+  return response.data;
+};
+
+export const updateOpportunity = async (id: string, data: UpdateOpportunityRequest): Promise<SalesOpportunityDTO> => {
+  const response = await api.put(`/opportunities/${id}`, data);
   return response.data;
 };

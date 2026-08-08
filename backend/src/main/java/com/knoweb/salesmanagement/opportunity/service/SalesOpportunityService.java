@@ -15,6 +15,7 @@ import com.knoweb.salesmanagement.lead.repository.LeadRepository;
 import com.knoweb.salesmanagement.opportunity.dto.OpportunityActivityDTO;
 import com.knoweb.salesmanagement.opportunity.dto.SalesOpportunityDTO;
 import com.knoweb.salesmanagement.opportunity.dto.SalesOpportunitySummaryDTO;
+import com.knoweb.salesmanagement.opportunity.dto.UpdateOpportunityRequest;
 import com.knoweb.salesmanagement.opportunity.entity.OpportunityActivity;
 import com.knoweb.salesmanagement.opportunity.entity.SalesOpportunity;
 import com.knoweb.salesmanagement.opportunity.enums.OpportunityStage;
@@ -237,6 +238,33 @@ public class SalesOpportunityService {
         SalesOpportunity opp = opportunityRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Opportunity not found"));
         validateAccess(opp);
+        return mapToDTO(opp);
+    }
+
+    @Transactional
+    public SalesOpportunityDTO updateOpportunity(UUID id, UpdateOpportunityRequest request) {
+        // OPPORTUNITY_UPDATE is checked at controller level
+        SalesOpportunity opp = opportunityRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Opportunity not found"));
+        
+        validateAccess(opp);
+
+        ProductCategory category = productCategoryRepository.findById(request.getProductCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Product category not found"));
+
+        Employee salesOfficer = employeeRepository.findById(request.getAssignedSalesOfficerId())
+                .orElseThrow(() -> new ResourceNotFoundException("Sales officer not found"));
+
+        opp.setTitle(request.getTitle());
+        opp.setProductCategory(category);
+        opp.setAssignedSalesOfficer(salesOfficer);
+        opp.setEstimatedValue(request.getEstimatedValue());
+        opp.setExpectedCloseDate(request.getExpectedCloseDate());
+        
+        opp = opportunityRepository.save(opp);
+        
+        logActivity(opp, "UPDATED", "Opportunity details were updated");
+        
         return mapToDTO(opp);
     }
 

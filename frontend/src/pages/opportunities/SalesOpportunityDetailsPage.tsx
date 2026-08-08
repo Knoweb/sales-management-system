@@ -1,18 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getOpportunity } from '../api/opportunityApi';
-import type { SalesOpportunityDTO } from '../api/opportunityApi';
-import { initializeProjectBrief } from '../api/projectBriefApi';
-import { getBdmApprovals, getClientVerifications, getWorkflowHistory, type BdmApprovalDTO, type ClientVerificationDTO, type WorkflowHistoryDTO } from '../services/ApprovalApi';
+import { getOpportunity } from '../../api/opportunityApi';
+import type { SalesOpportunityDTO } from '../../api/opportunityApi';
+import { initializeProjectBrief } from '../../api/projectBriefApi';
+import { getBdmApprovals, getClientVerifications, getWorkflowHistory, type BdmApprovalDTO, type ClientVerificationDTO, type WorkflowHistoryDTO } from '../../services/ApprovalApi';
 import { format } from 'date-fns';
-import { PageHeader } from '../components/PageHeader';
-import { Card } from '../components/Card';
-import { Tabs, type TabItem } from '../components/Tabs';
-import { StatusBadge, getStatusVariant } from '../components/StatusBadge';
-import { LoadingState, ErrorState, EmptyState } from '../components/FeedbackStates';
+import { PageHeader } from '../../components/PageHeader';
+import { Card } from '../../components/Card';
+import { Tabs, type TabItem } from '../../components/Tabs';
+import { StatusBadge, getStatusVariant } from '../../components/StatusBadge';
+import { LoadingState, ErrorState, EmptyState } from '../../components/FeedbackStates';
 import { FileText, Activity, LayoutDashboard, TrendingUp, CheckCircle, ExternalLink, Loader2 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { ClientVerificationCard } from '../components/clients/ClientVerificationCard';
+import { useAuth } from '../../context/AuthContext';
+import { ClientVerificationCard } from '../../components/clients/ClientVerificationCard';
 
 const getWorkflowVariant = (status: string) => {
   const s = status.toUpperCase().replace(/\s+/g, '_');

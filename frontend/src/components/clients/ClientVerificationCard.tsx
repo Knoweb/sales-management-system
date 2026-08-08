@@ -197,9 +197,12 @@ export const ClientVerificationCard: React.FC<ClientVerificationCardProps> = ({
 
           {status === 'CONFIRMED' && latest && (
             <div className="space-y-4">
-              <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '8px', color: '#166534', fontWeight: 500 }}>
-                <CheckCircle2 size={18} />
-                <span>Client has approved this project brief.</span>
+              <div style={{ backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '12px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <CheckCircle2 size={22} color="#16A34A" />
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontWeight: 600, fontSize: '15px', color: '#166534' }}>Client Approval Confirmed</span>
+                  <span style={{ fontSize: '12px', color: '#4B5563', marginTop: '2px' }}>The client has approved this Project Brief.</span>
+                </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
                 <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
