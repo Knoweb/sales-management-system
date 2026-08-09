@@ -217,6 +217,8 @@ public class TechnicalRoutingService {
             dto.setProjectBriefId(pb.getId());
             dto.setCurrentVersionNumber(pb.getCurrentVersionNumber());
             dto.setProjectTitle(pb.getProjectTitle());
+            dto.setBusinessProblem(pb.getBusinessProblem());
+            dto.setRequiredSolution(pb.getRequiredSolution());
             dto.setProjectScope(pb.getProjectScope());
             dto.setTechnicalRequirements(pb.getTechnicalRequirements());
             dto.setExpectedBudget(pb.getExpectedBudget());
@@ -226,6 +228,8 @@ public class TechnicalRoutingService {
             
             String suggestedDepts = pb.getRequiredDepartments().stream().map(Department::getName).collect(Collectors.joining(", "));
             dto.setSuggestedDepartments(suggestedDepts);
+            List<String> suggestedDeptIds = pb.getRequiredDepartments().stream().map(d -> d.getId().toString()).collect(Collectors.toList());
+            dto.setSuggestedDepartmentIds(suggestedDeptIds);
             dto.setProjectBriefStatus(pb.getStatus());
 
             Phase6ApprovalSummaryDTO approvalDto = new Phase6ApprovalSummaryDTO();

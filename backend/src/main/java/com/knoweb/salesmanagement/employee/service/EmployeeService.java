@@ -105,19 +105,31 @@ public class EmployeeService {
     @Transactional(readOnly = true)
     public Page<EmployeeDTO> searchEmployees(String search, UUID departmentId, EmploymentStatus employmentStatus, String employmentType, UUID skillId, Pageable pageable) {
         if (!accessService.hasGlobalAccess()) {
-            User currentUser = accessService.getAuthenticatedUser();
-            if (currentUser != null) {
-                java.util.Optional<Employee> currentEmp = employeeRepository.findByUserId(currentUser.getId());
-                if (currentEmp.isPresent()) {
-                    UUID myDeptId = currentEmp.get().getDepartment().getId();
-                    if (accessService.isDepartmentHeadFor(myDeptId)) {
-                        if (departmentId != null && !departmentId.equals(myDeptId)) {
-                            return Page.empty(pageable);
-                        }
-                        departmentId = myDeptId;
-                    }
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            boolean isHod = auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_HOD"));
+            
+            if (isHod) {
+                User currentUser = accessService.getAuthenticatedUser();
+                if (currentUser == null) {
+                    return Page.empty(pageable);
                 }
+                
+                Employee currentEmp = employeeRepository.findByUserId(currentUser.getId())
+                        .orElseThrow(() -> new IllegalStateException("Your user account is not linked to an employee profile."));
+                
+                if (currentEmp.getDepartment() == null) {
+                    throw new IllegalStateException("Your employee profile is not assigned to a department.");
+                }
+                
+                UUID myDeptId = currentEmp.getDepartment().getId();
+                
+                if (departmentId != null && !departmentId.equals(myDeptId)) {
+                    return Page.empty(pageable);
+                }
+                
+                departmentId = myDeptId;
             }
+            // For other roles, keep existing visibility unchanged by not modifying departmentId
         }
         
         String safeSearch = search == null ? "" : search;

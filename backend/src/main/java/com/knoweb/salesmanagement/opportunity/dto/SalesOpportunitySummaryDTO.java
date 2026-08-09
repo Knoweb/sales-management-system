@@ -20,6 +20,7 @@ public class SalesOpportunitySummaryDTO {
     private OpportunityStage stage;
     private ProjectBriefSummaryDTO projectBrief;
     private OffsetDateTime createdAt;
+    private String sourceLeadTitle;
     
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -45,4 +46,6 @@ public class SalesOpportunitySummaryDTO {
     public void setProjectBrief(ProjectBriefSummaryDTO projectBrief) { this.projectBrief = projectBrief; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
+    public String getSourceLeadTitle() { return sourceLeadTitle; }
+    public void setSourceLeadTitle(String sourceLeadTitle) { this.sourceLeadTitle = sourceLeadTitle; }
 }

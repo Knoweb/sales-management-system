@@ -9,14 +9,14 @@ import {
   searchEmployeeAvailability,
   type ProjectTeamDetailDTO,
   type EmployeeAvailabilityDTO
-} from '../services/ProjectTeamApi';
-import { PageHeader } from '../components/PageHeader';
-import { Card } from '../components/Card';
-import { StatusBadge } from '../components/StatusBadge';
-import { ErrorState, LoadingState, EmptyState } from '../components/FeedbackStates';
-import { Button } from '../components/Button';
-import { Input, Select, Checkbox, Textarea } from '../components/Forms';
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/Table';
+} from '../../services/ProjectTeamApi';
+import { PageHeader } from '../../components/PageHeader';
+import { Card } from '../../components/Card';
+import { StatusBadge } from '../../components/StatusBadge';
+import { ErrorState, LoadingState, EmptyState } from '../../components/FeedbackStates';
+import { Button } from '../../components/Button';
+import { Input, Select, Checkbox, Textarea } from '../../components/Forms';
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../components/Table';
 import { ArrowLeft, Users, Search, Plus, Trash2, CheckCircle } from 'lucide-react';
 
 export const ProjectTeamBuilderPage: React.FC = () => {

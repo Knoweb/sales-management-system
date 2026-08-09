@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { getDepartmentAssignedProjects, createProjectTeam, type AssignedProjectSummaryDTO } from '../services/ProjectTeamApi';
-import { EmployeeApi } from '../services/EmployeeApi';
+import { getDepartmentAssignedProjects, createProjectTeam, type AssignedProjectSummaryDTO } from '../../services/ProjectTeamApi';
+import { EmployeeApi } from '../../services/EmployeeApi';
 
-import { PageHeader } from '../components/PageHeader';
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/Table';
-import { StatusBadge } from '../components/StatusBadge';
-import { ErrorState, EmptyState, LoadingState } from '../components/FeedbackStates';
-import { Button } from '../components/Button';
+import { PageHeader } from '../../components/PageHeader';
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../components/Table';
+import { StatusBadge } from '../../components/StatusBadge';
+import { ErrorState, EmptyState, LoadingState } from '../../components/FeedbackStates';
+import { Button } from '../../components/Button';
 import { Users } from 'lucide-react';
 
 export const HodProjectQueuePage: React.FC = () => {

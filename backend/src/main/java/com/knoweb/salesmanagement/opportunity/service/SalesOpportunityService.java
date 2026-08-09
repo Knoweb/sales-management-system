@@ -283,6 +283,10 @@ public class SalesOpportunityService {
         dto.setProbabilityPercent(entity.getProbabilityPercent());
         dto.setStage(entity.getStage());
         dto.setCreatedAt(entity.getCreatedAt());
+        
+        if (entity.getLead() != null) {
+            dto.setSourceLeadTitle(entity.getLead().getTitle());
+        }
 
         Optional<ProjectBrief> briefOpt = projectBriefRepository.findByOpportunityId(entity.getId());
         ProjectBrief brief;

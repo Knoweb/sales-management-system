@@ -8,22 +8,19 @@ import {
   type TechnicalProjectDetailDTO,
   type ProjectRoutingRequest,
   type RoutingRevisionRequest
-} from '../services/TechnicalProjectApi';
-import { DepartmentApi } from '../services/DepartmentApi';
-import type { Department } from '../types/department';
-import { PageHeader } from '../components/PageHeader';
-import { Card } from '../components/Card';
-import { StatusBadge } from '../components/StatusBadge';
-import { ErrorState, LoadingState } from '../components/FeedbackStates';
-import { Button } from '../components/Button';
-import { IconButton } from '../components/IconButton';
-import { Input, Textarea } from '../components/Forms';
-import { Alert } from '../components/Alert';
-import { Waypoints, ArrowLeft } from 'lucide-react';
-
+} from '../../services/TechnicalProjectApi';
+import { DepartmentApi } from '../../services/DepartmentApi';
+import type { Department } from '../../types/department';
+import { Card } from '../../components/Card';
+import { StatusBadge } from '../../components/StatusBadge';
+import { ErrorState, LoadingState } from '../../components/FeedbackStates';
+import { Button } from '../../components/Button';
+import { Input, Textarea } from '../../components/Forms';
+import { Alert } from '../../components/Alert';
+import { Waypoints, ArrowLeft, AlertCircle, Check } from 'lucide-react';
+import './TechnicalProjectRoutingPage.css';
 interface DeptRoutingConfig {
   departmentId: string;
-  requiredScope: string;
   expectedEstimateSubmissionDate: string;
   routingNotes: string;
 }
@@ -61,7 +58,6 @@ export const TechnicalProjectRoutingPage: React.FC = () => {
         projData.routedDepartments.forEach(d => {
           initialConfigs[d.departmentId] = {
             departmentId: d.departmentId,
-            requiredScope: (projData.projectBrief?.projectScope || projData.projectBrief?.projectDescription || '').trim() || 'Technical scope assessment required',
             expectedEstimateSubmissionDate: format(addDays(new Date(), 7), 'yyyy-MM-dd'),
             routingNotes: d.routingReason || ''
           };
@@ -79,7 +75,6 @@ export const TechnicalProjectRoutingPage: React.FC = () => {
   }, [id]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, [fetchData]);
 
@@ -94,7 +89,6 @@ export const TechnicalProjectRoutingPage: React.FC = () => {
             ...old,
             [deptId]: {
               departmentId: deptId,
-              requiredScope: (project?.projectBrief?.projectScope || project?.projectBrief?.projectDescription || '').trim() || 'Technical scope assessment required',
               expectedEstimateSubmissionDate: format(addDays(new Date(), 7), 'yyyy-MM-dd'),
               routingNotes: ''
             }
@@ -123,7 +117,6 @@ export const TechnicalProjectRoutingPage: React.FC = () => {
   const isDeptConfigValid = (deptId: string): boolean => {
     const config = deptConfigs[deptId];
     if (!config) return false;
-    if (!config.requiredScope || !config.requiredScope.trim()) return false;
     if (!config.expectedEstimateSubmissionDate || !config.expectedEstimateSubmissionDate.trim()) return false;
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     if (config.expectedEstimateSubmissionDate < todayStr) return false;
@@ -174,7 +167,7 @@ export const TechnicalProjectRoutingPage: React.FC = () => {
           const cfg = deptConfigs[deptId];
           return {
             departmentId: deptId,
-            requiredScope: cfg?.requiredScope?.trim() || '',
+            requiredScope: project?.projectScope || 'Refer to Project Scope',
             expectedEstimateSubmissionDate: cfg?.expectedEstimateSubmissionDate || format(addDays(new Date(), 7), 'yyyy-MM-dd'),
             ...(cfg?.routingNotes?.trim() ? { routingNotes: cfg.routingNotes.trim() } : {})
           };
@@ -203,7 +196,7 @@ export const TechnicalProjectRoutingPage: React.FC = () => {
           const cfg = deptConfigs[deptId];
           return {
             departmentId: deptId,
-            requiredScope: cfg?.requiredScope?.trim() || '',
+            requiredScope: project?.projectScope || 'Refer to Project Scope',
             expectedEstimateSubmissionDate: cfg?.expectedEstimateSubmissionDate || format(addDays(new Date(), 7), 'yyyy-MM-dd'),
             ...(cfg?.routingNotes?.trim() ? { routingNotes: cfg.routingNotes.trim() } : {})
           };
@@ -249,53 +242,213 @@ export const TechnicalProjectRoutingPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12">
-      <div className="flex items-center space-x-4">
-        <IconButton icon={<ArrowLeft className="w-5 h-5" />} onClick={() => navigate('/technical-projects')} aria-label="Back" />
-        <PageHeader
-          title={`Route Project: ${project.projectBrief?.projectName || 'Unknown'}`}
-          description="Select technical departments and route this project."
-        />
+    <div className="max-w-5xl mx-auto pb-12">
+      <div>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => navigate('/technical-projects')}
+          style={{
+            height: '40px',
+            paddingInline: '12px',
+            backgroundColor: '#ffffff',
+            color: '#475569',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: 600,
+            boxShadow: 'none',
+          }}
+        >
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+            <ArrowLeft size={18} strokeWidth={2.2} />
+            Back to Technical Projects
+          </span>
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="p-6 space-y-6"><div className="mb-4"><h3 className="text-lg font-medium text-gray-900">Project Details</h3></div>
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="text-lg font-medium text-gray-900">{project.projectBrief?.projectName}</h3>
-                <p className="text-sm text-gray-500 mt-1">Status: <StatusBadge status={project.status} /></p>
-              </div>
+      <div style={{ marginTop: '24px', marginBottom: '24px' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '24px',
+            width: '100%',
+            backgroundColor: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: '16px',
+            padding: '24px 28px',
+            boxShadow: '0 1px 3px rgba(15, 23, 42, 0.06)',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '20px',
+              minWidth: 0,
+            }}
+          >
+            <div
+              style={{
+                width: '56px',
+                height: '56px',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '16px',
+                backgroundColor: '#eff6ff',
+                color: '#2563eb',
+              }}
+            >
+              <Waypoints size={28} />
             </div>
-            
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="block text-gray-500 mb-1">Expected Start Date</span>
-                <span className="font-medium">
-                  {project.projectBrief?.expectedStartDate ? format(new Date(project.projectBrief.expectedStartDate), 'MMM d, yyyy') : '-'}
-                </span>
-              </div>
-              <div>
-                <span className="block text-gray-500 mb-1">Expected Delivery Date</span>
-                <span className="font-medium">
-                  {project.projectBrief?.expectedDeliveryDate ? format(new Date(project.projectBrief.expectedDeliveryDate), 'MMM d, yyyy') : '-'}
-                </span>
+
+            <div style={{ minWidth: 0 }}>
+              <h1
+                style={{
+                  margin: 0,
+                  fontSize: '24px',
+                  lineHeight: '1.25',
+                  fontWeight: 700,
+                  color: '#0f172a',
+                }}
+              >
+                {project.projectTitle || 'Technical Project'}
+              </h1>
+
+              <p
+                style={{
+                  margin: '6px 0 0',
+                  fontSize: '15px',
+                  color: '#64748b',
+                }}
+              >
+                Client: {project.clientName || 'Not provided'}
+                {project.opportunityReference
+                  ? ` • Opportunity: ${project.opportunityReference}`
+                  : ''}
+              </p>
+            </div>
+          </div>
+
+          <div style={{ flexShrink: 0 }}>
+            <StatusBadge status={project.status} />
+          </div>
+        </div>
+      </div>
+
+      <div className="technical-page-sections">
+        <Card className="technical-section-card">
+          <div className="technical-section-header">
+            <h2>Project Details</h2>
+          </div>
+
+          <div className="technical-details-grid">
+            <div className="technical-detail-field">
+              <label>Client</label>
+              <div className="technical-detail-value">
+                {project.clientName || 'Not provided'}
               </div>
             </div>
 
-            <div>
-              <span className="block text-gray-500 mb-1 text-sm">Description</span>
-              <p className="text-gray-900 whitespace-pre-wrap text-sm">{project.projectBrief?.projectDescription || '-'}</p>
+            <div className="technical-detail-field">
+              <label>Opportunity</label>
+              <div className="technical-detail-value">
+                {project.opportunityTitle || project.opportunityReference || 'Not provided'}
+              </div>
             </div>
-            
-            <div>
-              <span className="block text-gray-500 mb-1 text-sm">Scope</span>
-              <p className="text-gray-900 whitespace-pre-wrap text-sm">{project.projectBrief?.projectScope || '-'}</p>
-            </div>
-          </Card>
 
-          {isRouted && (
-            <Card className="p-6"><div className="mb-4"><h3 className="text-lg font-medium text-gray-900">Routed Departments</h3></div>
+            <div className="technical-detail-field">
+              <label>Expected Budget</label>
+              <div className="technical-detail-value">
+                {project.expectedBudget
+                  ? `LKR ${project.expectedBudget.toLocaleString()}`
+                  : 'Not provided'}
+              </div>
+            </div>
+
+            <div className="technical-detail-field">
+              <label>Expected Deadline</label>
+              <div className="technical-detail-value">
+                {project.expectedDeadline
+                  ? format(new Date(project.expectedDeadline), 'MMM d, yyyy')
+                  : 'Not provided'}
+              </div>
+            </div>
+
+            <div className="technical-detail-field">
+              <label>Project Brief Version</label>
+              <div className="technical-detail-value">
+                {project.currentVersionNumber
+                  ? `Version ${project.currentVersionNumber}`
+                  : 'Not provided'}
+              </div>
+            </div>
+
+            <div className="technical-detail-field">
+              <label>Status</label>
+              <div className="technical-detail-value technical-status-field">
+                <StatusBadge status={project.status} />
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="technical-section-card">
+          <div className="technical-section-header">
+            <h2>Project Requirements</h2>
+          </div>
+
+          <div className="technical-requirements">
+            <div className="technical-requirement-field">
+              <label>Project Scope</label>
+              <div className="technical-requirement-value">
+                {project.projectScope || 'Not provided'}
+              </div>
+            </div>
+
+            <div className="technical-requirement-field">
+              <label>Technical Requirements</label>
+              <div className="technical-requirement-value">
+                {project.technicalRequirements || 'Not provided'}
+              </div>
+            </div>
+
+            <div className="technical-requirement-field">
+              <label>Required Departments</label>
+              <div className="technical-department-chips">
+                {project.suggestedDepartmentIds && project.suggestedDepartmentIds.length > 0 ? (
+                  project.suggestedDepartmentIds.map(deptId => {
+                    const dept = departments.find(d => d.id === deptId);
+                    return (
+                      <span key={deptId} className="technical-department-chip">
+                        {dept?.name || deptId}
+                      </span>
+                    );
+                  })
+                ) : project.suggestedDepartments ? (
+                  project.suggestedDepartments.split(',').map((deptName, i) => (
+                    <span key={i} className="technical-department-chip">
+                      {deptName.trim()}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-sm text-slate-500">None specified</span>
+                )}
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {isRouted && (
+          <Card className="technical-section-card">
+            <div className="technical-section-header">
+              <h2>Routed Departments</h2>
+            </div>
+            <div className="technical-routing-content">
               <div className="space-y-4">
                 {project.routedDepartments.map((d) => (
                   <div key={d.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg border border-gray-200">
@@ -307,66 +460,75 @@ export const TechnicalProjectRoutingPage: React.FC = () => {
                   </div>
                 ))}
               </div>
-            </Card>
-          )}
-        </div>
+            </div>
+          </Card>
+        )}
 
-        <div className="space-y-6">
-          {canRoute && (
-            <Card className="p-6"><div className="mb-4"><h3 className="text-lg font-medium text-gray-900">Routing Configuration</h3></div>
-              <div className="space-y-6">
-                {error && (
-                  <Alert variant="error" title="Validation / Routing Error">
-                    {error}
-                  </Alert>
-                )}
+        {canRoute && (
+          <Card className="technical-section-card">
+            <div className="technical-section-header">
+              <h2>Routing Configuration</h2>
+            </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Departments *</label>
-                  <div className="space-y-2 max-h-60 overflow-y-auto p-2 border border-gray-200 rounded-md">
-                    {departments.map(dept => (
-                      <label key={dept.id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedDeptIds.includes(dept.id)}
-                          onChange={() => toggleDepartment(dept.id)}
-                          className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                        />
-                        <span className="text-sm text-gray-900 font-medium">{dept.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                  {selectedDeptIds.length === 0 && (
-                    <p className="text-sm text-red-600 mt-1">Please select at least one department.</p>
-                  )}
+            <div className="technical-routing-content">
+              {error && (
+                <Alert variant="error" title="Validation / Routing Error">
+                  {error}
+                </Alert>
+              )}
+
+              <label className="technical-routing-label">
+                Select Departments <span>*</span>
+              </label>
+
+              <div className="technical-department-grid">
+                {departments.map(dept => {
+                  const isSelected = selectedDeptIds.includes(dept.id);
+                  return (
+                    <button
+                      type="button"
+                      key={dept.id}
+                      onClick={() => toggleDepartment(dept.id)}
+                      className={
+                        isSelected
+                          ? 'technical-department-option selected'
+                          : 'technical-department-option'
+                      }
+                    >
+                      <span className="technical-checkbox">
+                        {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                      </span>
+                      <span>{dept.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {selectedDeptIds.length === 0 && (
+                <div className="technical-routing-error">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>Please select at least one department.</span>
                 </div>
+              )}
 
-                {selectedDeptIds.length > 0 && (
-                  <div className="space-y-4 border-t border-gray-200 pt-4">
-                    <h4 className="text-sm font-semibold text-gray-900">Department Routing Details</h4>
+              {selectedDeptIds.length > 0 && (
+                <div className="technical-routing-details">
+                  <h3 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-3">Department Routing Details</h3>
+                  <div>
                     {selectedDeptIds.map(deptId => {
                       const dept = departments.find(d => d.id === deptId);
                       const config = deptConfigs[deptId] || {
                         departmentId: deptId,
-                        requiredScope: (project?.projectBrief?.projectScope || project?.projectBrief?.projectDescription || '').trim() || 'Technical scope assessment required',
                         expectedEstimateSubmissionDate: format(addDays(new Date(), 7), 'yyyy-MM-dd'),
                         routingNotes: ''
                       };
                       return (
-                        <div key={deptId} className="p-4 bg-gray-50 border border-gray-200 rounded-lg space-y-4">
-                          <h5 className="font-medium text-gray-900">{dept?.name || deptId}</h5>
-                          <Textarea
-                            label="Required Scope *"
-                            value={config.requiredScope}
-                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updateDeptConfig(deptId, 'requiredScope', e.target.value)}
-                            placeholder="Specify technical scope required..."
-                            required
-                            rows={3}
-                            error={fieldErrors[`${deptId}_requiredScope`]}
-                          />
+                        <div key={deptId} className="technical-department-routing-card space-y-5">
+                          <h5 className="text-base font-semibold text-slate-900">{dept?.name || deptId}</h5>
+                          
                           <Input
                             type="date"
-                            label="Expected Estimate Submission Date *"
+                            label="Expected Estimate Submission Date"
                             value={config.expectedEstimateSubmissionDate}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDeptConfig(deptId, 'expectedEstimateSubmissionDate', e.target.value)}
                             required
@@ -377,7 +539,7 @@ export const TechnicalProjectRoutingPage: React.FC = () => {
                             label="Routing Notes (Optional)"
                             value={config.routingNotes}
                             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updateDeptConfig(deptId, 'routingNotes', e.target.value)}
-                            placeholder="Optional notes or instructions for this department..."
+                            placeholder="Optional notes..."
                             rows={2}
                             error={fieldErrors[`${deptId}_routingNotes`]}
                           />
@@ -385,9 +547,11 @@ export const TechnicalProjectRoutingPage: React.FC = () => {
                       );
                     })}
                   </div>
-                )}
+                </div>
+              )}
 
-                {isRevision && (
+              {isRevision && (
+                <div className="mt-6 pt-4 border-t border-slate-200">
                   <Textarea
                     label="Revision Reason *"
                     value={revisionReason}
@@ -397,10 +561,11 @@ export const TechnicalProjectRoutingPage: React.FC = () => {
                     rows={3}
                     error={fieldErrors['revisionReason']}
                   />
-                )}
+                </div>
+              )}
 
+              <div className="technical-routing-actions">
                 <Button
-                  className="w-full"
                   onClick={isRevision ? handleRevise : handleRoute}
                   disabled={submitting || !isAllValid}
                   isLoading={submitting}
@@ -409,9 +574,9 @@ export const TechnicalProjectRoutingPage: React.FC = () => {
                   {isRevision ? 'Revise Routing' : 'Route Project'}
                 </Button>
               </div>
-            </Card>
-          )}
-        </div>
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   );

@@ -76,15 +76,37 @@ export interface TechnicalProjectDepartmentDTO {
 
 export interface TechnicalProjectDetailDTO {
   id: string;
-  projectBriefId: string;
-  projectBrief?: TechnicalProjectBriefDTO;
+  projectCode: string;
   status: TechnicalProjectStatus;
-  routedAt?: string;
-  routedBy?: string;
-  routedDepartments: TechnicalProjectDepartmentDTO[];
+  technicalCoordinatorId?: string;
+  technicalCoordinatorName?: string;
   createdAt: string;
-  updatedAt: string;
+  routedAt?: string;
   version: number;
+
+  clientId: string;
+  clientName: string;
+  primaryContactSummary?: string;
+
+  salesOpportunityId: string;
+  opportunityReference: string;
+  opportunityTitle: string;
+  opportunityStage?: string;
+
+  projectBriefId: string;
+  currentVersionNumber: number;
+  projectTitle: string;
+  projectScope?: string;
+  technicalRequirements?: string;
+  expectedBudget?: number;
+  currency?: string;
+  expectedDeadline?: string;
+  siteDetails?: string;
+  suggestedDepartments?: string;
+  suggestedDepartmentIds?: string[];
+  projectBriefStatus?: string;
+
+  routedDepartments: TechnicalProjectDepartmentDTO[];
 }
 export interface TechnicalRoutingDepartmentRequest {
   departmentId: string;

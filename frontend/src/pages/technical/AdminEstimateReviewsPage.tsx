@@ -1,17 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getSubmittedEstimates, getLatestConsolidatedEstimate, consolidateAndApprove, requestRevision, type DepartmentEstimateDTO, type ConsolidatedTechnicalEstimateDTO } from '../services/TechnicalCostingApi';
-import { getTechnicalProjects, type TechnicalProjectSummaryDTO } from '../services/TechnicalProjectApi';
-import { PageHeader } from '../components/PageHeader';
-import { Card } from '../components/Card';
-import { StatusBadge } from '../components/StatusBadge';
-import { LoadingState, EmptyState } from '../components/FeedbackStates';
-import { Button } from '../components/Button';
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/Table';
+import { getSubmittedEstimates, getLatestConsolidatedEstimate, consolidateAndApprove, requestRevision, type DepartmentEstimateDTO, type ConsolidatedTechnicalEstimateDTO } from '../../services/TechnicalCostingApi';
+import { getTechnicalProjects, type TechnicalProjectSummaryDTO } from '../../services/TechnicalProjectApi';
+import { PageHeader } from '../../components/PageHeader';
+import { Card } from '../../components/Card';
+import { StatusBadge } from '../../components/StatusBadge';
+import { LoadingState, EmptyState } from '../../components/FeedbackStates';
+import { Button } from '../../components/Button';
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../components/Table';
 import { Search, Calculator, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
-import { Textarea } from '../components/Forms';
+import { Textarea } from '../../components/Forms';
 
 const formatCurrency = (value: any): string => {
   if (value === null || value === undefined || value === '') return '—';

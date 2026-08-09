@@ -137,4 +137,17 @@ public class TechnicalProjectDetailDTO {
 
     public List<TechnicalProjectDepartmentDTO> getRoutedDepartments() { return routedDepartments; }
     public void setRoutedDepartments(List<TechnicalProjectDepartmentDTO> routedDepartments) { this.routedDepartments = routedDepartments; }
+
+    private String businessProblem;
+    private String requiredSolution;
+    private List<String> suggestedDepartmentIds;
+
+    public String getBusinessProblem() { return businessProblem; }
+    public void setBusinessProblem(String businessProblem) { this.businessProblem = businessProblem; }
+
+    public String getRequiredSolution() { return requiredSolution; }
+    public void setRequiredSolution(String requiredSolution) { this.requiredSolution = requiredSolution; }
+
+    public List<String> getSuggestedDepartmentIds() { return suggestedDepartmentIds; }
+    public void setSuggestedDepartmentIds(List<String> suggestedDepartmentIds) { this.suggestedDepartmentIds = suggestedDepartmentIds; }
 }

@@ -50,6 +50,7 @@ interface EmployeeFormFieldsProps {
   usersToDisplay: SimpleUser[];
   employeeNumberDisabled: boolean;
   employeeNumberValue: string;
+  hasGlobalAccess: boolean;
 }
 
 const EmployeeFormFields: React.FC<EmployeeFormFieldsProps> = ({
@@ -59,7 +60,8 @@ const EmployeeFormFields: React.FC<EmployeeFormFieldsProps> = ({
   departments,
   usersToDisplay,
   employeeNumberDisabled,
-  employeeNumberValue
+  employeeNumberValue,
+  hasGlobalAccess
 }) => {
   return (
     <>
@@ -153,21 +155,23 @@ const EmployeeFormFields: React.FC<EmployeeFormFieldsProps> = ({
             />
           </FormField>
           
-          <FormField label="User Account" id="userId">
-            <Select
-              id="userId"
-              value={formData.userId}
-              onChange={(e) => updateFormField('userId', e.target.value)}
-              disabled={formLoading}
-            >
-              <option value="">-- No User Account --</option>
-              {usersToDisplay.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.firstName} {u.lastName} ({u.email})
-                </option>
-              ))}
-            </Select>
-          </FormField>
+          {hasGlobalAccess && (
+            <FormField label="User Account" id="userId">
+              <Select
+                id="userId"
+                value={formData.userId}
+                onChange={(e) => updateFormField('userId', e.target.value)}
+                disabled={formLoading}
+              >
+                <option value="">-- No User Account --</option>
+                {usersToDisplay.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.firstName} {u.lastName} ({u.email})
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+          )}
         </div>
 
         <div style={{ marginTop: '0.5rem', marginBottom: '0.75rem' }}>
@@ -276,20 +280,37 @@ export const EmployeesPage: React.FC = () => {
   const { user } = useAuth();
 
   const canCreate = user?.permissions.includes('EMPLOYEE_CREATE') ?? false;
+  const hasGlobalAccess = user?.roles?.some(r => 
+    ['SYSTEM_ADMIN', 'TOP_MANAGEMENT', 'TECHNICAL_COORDINATOR'].includes(r)
+  ) ?? false;
 
   const loadData = async () => {
     try {
       setLoading(true);
 
-      const [empData, deptData, usersResponse] = await Promise.all([
-        EmployeeApi.search(),
-        DepartmentApi.search(),
-        apiClient.get('/users', { params: { active: true, unlinked: true, size: 100 } })
-      ]);
-
+      // 1. Core Employee Data (Required)
+      const empData = await EmployeeApi.search();
       setEmployees(empData.content || []);
-      setDepartments(deptData.content || []);
-      setAvailableUsers(usersResponse.data?.content || []);
+
+      // 2. Global Administrator Data (Optional)
+      if (hasGlobalAccess) {
+        const [deptResult, usersResult] = await Promise.allSettled([
+          DepartmentApi.search(),
+          apiClient.get('/users', { params: { active: true, unlinked: true, size: 100 } })
+        ]);
+
+        if (deptResult.status === 'fulfilled') {
+          setDepartments(deptResult.value.content || []);
+        } else {
+          console.warn('Failed to load departments', deptResult.reason);
+        }
+
+        if (usersResult.status === 'fulfilled') {
+          setAvailableUsers(usersResult.value.data?.content || []);
+        } else {
+          console.warn('Failed to load available users', usersResult.reason);
+        }
+      }
     } catch (error) {
       console.error('Failed to load employee data', error);
     } finally {
@@ -513,19 +534,21 @@ export const EmployeesPage: React.FC = () => {
           )}
         </div>
 
-        <div style={{ width: '220px', flexShrink: 0 }}>
-          <Select
-            value={deptFilter}
-            onChange={(event) => setDeptFilter(event.target.value)}
-          >
-            <option value="">All Departments</option>
-            {departments.map((department) => (
-              <option key={department.id} value={department.id}>
-                {department.name}
-              </option>
-            ))}
-          </Select>
-        </div>
+        {hasGlobalAccess && (
+          <div style={{ width: '220px', flexShrink: 0 }}>
+            <Select
+              value={deptFilter}
+              onChange={(event) => setDeptFilter(event.target.value)}
+            >
+              <option value="">All Departments</option>
+              {departments.map((department) => (
+                <option key={department.id} value={department.id}>
+                  {department.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+        )}
       </div>
 
       <Card>
@@ -630,6 +653,7 @@ export const EmployeesPage: React.FC = () => {
             usersToDisplay={usersToDisplay} 
             employeeNumberDisabled={true} 
             employeeNumberValue={selectedEmployee?.employeeNumber || ''} 
+            hasGlobalAccess={hasGlobalAccess}
           />
 
           <div
@@ -703,9 +727,10 @@ export const EmployeesPage: React.FC = () => {
             updateFormField={updateAddFormField} 
             formLoading={addFormLoading} 
             departments={departments} 
-            usersToDisplay={availableUsers} 
+            usersToDisplay={usersToDisplay} 
             employeeNumberDisabled={false} 
             employeeNumberValue={addFormData.employeeNumber} 
+            hasGlobalAccess={hasGlobalAccess}
           />
 
           <div

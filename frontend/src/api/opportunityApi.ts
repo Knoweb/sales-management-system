@@ -54,6 +54,7 @@ export interface SalesOpportunitySummaryDTO {
   clientName: string;
   assignedSalesOfficerName?: string;
   createdAt: string;
+  sourceLeadTitle?: string;
 }
 
 export interface ConvertLeadRequest {

@@ -7,14 +7,14 @@ import {
   initializeTechnicalProject,
   type TechnicalProjectSummaryDTO,
   type EligibleProjectBriefSummaryDTO
-} from '../services/TechnicalProjectApi';
-import { PageHeader } from '../components/PageHeader';
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/Table';
-import { StatusBadge } from '../components/StatusBadge';
-import { EmptyState, LoadingState } from '../components/FeedbackStates';
-import { Button } from '../components/Button';
+} from '../../services/TechnicalProjectApi';
+import { PageHeader } from '../../components/PageHeader';
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../components/Table';
+import { StatusBadge } from '../../components/StatusBadge';
+import { EmptyState, LoadingState } from '../../components/FeedbackStates';
+import { Button } from '../../components/Button';
 import { Waypoints, Play } from 'lucide-react';
-import { Alert } from '../components/Alert';
+import { Alert } from '../../components/Alert';
 
 export const TechnicalProjectQueuePage: React.FC = () => {
   const [projects, setProjects] = useState<TechnicalProjectSummaryDTO[]>([]);

@@ -171,7 +171,10 @@ const SalesOpportunitiesPage: React.FC = () => {
                     <TableRow key={opp.id}>
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="text-xs text-gray-500 font-mono">{opp.opportunityNumber}</span>
+                          <span className="font-semibold text-gray-900">{opp.title}</span>
+                          {/* <span className="text-xs text-gray-500 mt-0.5">
+                            {opp.sourceLeadTitle ? `From: ${opp.sourceLeadTitle}` : 'Direct Opportunity'}
+                          </span> */}
                         </div>
                       </TableCell>
                       <TableCell>{opp.clientName}</TableCell>
