@@ -204,12 +204,53 @@ public class ProjectExecutionWorkspaceService {
             throw new IllegalArgumentException("Complete or cancel all active tasks before entering project closure details.");
         }
 
+        if (Boolean.TRUE.equals(dto.getClientAccepted())) {
+            if (dto.getClientAcceptanceDate() == null) {
+                throw new IllegalArgumentException("Client acceptance date is required when client accepted is true.");
+            }
+            com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus effectiveInspectionStatus = 
+                dto.getInspectionStatus() != null ? dto.getInspectionStatus() : workspace.getInspectionStatus();
+            if (effectiveInspectionStatus != com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus.PASSED) {
+                throw new IllegalArgumentException("Client acceptance can only be recorded if Final Inspection is PASSED.");
+            }
+            java.time.LocalDate effectiveDeliveryDate = dto.getDeliveryDate() != null ? dto.getDeliveryDate() : workspace.getDeliveryDate();
+            if (effectiveDeliveryDate == null) {
+                throw new IllegalArgumentException("Client acceptance can only be recorded if Delivery Date exists.");
+            }
+            boolean effectiveInstallationCompleted = dto.getInstallationCompleted() != null ? dto.getInstallationCompleted() : workspace.getInstallationCompleted();
+            if (!effectiveInstallationCompleted) {
+                throw new IllegalArgumentException("Client acceptance can only be recorded if Installation is completed.");
+            }
+        }
+
+        if (dto.getWarrantyStartDate() != null || dto.getWarrantyEndDate() != null || (dto.getWarrantyNotes() != null && !dto.getWarrantyNotes().isEmpty())) {
+            boolean effectiveClientAccepted = dto.getClientAccepted() != null ? dto.getClientAccepted() : workspace.getClientAccepted();
+            java.time.LocalDate effectiveClientAcceptanceDate = dto.getClientAcceptanceDate() != null ? dto.getClientAcceptanceDate() : workspace.getClientAcceptanceDate();
+            
+            if (!effectiveClientAccepted || effectiveClientAcceptanceDate == null) {
+                throw new IllegalArgumentException("Warranty details can only be recorded after Client Acceptance.");
+            }
+            if (dto.getWarrantyStartDate() != null && dto.getWarrantyEndDate() != null) {
+                if (dto.getWarrantyEndDate().isBefore(dto.getWarrantyStartDate())) {
+                    throw new IllegalArgumentException("Warranty end date cannot be before warranty start date.");
+                }
+            }
+        }
+
         workspace.setInspectionStatus(dto.getInspectionStatus() != null ? dto.getInspectionStatus() : com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus.PENDING);
         workspace.setInspectionDate(dto.getInspectionDate());
         workspace.setInspectionNotes(dto.getInspectionNotes());
         workspace.setDeliveryDate(dto.getDeliveryDate());
         workspace.setInstallationCompleted(dto.getInstallationCompleted() != null ? dto.getInstallationCompleted() : false);
         workspace.setDeliveryNotes(dto.getDeliveryNotes());
+
+        workspace.setClientAccepted(dto.getClientAccepted() != null ? dto.getClientAccepted() : false);
+        workspace.setClientAcceptanceDate(dto.getClientAcceptanceDate());
+        workspace.setClientAcceptanceNotes(dto.getClientAcceptanceNotes());
+
+        workspace.setWarrantyStartDate(dto.getWarrantyStartDate());
+        workspace.setWarrantyEndDate(dto.getWarrantyEndDate());
+        workspace.setWarrantyNotes(dto.getWarrantyNotes());
 
         workspace = workspaceRepository.save(workspace);
         return mapToDTO(workspace);
@@ -289,6 +330,14 @@ public class ProjectExecutionWorkspaceService {
         dto.setDeliveryDate(workspace.getDeliveryDate());
         dto.setInstallationCompleted(workspace.getInstallationCompleted());
         dto.setDeliveryNotes(workspace.getDeliveryNotes());
+        
+        dto.setClientAccepted(workspace.getClientAccepted());
+        dto.setClientAcceptanceDate(workspace.getClientAcceptanceDate());
+        dto.setClientAcceptanceNotes(workspace.getClientAcceptanceNotes());
+        
+        dto.setWarrantyStartDate(workspace.getWarrantyStartDate());
+        dto.setWarrantyEndDate(workspace.getWarrantyEndDate());
+        dto.setWarrantyNotes(workspace.getWarrantyNotes());
         
         return dto;
     }

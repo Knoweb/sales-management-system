@@ -75,6 +75,24 @@ public class ProjectExecutionWorkspace {
     @Column(name = "delivery_notes")
     private String deliveryNotes;
 
+    @Column(name = "client_accepted", nullable = false)
+    private Boolean clientAccepted = false;
+
+    @Column(name = "client_acceptance_date")
+    private LocalDate clientAcceptanceDate;
+
+    @Column(name = "client_acceptance_notes")
+    private String clientAcceptanceNotes;
+
+    @Column(name = "warranty_start_date")
+    private LocalDate warrantyStartDate;
+
+    @Column(name = "warranty_end_date")
+    private LocalDate warrantyEndDate;
+
+    @Column(name = "warranty_notes")
+    private String warrantyNotes;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
@@ -132,6 +150,18 @@ public class ProjectExecutionWorkspace {
     public void setInstallationCompleted(Boolean installationCompleted) { this.installationCompleted = installationCompleted; }
     public String getDeliveryNotes() { return deliveryNotes; }
     public void setDeliveryNotes(String deliveryNotes) { this.deliveryNotes = deliveryNotes; }
+    public Boolean getClientAccepted() { return clientAccepted; }
+    public void setClientAccepted(Boolean clientAccepted) { this.clientAccepted = clientAccepted; }
+    public LocalDate getClientAcceptanceDate() { return clientAcceptanceDate; }
+    public void setClientAcceptanceDate(LocalDate clientAcceptanceDate) { this.clientAcceptanceDate = clientAcceptanceDate; }
+    public String getClientAcceptanceNotes() { return clientAcceptanceNotes; }
+    public void setClientAcceptanceNotes(String clientAcceptanceNotes) { this.clientAcceptanceNotes = clientAcceptanceNotes; }
+    public LocalDate getWarrantyStartDate() { return warrantyStartDate; }
+    public void setWarrantyStartDate(LocalDate warrantyStartDate) { this.warrantyStartDate = warrantyStartDate; }
+    public LocalDate getWarrantyEndDate() { return warrantyEndDate; }
+    public void setWarrantyEndDate(LocalDate warrantyEndDate) { this.warrantyEndDate = warrantyEndDate; }
+    public String getWarrantyNotes() { return warrantyNotes; }
+    public void setWarrantyNotes(String warrantyNotes) { this.warrantyNotes = warrantyNotes; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }

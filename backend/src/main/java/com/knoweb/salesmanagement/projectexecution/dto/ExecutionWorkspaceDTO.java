@@ -64,4 +64,25 @@ public class ExecutionWorkspaceDTO {
     public void setInstallationCompleted(Boolean installationCompleted) { this.installationCompleted = installationCompleted; }
     public String getDeliveryNotes() { return deliveryNotes; }
     public void setDeliveryNotes(String deliveryNotes) { this.deliveryNotes = deliveryNotes; }
+
+    private Boolean clientAccepted;
+    private LocalDate clientAcceptanceDate;
+    private String clientAcceptanceNotes;
+
+    private LocalDate warrantyStartDate;
+    private LocalDate warrantyEndDate;
+    private String warrantyNotes;
+
+    public Boolean getClientAccepted() { return clientAccepted; }
+    public void setClientAccepted(Boolean clientAccepted) { this.clientAccepted = clientAccepted; }
+    public LocalDate getClientAcceptanceDate() { return clientAcceptanceDate; }
+    public void setClientAcceptanceDate(LocalDate clientAcceptanceDate) { this.clientAcceptanceDate = clientAcceptanceDate; }
+    public String getClientAcceptanceNotes() { return clientAcceptanceNotes; }
+    public void setClientAcceptanceNotes(String clientAcceptanceNotes) { this.clientAcceptanceNotes = clientAcceptanceNotes; }
+    public LocalDate getWarrantyStartDate() { return warrantyStartDate; }
+    public void setWarrantyStartDate(LocalDate warrantyStartDate) { this.warrantyStartDate = warrantyStartDate; }
+    public LocalDate getWarrantyEndDate() { return warrantyEndDate; }
+    public void setWarrantyEndDate(LocalDate warrantyEndDate) { this.warrantyEndDate = warrantyEndDate; }
+    public String getWarrantyNotes() { return warrantyNotes; }
+    public void setWarrantyNotes(String warrantyNotes) { this.warrantyNotes = warrantyNotes; }
 }

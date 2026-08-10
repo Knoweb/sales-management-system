@@ -42,6 +42,12 @@ public class ProjectExecutionAttachmentService {
     public ProjectExecutionAttachmentDTO saveAttachment(ProjectExecutionAttachmentDTO dto, UUID userId, Collection<? extends GrantedAuthority> authorities) {
         ProjectExecutionWorkspace workspace = securityHelper.getWorkspaceAndVerifyWriteAccess(dto.getWorkspaceId(), userId, authorities);
 
+        if ("FINAL_DOCUMENT".equals(dto.getAttachmentType())) {
+            if (!Boolean.TRUE.equals(workspace.getClientAccepted()) || workspace.getClientAcceptanceDate() == null) {
+                throw new IllegalArgumentException("Final documents can only be uploaded after Client Acceptance is completed and recorded.");
+            }
+        }
+
         ProjectExecutionAttachment attachment = new ProjectExecutionAttachment();
         attachment.setWorkspace(workspace);
         

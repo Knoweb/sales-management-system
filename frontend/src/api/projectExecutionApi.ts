@@ -22,15 +22,31 @@ export interface ExecutionWorkspaceDTO {
     deliveryDate?: string;
     installationCompleted?: boolean;
     deliveryNotes?: string;
+
+    clientAccepted?: boolean;
+    clientAcceptanceDate?: string;
+    clientAcceptanceNotes?: string;
+
+    warrantyStartDate?: string;
+    warrantyEndDate?: string;
+    warrantyNotes?: string;
 }
 
 export interface ProjectClosureDTO {
     inspectionStatus: 'PENDING' | 'PASSED' | 'FAILED';
-    inspectionDate?: string;
+    inspectionDate?: string | null;
     inspectionNotes?: string;
-    deliveryDate?: string;
+    deliveryDate?: string | null;
     installationCompleted?: boolean;
     deliveryNotes?: string;
+
+    clientAccepted?: boolean;
+    clientAcceptanceDate?: string | null;
+    clientAcceptanceNotes?: string;
+
+    warrantyStartDate?: string | null;
+    warrantyEndDate?: string | null;
+    warrantyNotes?: string;
 }
 
 export interface ProjectTaskDTO {
