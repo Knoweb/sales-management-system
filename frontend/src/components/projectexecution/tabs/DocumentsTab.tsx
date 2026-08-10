@@ -69,8 +69,14 @@ const DocumentsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit 
 
     return (
         <div>
-            <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
+            <div className="execution-tab-header-container">
+                <div className="execution-tab-title-group">
+                    <h2 className="execution-tab-title">Documents</h2>
+                    <p className="execution-tab-subtitle">Manage and organize project-related documents and files.</p>
+                </div>
+                <div className="execution-tab-actions">
                 {canEdit && <button onClick={() => { setForm({}); setIsModalVisible(true); }} className="execution-secondary-button"><Plus size={16} /> Upload Document</button>}
+            </div>
             </div>
             {loading ? <p>Loading...</p> : (
                 <div className="execution-table-container">

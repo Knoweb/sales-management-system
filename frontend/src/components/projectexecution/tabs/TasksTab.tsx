@@ -80,11 +80,22 @@ const TasksTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = tr
 
     return (
         <div>
-        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
-            {canEdit && <button onClick={() => { setEditingTask(null); setForm({}); setIsModalVisible(true); }} className="execution-secondary-button">
-                <Plus size={16} /> Create Task
-            </button>}
-        </div>
+            <div className="execution-tab-header-container">
+                <div className="execution-tab-title-group">
+                    <h2 className="execution-tab-title">Tasks</h2>
+                    <p className="execution-tab-subtitle">Manage project tasks, progress, priorities and due dates.</p>
+                </div>
+                <div className="execution-tab-actions">
+                    {canEdit && (
+                        <button 
+                            onClick={() => { setEditingTask(null); setForm({}); setIsModalVisible(true); }} 
+                            className="execution-secondary-button"
+                        >
+                            <Plus size={16} /> Create Task
+                        </button>
+                    )}
+                </div>
+            </div>
             {loading ? <p>Loading...</p> : (
                 <div className="execution-table-container">
                     <table className="execution-table">

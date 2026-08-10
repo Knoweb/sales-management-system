@@ -15,6 +15,7 @@ import LabourTab from '../components/projectexecution/tabs/LabourTab';
 import MaterialsTab from '../components/projectexecution/tabs/MaterialsTab';
 import IssuesTab from '../components/projectexecution/tabs/IssuesTab';
 import ChangeRequestsTab from '../components/projectexecution/tabs/ChangeRequestsTab';
+import ClosureTab from '../components/projectexecution/tabs/ClosureTab.tsx';
 import DocumentsTab from '../components/projectexecution/tabs/DocumentsTab';
 
 import { 
@@ -148,6 +149,7 @@ export const ExecutionWorkspaceDetails: React.FC = () => {
         { id: 'photos', label: 'Photos', icon: Image },
         { id: 'approvals', label: 'Approval Requests', icon: CheckSquare },
         { id: 'changes', label: 'Change Requests', icon: PenTool },
+        { id: 'closure', label: 'Closure & Delivery', icon: CheckSquare },
     ];
 
     const getStatusClass = (status: string) => {
@@ -237,7 +239,7 @@ export const ExecutionWorkspaceDetails: React.FC = () => {
                 <div className="execution-content">
                     {activeTab === 'overview' && (
                         <div className="execution-overview">
-                            <h2>Workspace Overview</h2>
+                            <h2 className="execution-tab-title">Workspace Overview</h2>
                             
                             {/* Summary Dashboard Cards */}
                             <div className="execution-stats-grid">
@@ -328,6 +330,7 @@ export const ExecutionWorkspaceDetails: React.FC = () => {
                     {activeTab === 'photos' && <PhotosTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
                     {activeTab === 'approvals' && <ApprovalsTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
                     {activeTab === 'changes' && <ChangeRequestsTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
+                    {activeTab === 'closure' && <ClosureTab workspace={workspace} onRefresh={loadWorkspace} canEdit={canEdit} />}
                 </div>
             </div>
             

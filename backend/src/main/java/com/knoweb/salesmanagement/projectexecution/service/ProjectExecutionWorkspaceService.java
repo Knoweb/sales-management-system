@@ -131,11 +131,15 @@ public class ProjectExecutionWorkspaceService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ExecutionWorkspaceDTO getWorkspaceById(UUID id) {
-        return workspaceRepository.findById(id)
-                .map(this::mapToDTO)
+        ProjectExecutionWorkspace workspace = workspaceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Workspace not found"));
+        
+        // Recalculate progress on load to fix stale legacy records
+        recalculateWorkspaceProgress(workspace);
+        
+        return mapToDTO(workspace);
     }
 
     @Transactional
@@ -173,61 +177,76 @@ public class ProjectExecutionWorkspaceService {
     }
     
     @Transactional
+    public ExecutionWorkspaceDTO updateClosure(UUID workspaceId, com.knoweb.salesmanagement.projectexecution.dto.ProjectClosureDTO dto) {
+        ProjectExecutionWorkspace workspace = workspaceRepository.findById(workspaceId)
+                .orElseThrow(() -> new RuntimeException("Workspace not found"));
+
+        if (dto.getInspectionStatus() == com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus.PASSED || 
+            dto.getInspectionStatus() == com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus.FAILED) {
+            if (dto.getInspectionDate() == null) {
+                throw new IllegalArgumentException("Inspection date is required when status is PASSED or FAILED.");
+            }
+        }
+
+        // ALWAYS check for active tasks before ANY closure update
+        java.util.List<ProjectTask> tasks = taskRepository.findByWorkspaceId(workspaceId);
+        boolean hasActiveTasks = false;
+        
+        for (ProjectTask t : tasks) {
+            if (t.getStatus() != com.knoweb.salesmanagement.projectexecution.enums.TaskStatus.COMPLETED && 
+                t.getStatus() != com.knoweb.salesmanagement.projectexecution.enums.TaskStatus.CANCELLED) {
+                hasActiveTasks = true;
+                break;
+            }
+        }
+        
+        if (hasActiveTasks) {
+            throw new IllegalArgumentException("Complete or cancel all active tasks before entering project closure details.");
+        }
+
+        workspace.setInspectionStatus(dto.getInspectionStatus() != null ? dto.getInspectionStatus() : com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus.PENDING);
+        workspace.setInspectionDate(dto.getInspectionDate());
+        workspace.setInspectionNotes(dto.getInspectionNotes());
+        workspace.setDeliveryDate(dto.getDeliveryDate());
+        workspace.setInstallationCompleted(dto.getInstallationCompleted() != null ? dto.getInstallationCompleted() : false);
+        workspace.setDeliveryNotes(dto.getDeliveryNotes());
+
+        workspace = workspaceRepository.save(workspace);
+        return mapToDTO(workspace);
+    }
+    
+    @Transactional
     public void updateWorkspaceProgress(UUID workspaceId) {
         ProjectExecutionWorkspace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new RuntimeException("Workspace not found"));
                 
-        var tasks = taskRepository.findByWorkspaceId(workspaceId);
+        recalculateWorkspaceProgress(workspace);
+    }
+    
+    public void recalculateWorkspaceProgress(ProjectExecutionWorkspace workspace) {
+        var allTasks = taskRepository.findByWorkspaceId(workspace.getId());
         
-        // Sync each task from its latest daily progress
-        for (ProjectTask task : tasks) {
-            final UUID taskId = task.getId();
-            java.util.List<com.knoweb.salesmanagement.projectexecution.entity.DailyProgressUpdate> taskUpdates = progressRepository.findByWorkspaceId(workspaceId)
-                .stream()
-                .filter(p -> p.getTask() != null && p.getTask().getId().equals(taskId))
-                .sorted((a, b) -> {
-                    int dateCompare = b.getProgressDate().compareTo(a.getProgressDate());
-                    if (dateCompare != 0) return dateCompare;
-                    return b.getSubmittedAt().compareTo(a.getSubmittedAt());
-                })
-                .collect(Collectors.toList());
+        // Exclude CANCELLED tasks completely
+        java.util.List<ProjectTask> validTasks = allTasks.stream()
+            .filter(t -> t.getStatus() != com.knoweb.salesmanagement.projectexecution.enums.TaskStatus.CANCELLED)
+            .collect(Collectors.toList());
 
-            if (!taskUpdates.isEmpty()) {
-                BigDecimal latestPct = taskUpdates.get(0).getCompletionPercentage();
-                if (latestPct == null) latestPct = BigDecimal.ZERO;
-                if (latestPct.compareTo(new BigDecimal("100")) > 0) latestPct = new BigDecimal("100");
-                if (latestPct.compareTo(BigDecimal.ZERO) < 0) latestPct = BigDecimal.ZERO;
-                
-                if (task.getCompletionPercentage() == null || task.getCompletionPercentage().compareTo(latestPct) != 0) {
-                    task.setCompletionPercentage(latestPct);
-                    taskRepository.save(task);
-                }
-            }
-        }
-        
-        if (tasks.isEmpty()) {
+        if (validTasks.isEmpty()) {
             workspace.setOverallProgress(BigDecimal.ZERO);
+            if (workspace.getStatus() == ExecutionWorkspaceStatus.COMPLETED) {
+                workspace.setStatus(ExecutionWorkspaceStatus.IN_PROGRESS);
+            }
         } else {
             BigDecimal totalPercentage = BigDecimal.ZERO;
-            BigDecimal sumEstimated = tasks.stream()
-                .map(t -> t.getEstimatedHours() != null ? t.getEstimatedHours() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, (a, b) -> a.add(b));
-            
-            BigDecimal avg;
-            if (sumEstimated.compareTo(BigDecimal.ZERO) > 0) {
-                for (ProjectTask t : tasks) {
-                    BigDecimal weight = t.getEstimatedHours() != null ? t.getEstimatedHours() : BigDecimal.ZERO;
-                    BigDecimal p = t.getCompletionPercentage() != null ? t.getCompletionPercentage() : BigDecimal.ZERO;
-                    totalPercentage = totalPercentage.add(p.multiply(weight));
+            for (ProjectTask t : validTasks) {
+                BigDecimal p = t.getCompletionPercentage() != null ? t.getCompletionPercentage() : BigDecimal.ZERO;
+                // COMPLETED tasks count as 100%
+                if (t.getStatus() == com.knoweb.salesmanagement.projectexecution.enums.TaskStatus.COMPLETED) {
+                    p = new BigDecimal("100");
                 }
-                avg = totalPercentage.divide(sumEstimated, 2, RoundingMode.HALF_UP);
-            } else {
-                for (ProjectTask t : tasks) {
-                    BigDecimal p = t.getCompletionPercentage() != null ? t.getCompletionPercentage() : BigDecimal.ZERO;
-                    totalPercentage = totalPercentage.add(p);
-                }
-                avg = totalPercentage.divide(new BigDecimal(tasks.size()), 2, RoundingMode.HALF_UP);
+                totalPercentage = totalPercentage.add(p);
             }
+            BigDecimal avg = totalPercentage.divide(new BigDecimal(validTasks.size()), 2, RoundingMode.HALF_UP);
             
             if (avg.compareTo(new BigDecimal("100")) > 0) avg = new BigDecimal("100");
             if (avg.compareTo(BigDecimal.ZERO) < 0) avg = BigDecimal.ZERO;
@@ -236,8 +255,12 @@ public class ProjectExecutionWorkspaceService {
             
             if (avg.compareTo(new BigDecimal("100")) >= 0) {
                 workspace.setStatus(ExecutionWorkspaceStatus.COMPLETED);
-            } else if (avg.compareTo(BigDecimal.ZERO) > 0 && workspace.getStatus() == ExecutionWorkspaceStatus.PLANNED) {
-                workspace.setStatus(ExecutionWorkspaceStatus.IN_PROGRESS);
+            } else {
+                if (workspace.getStatus() == ExecutionWorkspaceStatus.COMPLETED) {
+                    workspace.setStatus(ExecutionWorkspaceStatus.IN_PROGRESS);
+                } else if (avg.compareTo(BigDecimal.ZERO) > 0 && workspace.getStatus() == ExecutionWorkspaceStatus.PLANNED) {
+                    workspace.setStatus(ExecutionWorkspaceStatus.IN_PROGRESS);
+                }
             }
         }
         workspaceRepository.save(workspace);
@@ -259,6 +282,14 @@ public class ProjectExecutionWorkspaceService {
         dto.setActualEndDate(workspace.getActualEndDate());
         dto.setOverallProgress(workspace.getOverallProgress());
         dto.setExecutionNotes(workspace.getExecutionNotes());
+        
+        dto.setInspectionStatus(workspace.getInspectionStatus());
+        dto.setInspectionDate(workspace.getInspectionDate());
+        dto.setInspectionNotes(workspace.getInspectionNotes());
+        dto.setDeliveryDate(workspace.getDeliveryDate());
+        dto.setInstallationCompleted(workspace.getInstallationCompleted());
+        dto.setDeliveryNotes(workspace.getDeliveryNotes());
+        
         return dto;
     }
 }

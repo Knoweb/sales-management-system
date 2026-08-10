@@ -15,6 +15,22 @@ export interface ExecutionWorkspaceDTO {
     actualStartDate?: string;
     actualEndDate?: string;
     overallProgress: number;
+    executionNotes?: string;
+    inspectionStatus?: 'PENDING' | 'PASSED' | 'FAILED';
+    inspectionDate?: string;
+    inspectionNotes?: string;
+    deliveryDate?: string;
+    installationCompleted?: boolean;
+    deliveryNotes?: string;
+}
+
+export interface ProjectClosureDTO {
+    inspectionStatus: 'PENDING' | 'PASSED' | 'FAILED';
+    inspectionDate?: string;
+    inspectionNotes?: string;
+    deliveryDate?: string;
+    installationCompleted?: boolean;
+    deliveryNotes?: string;
 }
 
 export interface ProjectTaskDTO {
@@ -251,6 +267,10 @@ export const projectExecutionApi = {
             const res = await api.get<any[]>(`${API_BASE}/lookups/departments`);
             return res.data;
         }
+    },
+    updateClosure: async (workspaceId: string, data: ProjectClosureDTO): Promise<ExecutionWorkspaceDTO> => {
+        const response = await api.put<ExecutionWorkspaceDTO>(`${API_BASE}/workspaces/${workspaceId}/closure`, data);
+        return response.data;
     }
 };
 

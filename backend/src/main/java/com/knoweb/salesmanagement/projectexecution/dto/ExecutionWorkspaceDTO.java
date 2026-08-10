@@ -45,4 +45,23 @@ public class ExecutionWorkspaceDTO {
     public String getExecutionNotes() { return executionNotes; }
     public void setExecutionNotes(String executionNotes) { this.executionNotes = executionNotes; }
 
+    private com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus inspectionStatus;
+    private LocalDate inspectionDate;
+    private String inspectionNotes;
+    private LocalDate deliveryDate;
+    private Boolean installationCompleted;
+    private String deliveryNotes;
+
+    public com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus getInspectionStatus() { return inspectionStatus; }
+    public void setInspectionStatus(com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus inspectionStatus) { this.inspectionStatus = inspectionStatus; }
+    public LocalDate getInspectionDate() { return inspectionDate; }
+    public void setInspectionDate(LocalDate inspectionDate) { this.inspectionDate = inspectionDate; }
+    public String getInspectionNotes() { return inspectionNotes; }
+    public void setInspectionNotes(String inspectionNotes) { this.inspectionNotes = inspectionNotes; }
+    public LocalDate getDeliveryDate() { return deliveryDate; }
+    public void setDeliveryDate(LocalDate deliveryDate) { this.deliveryDate = deliveryDate; }
+    public Boolean getInstallationCompleted() { return installationCompleted; }
+    public void setInstallationCompleted(Boolean installationCompleted) { this.installationCompleted = installationCompleted; }
+    public String getDeliveryNotes() { return deliveryNotes; }
+    public void setDeliveryNotes(String deliveryNotes) { this.deliveryNotes = deliveryNotes; }
 }

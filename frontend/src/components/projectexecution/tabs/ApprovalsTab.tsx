@@ -63,9 +63,15 @@ const ApprovalsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit 
 
     return (
         <div>
-        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
+        <div className="execution-tab-header-container">
+                <div className="execution-tab-title-group">
+                    <h2 className="execution-tab-title">Approval Requests</h2>
+                    <p className="execution-tab-subtitle">Manage approval requests for various project activities.</p>
+                </div>
+                <div className="execution-tab-actions">
             {canEdit && <button onClick={() => { setForm({}); setIsModalVisible(true); }} className="execution-secondary-button"><Plus size={16} /> New Approval Request</button>}
         </div>
+            </div>
             {loading ? <p>Loading...</p> : (
                 <div className="execution-table-container">
                     <table className="execution-table">

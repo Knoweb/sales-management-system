@@ -56,6 +56,25 @@ public class ProjectExecutionWorkspace {
     @Column(name = "updated_by")
     private UUID updatedBy;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "inspection_status", nullable = false, length = 50)
+    private com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus inspectionStatus = com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus.PENDING;
+
+    @Column(name = "inspection_date")
+    private LocalDate inspectionDate;
+
+    @Column(name = "inspection_notes")
+    private String inspectionNotes;
+
+    @Column(name = "delivery_date")
+    private LocalDate deliveryDate;
+
+    @Column(name = "installation_completed", nullable = false)
+    private Boolean installationCompleted = false;
+
+    @Column(name = "delivery_notes")
+    private String deliveryNotes;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
@@ -101,6 +120,18 @@ public class ProjectExecutionWorkspace {
     public void setCreatedBy(UUID createdBy) { this.createdBy = createdBy; }
     public UUID getUpdatedBy() { return updatedBy; }
     public void setUpdatedBy(UUID updatedBy) { this.updatedBy = updatedBy; }
+    public com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus getInspectionStatus() { return inspectionStatus; }
+    public void setInspectionStatus(com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus inspectionStatus) { this.inspectionStatus = inspectionStatus; }
+    public LocalDate getInspectionDate() { return inspectionDate; }
+    public void setInspectionDate(LocalDate inspectionDate) { this.inspectionDate = inspectionDate; }
+    public String getInspectionNotes() { return inspectionNotes; }
+    public void setInspectionNotes(String inspectionNotes) { this.inspectionNotes = inspectionNotes; }
+    public LocalDate getDeliveryDate() { return deliveryDate; }
+    public void setDeliveryDate(LocalDate deliveryDate) { this.deliveryDate = deliveryDate; }
+    public Boolean getInstallationCompleted() { return installationCompleted; }
+    public void setInstallationCompleted(Boolean installationCompleted) { this.installationCompleted = installationCompleted; }
+    public String getDeliveryNotes() { return deliveryNotes; }
+    public void setDeliveryNotes(String deliveryNotes) { this.deliveryNotes = deliveryNotes; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }

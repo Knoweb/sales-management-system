@@ -71,8 +71,11 @@ public class ProjectMonitoringService {
         this.eventPublisher = eventPublisher;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ProjectExecutionSummaryDTO getWorkspaceSummary(UUID workspaceId) {
+        // Recalculate progress to fix any stale legacy records
+        workspaceService.updateWorkspaceProgress(workspaceId);
+        
         ProjectExecutionSummaryDTO summary = new ProjectExecutionSummaryDTO();
         
         ProjectExecutionWorkspace workspace = workspaceRepository.findById(workspaceId)
@@ -177,7 +180,7 @@ public class ProjectMonitoringService {
         update.setSupportDetails(dto.getSupportDetails());
         update.setSubmittedBy(currentUserId);
         
-        progressRepository.save(update);
+        progressRepository.saveAndFlush(update);
 
         if (task != null) {
             task.setCompletionPercentage(pct);
@@ -190,7 +193,7 @@ public class ProjectMonitoringService {
                 }
             }
             
-            taskRepository.save(task);
+            taskRepository.saveAndFlush(task);
             
             // Support Request Notification
             if (Boolean.TRUE.equals(update.getSupportRequired()) && workspace.getProjectManager() != null && workspace.getProjectManager().getUser() != null) {

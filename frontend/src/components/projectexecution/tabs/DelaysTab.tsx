@@ -60,8 +60,14 @@ const DelaysTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = t
 
     return (
         <div>
-            <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
+            <div className="execution-tab-header-container">
+                <div className="execution-tab-title-group">
+                    <h2 className="execution-tab-title">Delays</h2>
+                    <p className="execution-tab-subtitle">Record and monitor project delays and their impact.</p>
+                </div>
+                <div className="execution-tab-actions">
                 {canEdit && <button onClick={() => { setForm({}); setIsModalVisible(true); }} className="execution-secondary-button"><Plus size={16} /> Report Delay</button>}
+            </div>
             </div>
             {loading ? <p>Loading...</p> : (
                 <div className="execution-table-container">

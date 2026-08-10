@@ -57,4 +57,12 @@ public class ProjectExecutionWorkspaceController {
             @Valid @RequestBody SetupWorkspaceDTO dto) {
         return ResponseEntity.ok(workspaceService.setupWorkspace(id, dto));
     }
+
+    @PutMapping("/{id}/closure")
+    @PreAuthorize("hasAuthority('PROJECT_EXECUTION_WRITE')")
+    public ResponseEntity<ExecutionWorkspaceDTO> updateClosure(
+            @PathVariable UUID id,
+            @Valid @RequestBody com.knoweb.salesmanagement.projectexecution.dto.ProjectClosureDTO dto) {
+        return ResponseEntity.ok(workspaceService.updateClosure(id, dto));
+    }
 }

@@ -61,9 +61,15 @@ const ChangeRequestsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, can
 
     return (
         <div>
-        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
+        <div className="execution-tab-header-container">
+                <div className="execution-tab-title-group">
+                    <h2 className="execution-tab-title">Change Requests</h2>
+                    <p className="execution-tab-subtitle">Track and manage scope changes and variation requests.</p>
+                </div>
+                <div className="execution-tab-actions">
             {canEdit && <button onClick={() => { setForm({}); setIsModalVisible(true); }} className="execution-secondary-button"><Plus size={16} /> New Change Request</button>}
         </div>
+            </div>
             {loading ? <p>Loading...</p> : (
                 <div className="execution-table-container">
                     <table className="execution-table">
