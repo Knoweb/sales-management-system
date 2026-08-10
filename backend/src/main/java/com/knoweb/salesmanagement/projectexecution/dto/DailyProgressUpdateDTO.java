@@ -26,6 +26,8 @@ public class DailyProgressUpdateDTO {
     private BigDecimal completionPercentage;
     private BigDecimal hoursWorked;
     private OffsetDateTime submittedAt;
+    private Boolean supportRequired;
+    private String supportDetails;
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -53,5 +55,9 @@ public class DailyProgressUpdateDTO {
     public void setHoursWorked(BigDecimal hoursWorked) { this.hoursWorked = hoursWorked; }
     public OffsetDateTime getSubmittedAt() { return submittedAt; }
     public void setSubmittedAt(OffsetDateTime submittedAt) { this.submittedAt = submittedAt; }
+    public Boolean getSupportRequired() { return supportRequired; }
+    public void setSupportRequired(Boolean supportRequired) { this.supportRequired = supportRequired; }
+    public String getSupportDetails() { return supportDetails; }
+    public void setSupportDetails(String supportDetails) { this.supportDetails = supportDetails; }
 
 }

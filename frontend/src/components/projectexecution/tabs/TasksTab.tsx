@@ -72,7 +72,8 @@ const TasksTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = tr
             if (error?.response?.status === 403) {
                 alert("You have read-only access. Only the Project Manager can make changes.");
             } else {
-                alert('Failed to save task');
+                const msg = error?.response?.data?.message || 'Failed to save task';
+                alert(msg);
             }
         }
     };
@@ -85,21 +86,32 @@ const TasksTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = tr
             </button>}
         </div>
             {loading ? <p>Loading...</p> : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                    <thead>
-                        <tr style={{ borderBottom: '1px solid #eee' }}>
-                            <th>Title</th><th>Status</th><th>Priority</th><th>Progress</th><th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {tasks.map((t: any) => (
-                            <tr key={t.id} style={{ borderBottom: '1px solid #eee' }}>
-                                <td>{t.title}</td><td>{t.status}</td><td>{t.priority}</td><td>{t.completionPercentage || 0}%</td>
-                                <td>{canEdit && <button onClick={() => { setEditingTask(t); setForm(t); setIsModalVisible(true); }}><Edit2 size={14}/></button>}</td>
+                <div className="execution-table-container">
+                    <table className="execution-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th><th>Status</th><th>Execution</th><th>Due Date</th><th>Priority</th><th>Progress</th><th>Action</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {tasks.map((t: any) => (
+                                <tr key={t.id}>
+                                    <td>{t.title}</td><td>{t.status}</td>
+                                    <td>
+                                        {t.executionStatus === 'DELAYED' && <span style={{ color: '#d32f2f', fontWeight: 'bold' }}>DELAYED ({t.delayDays} days)</span>}
+                                        {t.executionStatus === 'NO_UPDATE' && <span style={{ color: '#ed6c02', fontWeight: 'bold' }}>NO UPDATE</span>}
+                                        {t.executionStatus === 'ON_TRACK' && <span style={{ color: '#2e7d32', fontWeight: 'bold' }}>ON TRACK</span>}
+                                        {t.status === 'COMPLETED' && <span style={{ color: '#64748b' }}>Completed</span>}
+                                        {t.status === 'CANCELLED' && <span style={{ color: '#64748b' }}>Cancelled</span>}
+                                    </td>
+                                    <td>{t.plannedEndDate || 'N/A'}</td>
+                                    <td>{t.priority}</td><td>{t.completionPercentage || 0}%</td>
+                                    <td>{canEdit && <button onClick={() => { setEditingTask(t); setForm(t); setIsModalVisible(true); }}><Edit2 size={14}/></button>}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             )}
             
             {isModalVisible && (
@@ -109,6 +121,9 @@ const TasksTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = tr
                         <form onSubmit={handleSave}>
                             <label>Title</label>
                             <input required style={inputStyle} value={form.title || ''} onChange={(e: any) => setForm({...form, title: e.target.value})} />
+                            
+                            <label>Due Date</label>
+                            <input type="date" required style={inputStyle} value={form.plannedEndDate || ''} onChange={(e: any) => setForm({...form, plannedEndDate: e.target.value})} />
                             
                             <label>Priority</label>
                             <select style={inputStyle} value={form.priority || 'MEDIUM'} onChange={(e: any) => setForm({...form, priority: e.target.value})}>

@@ -32,7 +32,7 @@ public class NotificationController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('NOTIFICATION_SELF_READ')")
+    @PreAuthorize("hasAuthority('NOTIFICATION_SELF_READ') or hasAuthority('NOTIFICATION_READ')")
     public Page<NotificationDTO> getMyNotifications(
             @RequestParam(required = false) Boolean isRead,
             @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
@@ -43,7 +43,7 @@ public class NotificationController {
     }
 
     @GetMapping("/unread-count")
-    @PreAuthorize("hasAuthority('NOTIFICATION_SELF_READ')")
+    @PreAuthorize("hasAuthority('NOTIFICATION_SELF_READ') or hasAuthority('NOTIFICATION_READ')")
     public Map<String, Long> getUnreadCount(Authentication authentication) {
         UUID userId = getUserId(authentication);
         long count = notificationService.getUnreadCount(userId);
@@ -51,14 +51,14 @@ public class NotificationController {
     }
 
     @PatchMapping("/{id}/read")
-    @PreAuthorize("hasAuthority('NOTIFICATION_SELF_UPDATE')")
+    @PreAuthorize("hasAuthority('NOTIFICATION_SELF_UPDATE') or hasAuthority('NOTIFICATION_READ')")
     public void markAsRead(@PathVariable UUID id, Authentication authentication) {
         UUID userId = getUserId(authentication);
         notificationService.markAsRead(userId, id);
     }
 
     @PatchMapping("/read-all")
-    @PreAuthorize("hasAuthority('NOTIFICATION_SELF_UPDATE')")
+    @PreAuthorize("hasAuthority('NOTIFICATION_SELF_UPDATE') or hasAuthority('NOTIFICATION_READ')")
     public void markAllAsRead(Authentication authentication) {
         UUID userId = getUserId(authentication);
         notificationService.markAllAsRead(userId);

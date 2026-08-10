@@ -26,6 +26,13 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.knoweb.salesmanagement.projectexecution.repository.DailyProgressUpdateRepository;
+import com.knoweb.salesmanagement.projectexecution.entity.DailyProgressUpdate;
+import java.time.LocalDate;
+
+import org.springframework.context.ApplicationEventPublisher;
+import com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent;
+
 @Service
 public class ProjectTaskService {
 
@@ -38,8 +45,10 @@ public class ProjectTaskService {
     private final TaskStatusHistoryRepository historyRepository;
     private final ProjectExecutionWorkspaceService workspaceService;
     private final ProjectExecutionSecurityHelper securityHelper;
+    private final DailyProgressUpdateRepository progressUpdateRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public ProjectTaskService(ProjectTaskRepository taskRepository, ProjectExecutionWorkspaceRepository workspaceRepository, DepartmentRepository departmentRepository, UserRepository userRepository, ProjectTaskDependencyRepository dependencyRepository, TaskStatusHistoryRepository historyRepository, ProjectExecutionWorkspaceService workspaceService, ProjectExecutionSecurityHelper securityHelper, EmployeeRepository employeeRepository) {
+    public ProjectTaskService(ProjectTaskRepository taskRepository, ProjectExecutionWorkspaceRepository workspaceRepository, DepartmentRepository departmentRepository, UserRepository userRepository, ProjectTaskDependencyRepository dependencyRepository, TaskStatusHistoryRepository historyRepository, ProjectExecutionWorkspaceService workspaceService, ProjectExecutionSecurityHelper securityHelper, EmployeeRepository employeeRepository, DailyProgressUpdateRepository progressUpdateRepository, ApplicationEventPublisher eventPublisher) {
         this.taskRepository = taskRepository;
         this.workspaceRepository = workspaceRepository;
         this.departmentRepository = departmentRepository;
@@ -49,13 +58,26 @@ public class ProjectTaskService {
         this.historyRepository = historyRepository;
         this.workspaceService = workspaceService;
         this.securityHelper = securityHelper;
+        this.progressUpdateRepository = progressUpdateRepository;
+        this.eventPublisher = eventPublisher;
     }
 
 
     @Transactional(readOnly = true)
     public List<ProjectTaskDTO> getTasksByWorkspaceId(UUID workspaceId) {
+        List<DailyProgressUpdate> updates = progressUpdateRepository.findByWorkspaceId(workspaceId);
+        Map<UUID, LocalDate> latestUpdates = updates.stream()
+                .collect(Collectors.groupingBy(
+                        u -> u.getTask().getId(),
+                        Collectors.mapping(DailyProgressUpdate::getProgressDate, Collectors.maxBy(LocalDate::compareTo))
+                ))
+                .entrySet().stream()
+                .filter(e -> e.getValue().isPresent())
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get()));
+
         return taskRepository.findByWorkspaceId(workspaceId).stream()
-                .map(this::mapToDTO).collect(Collectors.toList());
+                .map(task -> mapToDTO(task, latestUpdates.get(task.getId())))
+                .collect(Collectors.toList());
     }
 
     @Transactional
@@ -108,8 +130,11 @@ public class ProjectTaskService {
 
         securityHelper.getWorkspaceAndVerifyWriteAccess(task.getWorkspace().getId(), currentUserId, authorities);
 
-        if (newStatus == TaskStatus.COMPLETED && (completionPercentage == null || completionPercentage.compareTo(new BigDecimal("100")) < 0)) {
-            throw new RuntimeException("Completed task must have 100% completion");
+        if (newStatus == TaskStatus.COMPLETED) {
+            BigDecimal currentPercentage = completionPercentage != null ? completionPercentage : task.getCompletionPercentage();
+            if (currentPercentage == null || currentPercentage.compareTo(new BigDecimal("100")) < 0) {
+                throw new IllegalArgumentException("Task must reach 100% completion before it can be marked as completed.");
+            }
         }
         
         if (newStatus == TaskStatus.IN_PROGRESS && (completionPercentage == null || completionPercentage.compareTo(BigDecimal.ZERO) == 0)) {
@@ -117,7 +142,7 @@ public class ProjectTaskService {
              List<ProjectTaskDependency> deps = dependencyRepository.findByTaskId(taskId);
              for(ProjectTaskDependency dep : deps) {
                  if (dep.getPredecessor().getStatus() != TaskStatus.COMPLETED) {
-                     throw new RuntimeException("Cannot start task: Predecessor '" + dep.getPredecessor().getTitle() + "' is not completed.");
+                     throw new IllegalArgumentException("Cannot start task: Predecessor '" + dep.getPredecessor().getTitle() + "' is not completed.");
                  }
              }
         }
@@ -127,6 +152,9 @@ public class ProjectTaskService {
 
         task.setStatus(newStatus);
         if (completionPercentage != null) {
+            if (completionPercentage.compareTo(BigDecimal.ZERO) < 0 || completionPercentage.compareTo(new BigDecimal("100")) > 0) {
+                throw new IllegalArgumentException("Completion percentage must be between 0 and 100");
+            }
             task.setCompletionPercentage(completionPercentage);
         }
         
@@ -142,6 +170,7 @@ public class ProjectTaskService {
         history.setChangedBy(currentUserId);
         historyRepository.save(history);
         
+        evaluateDelayEscalation(task);
         workspaceService.updateWorkspaceProgress(task.getWorkspace().getId());
 
         return mapToDTO(task);
@@ -180,6 +209,16 @@ public class ProjectTaskService {
     }
 
     private ProjectTaskDTO mapToDTO(ProjectTask task) {
+        // Find latest update if not provided in batch
+        List<DailyProgressUpdate> updates = progressUpdateRepository.findByWorkspaceId(task.getWorkspace().getId());
+        LocalDate latestUpdate = updates.stream()
+            .filter(u -> u.getTask().getId().equals(task.getId()))
+            .map(DailyProgressUpdate::getProgressDate)
+            .max(LocalDate::compareTo).orElse(null);
+        return mapToDTO(task, latestUpdate);
+    }
+
+    private ProjectTaskDTO mapToDTO(ProjectTask task, LocalDate latestUpdateDate) {
         ProjectTaskDTO dto = new ProjectTaskDTO();
         dto.setId(task.getId());
         dto.setWorkspaceId(task.getWorkspace().getId());
@@ -202,7 +241,71 @@ public class ProjectTaskService {
         dto.setEstimatedHours(task.getEstimatedHours());
         dto.setActualHours(task.getActualHours());
         dto.setCompletionPercentage(task.getCompletionPercentage());
+
+        // P12-2 Logic
+        boolean isCompleted = task.getCompletionPercentage() != null && task.getCompletionPercentage().compareTo(new BigDecimal("100")) >= 0;
+        boolean isFinishedStatus = task.getStatus() == TaskStatus.COMPLETED || task.getStatus() == TaskStatus.CANCELLED;
+        LocalDate today = LocalDate.now();
+        boolean startedToday = task.getActualStartDate() != null && task.getActualStartDate().isEqual(today);
+
+        if (isFinishedStatus) {
+            dto.setExecutionStatus("N/A");
+            dto.setDelayDays(0);
+        } else {
+            dto.setExecutionStatus("ON_TRACK");
+            dto.setDelayDays(0);
+
+            if (!isCompleted && task.getPlannedEndDate() != null && task.getPlannedEndDate().isBefore(today)) {
+                dto.setExecutionStatus("DELAYED");
+                dto.setDelayDays((int) java.time.temporal.ChronoUnit.DAYS.between(task.getPlannedEndDate(), today));
+            } else if (!isCompleted && task.getStatus() == TaskStatus.IN_PROGRESS && !startedToday) {
+                // Check for missing updates today or yesterday
+                if (latestUpdateDate == null || latestUpdateDate.isBefore(today.minusDays(1))) {
+                    dto.setExecutionStatus("NO_UPDATE");
+                }
+            }
+        }
+
         return dto;
+    }
+
+    public void evaluateDelayEscalation(ProjectTask task) {
+        boolean isCompleted = task.getCompletionPercentage() != null && task.getCompletionPercentage().compareTo(new BigDecimal("100")) >= 0;
+        boolean isFinishedStatus = task.getStatus() == TaskStatus.COMPLETED || task.getStatus() == TaskStatus.CANCELLED;
+        LocalDate today = LocalDate.now();
+
+        if (!isCompleted && !isFinishedStatus && task.getPlannedEndDate() != null && task.getPlannedEndDate().isBefore(today)) {
+            int delayDays = (int) java.time.temporal.ChronoUnit.DAYS.between(task.getPlannedEndDate(), today);
+            
+            // Send Notification
+            if (task.getWorkspace().getProjectManager() != null && task.getWorkspace().getProjectManager().getUser() != null) {
+                try {
+                    String deduplicationKey = "delay_esc_" + task.getId() + "_" + task.getPlannedEndDate();
+                    System.out.println("Publishing TASK_DELAYED: taskId=" + task.getId() + 
+                                       ", dueDate=" + task.getPlannedEndDate() + 
+                                       ", delayDays=" + delayDays + 
+                                       ", projectManagerEmployeeId=" + task.getWorkspace().getProjectManager().getId() + 
+                                       ", recipientUserId=" + task.getWorkspace().getProjectManager().getUser().getId() + 
+                                       ", deduplicationKey=" + deduplicationKey);
+                                       
+                    InternalNotificationEvent event = new InternalNotificationEvent();
+                    event.setEventType("TASK_DELAYED");
+                    event.setTitle("Task Delayed: " + task.getTitle());
+                    event.setMessage("Task is delayed by " + delayDays + " days past its due date.");
+                    event.setEntityType("PROJECT_TASK");
+                    event.setEntityId(task.getId());
+                    event.setContextUrl("/execution-workspaces/" + task.getWorkspace().getId() + "/tasks");
+                    event.setDeduplicationKey(deduplicationKey);
+                    event.setRecipientUserIds(java.util.Set.of(task.getWorkspace().getProjectManager().getUser().getId()));
+                    eventPublisher.publishEvent(event);
+                } catch (Exception e) {
+                    // Log and ignore to prevent breaking transactions
+                    System.err.println("Failed to send delay escalation notification: " + e.getMessage());
+                }
+            } else {
+                System.out.println("WARNING: Cannot send delay escalation notification for taskId=" + task.getId() + " - Project Manager is missing or has no linked User.");
+            }
+        }
     }
 
     @Transactional
@@ -226,6 +329,9 @@ public class ProjectTaskService {
         }
         
         task.setUpdatedAt(java.time.OffsetDateTime.now());
-        return mapToDTO(taskRepository.save(task));
+        task = taskRepository.save(task);
+        evaluateDelayEscalation(task);
+        workspaceService.updateWorkspaceProgress(task.getWorkspace().getId());
+        return mapToDTO(task);
     }
 }

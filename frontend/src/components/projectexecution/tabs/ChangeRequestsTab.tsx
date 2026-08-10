@@ -65,9 +65,10 @@ const ChangeRequestsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, can
             {canEdit && <button onClick={() => { setForm({}); setIsModalVisible(true); }} className="execution-secondary-button"><Plus size={16} /> New Change Request</button>}
         </div>
             {loading ? <p>Loading...</p> : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <div className="execution-table-container">
+                    <table className="execution-table">
                     <thead>
-                        <tr style={{ borderBottom: '1px solid #eee' }}><th>Title</th><th>Reason</th><th>Cost</th><th>Schedule Impact</th><th>Status</th><th>Action</th></tr>
+                        <tr><th>Title</th><th>Reason</th><th>Cost</th><th>Schedule Impact</th><th>Status</th><th>Action</th></tr>
                     </thead>
                     <tbody>
                         {requests.map((r: any) => (
@@ -82,6 +83,7 @@ const ChangeRequestsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, can
                         ))}
                     </tbody>
                 </table>
+                </div>
             )}
             
             {isModalVisible && (

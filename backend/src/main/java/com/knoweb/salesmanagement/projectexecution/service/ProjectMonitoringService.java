@@ -25,6 +25,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.context.ApplicationEventPublisher;
+import com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent;
+
 @Service
 public class ProjectMonitoringService {
     
@@ -38,6 +41,8 @@ public class ProjectMonitoringService {
     private final ProjectMaterialUsageRepository materialRepository;
     private final ProjectExecutionSecurityHelper securityHelper;
     private final ProjectExecutionWorkspaceService workspaceService;
+    private final ProjectTaskService taskService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ProjectMonitoringService(
             DailyProgressUpdateRepository progressRepository, 
@@ -49,7 +54,9 @@ public class ProjectMonitoringService {
             ProjectMaterialUsageRepository materialRepository,
             ProjectExecutionSecurityHelper securityHelper,
             EmployeeRepository employeeRepository,
-            ProjectExecutionWorkspaceService workspaceService) {
+            ProjectExecutionWorkspaceService workspaceService,
+            ProjectTaskService taskService,
+            ApplicationEventPublisher eventPublisher) {
         this.progressRepository = progressRepository;
         this.issueRepository = issueRepository;
         this.workspaceRepository = workspaceRepository;
@@ -60,6 +67,8 @@ public class ProjectMonitoringService {
         this.materialRepository = materialRepository;
         this.securityHelper = securityHelper;
         this.workspaceService = workspaceService;
+        this.taskService = taskService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -130,6 +139,8 @@ public class ProjectMonitoringService {
             dto.setCompletionPercentage(p.getCompletionPercentage());
             dto.setHoursWorked(p.getHoursWorked());
             dto.setSubmittedAt(p.getSubmittedAt());
+            dto.setSupportRequired(p.getSupportRequired());
+            dto.setSupportDetails(p.getSupportDetails());
             return dto;
         }).collect(Collectors.toList());
     }
@@ -144,6 +155,9 @@ public class ProjectMonitoringService {
         ProjectTask task = null;
         if (dto.getTaskId() != null) {
             task = taskRepository.findById(dto.getTaskId()).orElseThrow();
+            if (task.getStatus() == com.knoweb.salesmanagement.projectexecution.enums.TaskStatus.CANCELLED) {
+                throw new IllegalArgumentException("Cannot submit daily progress for a cancelled task.");
+            }
             update.setTask(task);
         }
         update.setEmployee(employeeRepository.findById(dto.getEmployeeId()).orElseThrow());
@@ -153,14 +167,52 @@ public class ProjectMonitoringService {
         update.setBlockers(dto.getBlockers());
         
         BigDecimal pct = dto.getCompletionPercentage() != null ? dto.getCompletionPercentage() : BigDecimal.ZERO;
-        if (pct.compareTo(new BigDecimal("100")) > 0) pct = new BigDecimal("100");
-        if (pct.compareTo(BigDecimal.ZERO) < 0) pct = BigDecimal.ZERO;
+        if (pct.compareTo(new BigDecimal("100")) > 0 || pct.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Completion percentage must be between 0 and 100");
+        }
         update.setCompletionPercentage(pct);
         
         update.setHoursWorked(dto.getHoursWorked());
+        update.setSupportRequired(dto.getSupportRequired() != null ? dto.getSupportRequired() : false);
+        update.setSupportDetails(dto.getSupportDetails());
         update.setSubmittedBy(currentUserId);
         
         progressRepository.save(update);
+
+        if (task != null) {
+            task.setCompletionPercentage(pct);
+            
+            // Auto-complete if 100% and not CANCELLED
+            if (pct.compareTo(new BigDecimal("100")) >= 0 && task.getStatus() != com.knoweb.salesmanagement.projectexecution.enums.TaskStatus.CANCELLED) {
+                task.setStatus(com.knoweb.salesmanagement.projectexecution.enums.TaskStatus.COMPLETED);
+                if (task.getActualEndDate() == null) {
+                    task.setActualEndDate(java.time.LocalDate.now());
+                }
+            }
+            
+            taskRepository.save(task);
+            
+            // Support Request Notification
+            if (Boolean.TRUE.equals(update.getSupportRequired()) && workspace.getProjectManager() != null && workspace.getProjectManager().getUser() != null) {
+                try {
+                    InternalNotificationEvent event = new InternalNotificationEvent();
+                    event.setEventType("SUPPORT_REQUESTED");
+                    event.setTitle("Support Requested for Task: " + task.getTitle());
+                    event.setMessage(update.getSupportDetails() != null ? update.getSupportDetails() : "No details provided");
+                    event.setEntityType("PROJECT_TASK");
+                    event.setEntityId(task.getId());
+                    event.setContextUrl("/execution-workspaces/" + workspace.getId() + "/progress");
+                    event.setDeduplicationKey("support_req_" + task.getId() + "_" + update.getProgressDate());
+                    event.setRecipientUserIds(java.util.Set.of(workspace.getProjectManager().getUser().getId()));
+                    eventPublisher.publishEvent(event);
+                } catch (Exception e) {
+                    System.err.println("Failed to send support request notification: " + e.getMessage());
+                }
+            }
+            
+            // Evaluate delay escalation
+            taskService.evaluateDelayEscalation(task);
+        }
 
         workspaceService.updateWorkspaceProgress(workspace.getId());
     }

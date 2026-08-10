@@ -73,9 +73,10 @@ const DocumentsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit 
                 {canEdit && <button onClick={() => { setForm({}); setIsModalVisible(true); }} className="execution-secondary-button"><Plus size={16} /> Upload Document</button>}
             </div>
             {loading ? <p>Loading...</p> : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <div className="execution-table-container">
+                    <table className="execution-table">
                     <thead>
-                        <tr style={{ borderBottom: '1px solid #eee' }}><th>File</th><th>Description</th><th>Size</th><th>Action</th></tr>
+                        <tr><th>File</th><th>Description</th><th>Size</th><th>Action</th></tr>
                     </thead>
                     <tbody>
                         {docs.map((r: any) => (
@@ -90,6 +91,7 @@ const DocumentsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit 
                         ))}
                     </tbody>
                 </table>
+                </div>
             )}
             
             {isModalVisible && (

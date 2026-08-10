@@ -21,7 +21,7 @@ import {
     Briefcase, Calendar, CheckSquare, Clock, LayoutDashboard, 
     ListTodo, Users, ArrowLeft, Activity, 
     AlertTriangle, FileText, Image, PenTool, BarChart3, Wrench, ShieldAlert,
-    Settings
+    Settings, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import './ExecutionWorkspaceDetails.css';
 
@@ -65,6 +65,7 @@ export const ExecutionWorkspaceDetails: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState('overview');
     const [isSetupModalOpen, setIsSetupModalOpen] = useState(false);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
 
     const loadWorkspace = () => {
@@ -208,15 +209,25 @@ export const ExecutionWorkspaceDetails: React.FC = () => {
 
             <div className="execution-layout">
                 {/* Sidebar Tabs */}
-                <div className="execution-sidebar">
+                <div className={`execution-sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+                    <div className="execution-sidebar-header">
+                        <button 
+                            className="execution-sidebar-toggle" 
+                            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                            title={isSidebarCollapsed ? "Expand Menu" : "Collapse Menu"}
+                        >
+                            {isSidebarCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+                        </button>
+                    </div>
                     <nav className="execution-nav">
                         {tabs.map(tab => (
                             <button 
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
+                                title={isSidebarCollapsed ? tab.label : undefined}
                                 className={`execution-tab ${activeTab === tab.id ? 'active' : ''}`}>
                                 <tab.icon size={18} className="execution-tab-icon" />
-                                {tab.label}
+                                {!isSidebarCollapsed && <span>{tab.label}</span>}
                             </button>
                         ))}
                     </nav>

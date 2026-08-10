@@ -66,13 +66,15 @@ class InitialAdminBootstrapTest {
     @Test
     void explicitRecoveryResetsOnlyAdmin() {
         ReflectionTestUtils.setField(bootstrap, "adminRecoveryMode", true);
+        ReflectionTestUtils.setField(bootstrap, "adminRecoveryEmail", "admin@knoweb.lk");
+        ReflectionTestUtils.setField(bootstrap, "adminRecoveryPassword", "NewAdmin123");
         
         User admin = new User();
         admin.setEmail("admin@knoweb.lk");
         admin.setPasswordHash("old_hash");
         admin.setLocked(true);
         
-        when(userRepository.findByRolesCode("SYSTEM_ADMIN")).thenReturn(List.of(admin));
+        when(userRepository.findByEmail("admin@knoweb.lk")).thenReturn(Optional.of(admin));
         when(passwordEncoder.encode("NewAdmin123")).thenReturn("new_hash");
 
         bootstrap.run(applicationArguments);
@@ -86,9 +88,6 @@ class InitialAdminBootstrapTest {
         assertTrue(savedUser.isActive());
         assertFalse(savedUser.isLocked());
         assertFalse(savedUser.isPasswordChangeRequired());
-        
-        // Ensure other users are not queried or changed via findByEmail
-        verify(userRepository, never()).findByEmail(anyString());
     }
 
     @Test

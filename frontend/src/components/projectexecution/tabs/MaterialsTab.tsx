@@ -68,9 +68,10 @@ const MaterialsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit 
                 {canEdit && <button onClick={() => { setForm({}); setIsModalVisible(true); }} className="execution-secondary-button"><Plus size={16} /> Record Material</button>}
             </div>
             {loading ? <p>Loading...</p> : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <div className="execution-table-container">
+                    <table className="execution-table">
                     <thead>
-                        <tr style={{ borderBottom: '1px solid #eee' }}><th>Date</th><th>Material</th><th>Qty</th><th>Total</th><th>Status</th><th>Action</th></tr>
+                        <tr><th>Date</th><th>Material</th><th>Qty</th><th>Total</th><th>Status</th><th>Action</th></tr>
                     </thead>
                     <tbody>
                         {materials.map((r: any) => (
@@ -89,6 +90,7 @@ const MaterialsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit 
                         ))}
                     </tbody>
                 </table>
+                </div>
             )}
             
             {isModalVisible && (

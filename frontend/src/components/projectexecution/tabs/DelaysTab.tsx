@@ -64,9 +64,10 @@ const DelaysTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = t
                 {canEdit && <button onClick={() => { setForm({}); setIsModalVisible(true); }} className="execution-secondary-button"><Plus size={16} /> Report Delay</button>}
             </div>
             {loading ? <p>Loading...</p> : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <div className="execution-table-container">
+                    <table className="execution-table">
                     <thead>
-                        <tr style={{ borderBottom: '1px solid #eee' }}><th>Reason</th><th>Expected Delay (Days)</th><th>Revised Date</th><th>Task</th><th>Status</th></tr>
+                        <tr><th>Reason</th><th>Expected Delay (Days)</th><th>Revised Date</th><th>Task</th><th>Status</th></tr>
                     </thead>
                     <tbody>
                         {delays.map((r: any) => (
@@ -76,6 +77,7 @@ const DelaysTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = t
                         ))}
                     </tbody>
                 </table>
+                </div>
             )}
             
             {isModalVisible && (
