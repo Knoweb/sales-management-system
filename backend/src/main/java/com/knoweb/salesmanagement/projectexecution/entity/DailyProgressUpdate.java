@@ -52,6 +52,12 @@ public class DailyProgressUpdate {
     @Column(name = "submitted_at", nullable = false, updatable = false)
     private OffsetDateTime submittedAt;
 
+    @Column(name = "support_required")
+    private Boolean supportRequired = false;
+
+    @Column(name = "support_details", columnDefinition = "TEXT")
+    private String supportDetails;
+
     @PrePersist
     protected void onCreate() {
         if (submittedAt == null) { submittedAt = OffsetDateTime.now(); }
@@ -82,4 +88,8 @@ public class DailyProgressUpdate {
     public void setSubmittedBy(UUID submittedBy) { this.submittedBy = submittedBy; }
     public OffsetDateTime getSubmittedAt() { return submittedAt; }
     public void setSubmittedAt(OffsetDateTime submittedAt) { this.submittedAt = submittedAt; }
+    public Boolean getSupportRequired() { return supportRequired; }
+    public void setSupportRequired(Boolean supportRequired) { this.supportRequired = supportRequired; }
+    public String getSupportDetails() { return supportDetails; }
+    public void setSupportDetails(String supportDetails) { this.supportDetails = supportDetails; }
 }

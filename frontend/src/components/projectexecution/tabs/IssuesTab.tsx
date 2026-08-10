@@ -67,9 +67,10 @@ const IssuesTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = t
                 {canEdit && <button onClick={() => { setForm({}); setIsModalVisible(true); }} className="execution-secondary-button"><Plus size={16} /> Report Issue</button>}
             </div>
             {loading ? <p>Loading...</p> : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <div className="execution-table-container">
+                    <table className="execution-table">
                     <thead>
-                        <tr style={{ borderBottom: '1px solid #eee' }}><th>Title</th><th>Severity</th><th>Status</th><th>Task</th><th>Action</th></tr>
+                        <tr><th>Title</th><th>Severity</th><th>Status</th><th>Task</th><th>Action</th></tr>
                     </thead>
                     <tbody>
                         {issues.map((r: any) => (
@@ -82,6 +83,7 @@ const IssuesTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = t
                         ))}
                     </tbody>
                 </table>
+                </div>
             )}
             
             {isModalVisible && (

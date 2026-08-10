@@ -40,7 +40,8 @@ const KanbanTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = t
             if (e?.response?.status === 403) {
                 alert("You have read-only access. Only the Project Manager can make changes.");
             } else {
-                alert('Failed to update status');
+                const msg = e?.response?.data?.message || 'Failed to update status';
+                alert(msg);
             }
         }
     };
@@ -57,7 +58,25 @@ const KanbanTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = t
                             <strong>{task.title}</strong>
                             <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px', marginBottom: '8px' }}>
                                 {task.completionPercentage || 0}% | {task.priority}
+                                {task.plannedEndDate && ` | Due: ${task.plannedEndDate}`}
                             </div>
+                            {task.status === 'COMPLETED' && (
+                                <div style={{ fontSize: '11px', marginBottom: '8px' }}>
+                                    <span style={{ color: '#64748b', fontWeight: 'bold', padding: '2px 4px', backgroundColor: '#f1f5f9', borderRadius: '4px' }}>Completed</span>
+                                </div>
+                            )}
+                            {task.status === 'CANCELLED' && (
+                                <div style={{ fontSize: '11px', marginBottom: '8px' }}>
+                                    <span style={{ color: '#64748b', fontWeight: 'bold', padding: '2px 4px', backgroundColor: '#f1f5f9', borderRadius: '4px' }}>Cancelled</span>
+                                </div>
+                            )}
+                            {task.status !== 'COMPLETED' && task.status !== 'CANCELLED' && task.executionStatus && (
+                                <div style={{ fontSize: '11px', marginBottom: '8px' }}>
+                                    {task.executionStatus === 'DELAYED' && <span style={{ color: '#d32f2f', fontWeight: 'bold', padding: '2px 4px', backgroundColor: '#ffebee', borderRadius: '4px' }}>DELAYED ({task.delayDays}d)</span>}
+                                    {task.executionStatus === 'NO_UPDATE' && <span style={{ color: '#ed6c02', fontWeight: 'bold', padding: '2px 4px', backgroundColor: '#fff3e0', borderRadius: '4px' }}>NO UPDATE</span>}
+                                    {task.executionStatus === 'ON_TRACK' && <span style={{ color: '#2e7d32', fontWeight: 'bold', padding: '2px 4px', backgroundColor: '#e8f5e9', borderRadius: '4px' }}>ON TRACK</span>}
+                                </div>
+                            )}
                             <select disabled={!canEdit} value={task.status} onChange={(e: any) => handleStatusChange(task.id, e.target.value)} style={{ width: '100%', padding: '4px' }}>
                                 {COLUMNS.map((s: any) => <option key={s} value={s}>{s}</option>)}
                             </select>

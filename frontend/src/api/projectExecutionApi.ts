@@ -35,6 +35,8 @@ export interface ProjectTaskDTO {
     estimatedHours?: number;
     actualHours?: number;
     completionPercentage: number;
+    executionStatus?: 'ON_TRACK' | 'DELAYED' | 'NO_UPDATE';
+    delayDays?: number;
 }
 
 export interface ProjectEmployeeAllocationDTO {
@@ -65,6 +67,8 @@ export interface DailyProgressUpdateDTO {
     hoursWorked: number;
     employeeName?: string;
     submittedAt?: string;
+    supportRequired?: boolean;
+    supportDetails?: string;
 }
 
 export interface ProjectLabourEntryDTO {

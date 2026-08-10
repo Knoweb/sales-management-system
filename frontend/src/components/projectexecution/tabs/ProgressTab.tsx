@@ -59,7 +59,8 @@ const ProgressTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit =
             if (error?.response?.status === 403) {
                 alert("You have read-only access. Only the Project Manager can make changes.");
             } else {
-                alert('Failed');
+                const msg = error?.response?.data?.message || 'Failed';
+                alert(msg);
             }
         }
     };
@@ -70,18 +71,30 @@ const ProgressTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit =
             {canEdit && <button onClick={() => { setForm({}); setIsModalVisible(true); }} className="execution-secondary-button"><Plus size={16} /> Add Daily Update</button>}
         </div>
             {loading ? <p>Loading...</p> : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                    <thead>
-                        <tr style={{ borderBottom: '1px solid #eee' }}><th>Date</th><th>Task</th><th>Employee</th><th>Completed</th><th>%</th></tr>
-                    </thead>
-                    <tbody>
-                        {updates.map((u: any, i: any) => (
-                            <tr key={i} style={{ borderBottom: '1px solid #eee' }}>
-                                <td>{u.progressDate}</td><td>{u.taskTitle}</td><td>{u.employeeName}</td><td>{u.workCompleted}</td><td>{u.completionPercentage}%</td>
+                <div className="execution-table-container">
+                    <table className="execution-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th><th>Task</th><th>Employee</th><th>Work completed</th><th>Completion %</th><th>Hours</th><th>Blockers</th><th>Next-day plan</th><th>Support</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {updates.map((u: any, i: any) => (
+                                <tr key={i}>
+                                    <td className="nowrap">{u.progressDate}</td>
+                                    <td className="wrap" style={{ minWidth: '150px' }}>{u.taskTitle}</td>
+                                    <td className="nowrap">{u.employeeName}</td>
+                                    <td className="wrap" style={{ minWidth: '200px' }}>{u.workCompleted}</td>
+                                    <td className="nowrap">{u.completionPercentage}%</td>
+                                    <td className="nowrap">{u.hoursWorked}</td>
+                                    <td className="wrap">{u.blockers || '-'}</td>
+                                    <td className="wrap">{u.workPlannedNext || '-'}</td>
+                                    <td className="wrap">{u.supportRequired ? `Yes: ${u.supportDetails || ''}` : 'No'}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             )}
             {isModalVisible && (
                 <div style={modalStyle}>
@@ -91,7 +104,10 @@ const ProgressTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit =
                             <label>Employee ID</label>
                             <EmployeeSelector value={form.employeeId} onChange={(val: any) => setForm({...form, employeeId: val})} />
                             <label>Task</label>
-                            <TaskSelector workspaceId={workspaceId} value={form.taskId} onChange={(val: any) => setForm({...form, taskId: val})} />
+                            <TaskSelector workspaceId={workspaceId} value={form.taskId} onChange={(val: any, option?: any) => {
+                                const currentPct = option?.originalData?.completionPercentage ?? 0;
+                                setForm({...form, taskId: val, completionPercentage: currentPct, _currentTaskPercentage: currentPct});
+                            }} />
                             <label>Date</label>
                             <input type="date" required style={inputStyle} onChange={(e: any) => setForm({...form, progressDate: e.target.value})} />
                             <label>Work Completed</label>
@@ -99,9 +115,34 @@ const ProgressTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit =
                             <label>Hours Worked</label>
                             <input type="number" required style={inputStyle} onChange={(e: any) => setForm({...form, hoursWorked: e.target.value})} />
                             <label>Task Completion %</label>
-                            <input type="number" required style={inputStyle} onChange={(e: any) => setForm({...form, completionPercentage: e.target.value})} />
+                            <input type="number" min="0" max="100" required style={inputStyle} value={form.completionPercentage ?? ''} onChange={(e: any) => setForm({...form, completionPercentage: e.target.value})} />
                             
-                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                            {form.completionPercentage !== undefined && form._currentTaskPercentage !== undefined && Number(form.completionPercentage) < Number(form._currentTaskPercentage) && (
+                                <div style={{ color: '#ed6c02', fontSize: '12px', marginTop: '-12px', marginBottom: '16px' }}>
+                                    Completion is lower than the current progress.
+                                </div>
+                            )}
+                            
+                            <label>Problems / Blockers</label>
+                            <input style={inputStyle} onChange={(e: any) => setForm({...form, blockers: e.target.value})} />
+
+                            <label>Next-day plan</label>
+                            <input style={inputStyle} onChange={(e: any) => setForm({...form, workPlannedNext: e.target.value})} />
+                            
+                            <label>Support Required</label>
+                            <select style={inputStyle} value={form.supportRequired ? 'yes' : 'no'} onChange={(e: any) => setForm({...form, supportRequired: e.target.value === 'yes'})}>
+                                <option value="no">No</option>
+                                <option value="yes">Yes</option>
+                            </select>
+                            
+                            {form.supportRequired && (
+                                <>
+                                    <label>Support Details</label>
+                                    <textarea required style={{ ...inputStyle, minHeight: '60px' }} onChange={(e: any) => setForm({...form, supportDetails: e.target.value})} />
+                                </>
+                            )}
+                            
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '16px' }}>
                                 <button type="button" onClick={() => setIsModalVisible(false)}>Cancel</button>
                                 <button type="submit">Save</button>
                             </div>

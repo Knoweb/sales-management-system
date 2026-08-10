@@ -29,6 +29,8 @@ public class ProjectTaskDTO {
     private BigDecimal estimatedHours;
     private BigDecimal actualHours;
     private BigDecimal completionPercentage;
+    private Integer delayDays;
+    private String executionStatus;
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -64,5 +66,8 @@ public class ProjectTaskDTO {
     public void setActualHours(BigDecimal actualHours) { this.actualHours = actualHours; }
     public BigDecimal getCompletionPercentage() { return completionPercentage; }
     public void setCompletionPercentage(BigDecimal completionPercentage) { this.completionPercentage = completionPercentage; }
-
+    public Integer getDelayDays() { return delayDays; }
+    public void setDelayDays(Integer delayDays) { this.delayDays = delayDays; }
+    public String getExecutionStatus() { return executionStatus; }
+    public void setExecutionStatus(String executionStatus) { this.executionStatus = executionStatus; }
 }

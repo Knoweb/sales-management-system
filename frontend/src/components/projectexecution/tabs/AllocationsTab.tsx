@@ -82,9 +82,10 @@ const AllocationsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdi
             </button>}
         </div>
             {loading ? <p>Loading...</p> : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <div className="execution-table-container">
+                    <table className="execution-table">
                     <thead>
-                        <tr style={{ borderBottom: '1px solid #eee' }}>
+                        <tr>
                             <th>Employee</th><th>Role</th><th>Alloc %</th><th>Active</th><th>Action</th>
                         </tr>
                     </thead>
@@ -98,6 +99,7 @@ const AllocationsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdi
                         ))}
                     </tbody>
                 </table>
+                </div>
             )}
             
             {isModalVisible && (

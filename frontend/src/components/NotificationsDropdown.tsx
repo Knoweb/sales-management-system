@@ -11,7 +11,7 @@ import { useAuth } from '../context/AuthContext';
 
 const NotificationsDropdown: React.FC = () => {
   const { user } = useAuth();
-  const hasReadPermission = user?.permissions?.includes('NOTIFICATION_SELF_READ') ?? false;
+  const hasReadPermission = user?.permissions?.includes('NOTIFICATION_SELF_READ') || user?.permissions?.includes('NOTIFICATION_READ') || false;
 
   const [notifications, setNotifications] = useState<NotificationDTO[]>([]);
   const [loading, setLoading] = useState(false);
@@ -24,7 +24,7 @@ const NotificationsDropdown: React.FC = () => {
       if (showLoading) setLoading(true);
       const data = await getMyNotifications();
       const responseData: any = data;
-      
+
       // Safely extract array from paginated response
       let extracted: NotificationDTO[] = [];
       if (Array.isArray(responseData)) {
@@ -36,7 +36,7 @@ const NotificationsDropdown: React.FC = () => {
       } else {
         console.warn('Unexpected notifications API response format:', responseData);
       }
-      
+
       setNotifications(extracted);
     } catch (err) {
       console.error('Failed to load notifications', err);
@@ -125,9 +125,9 @@ const NotificationsDropdown: React.FC = () => {
           <div className="p-4 border-b border-border bg-surface-secondary flex justify-between items-center sticky top-0 z-10">
             <h3 className="text-label font-semibold m-0">Notifications</h3>
             {unreadCount > 0 && (
-              <Button 
-                variant="ghost" 
-                onClick={handleMarkAllAsRead} 
+              <Button
+                variant="ghost"
+                onClick={handleMarkAllAsRead}
                 className="text-xs"
                 style={{ padding: '4px 8px', height: 'auto' }}
               >
@@ -135,7 +135,7 @@ const NotificationsDropdown: React.FC = () => {
               </Button>
             )}
           </div>
-          
+
           <div className="overflow-y-auto flex-1">
             {loading && safeNotifications.length === 0 ? (
               <div className="p-8">
@@ -143,9 +143,9 @@ const NotificationsDropdown: React.FC = () => {
               </div>
             ) : safeNotifications.length === 0 ? (
               <div className="p-8">
-                <EmptyState 
-                  icon={<Bell size={32} />} 
-                  title="All caught up!" 
+                <EmptyState
+                  icon={<Bell size={32} />}
+                  title="All caught up!"
                   message="You don't have any notifications right now."
                 />
               </div>
@@ -168,7 +168,7 @@ const NotificationsDropdown: React.FC = () => {
                           {new Date(notification.createdAt).toLocaleString()}
                         </p>
                       </div>
-                      
+
                       {!notification.read && (
                         <button
                           onClick={(e) => handleMarkAsRead(notification.id, e)}
@@ -180,7 +180,7 @@ const NotificationsDropdown: React.FC = () => {
                         </button>
                       )}
                     </div>
-                    
+
                     {notification.entityType === 'PROJECT_BRIEF' && notification.entityId && (
                       <Link
                         to={`/project-briefs/${notification.entityId}`}

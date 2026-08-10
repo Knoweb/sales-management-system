@@ -24,6 +24,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import com.knoweb.salesmanagement.projectexecution.repository.DailyProgressUpdateRepository;
+
 class ProjectTaskServiceTest {
 
     @Mock
@@ -38,6 +40,10 @@ class ProjectTaskServiceTest {
     private ProjectExecutionWorkspaceService workspaceService;
     @Mock
     private ProjectExecutionSecurityHelper securityHelper;
+    @Mock
+    private DailyProgressUpdateRepository progressUpdateRepository;
+    @Mock
+    private org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private ProjectTaskService taskService;
@@ -84,5 +90,41 @@ class ProjectTaskServiceTest {
         });
 
         assertEquals("Circular dependency detected", exception.getMessage());
+    }
+
+    @Test
+    void evaluateDelayEscalation_SendsNotification_WhenTaskOverdue() {
+        // Arrange
+        ProjectExecutionWorkspace workspace = new ProjectExecutionWorkspace();
+        workspace.setId(UUID.randomUUID());
+        
+        com.knoweb.salesmanagement.employee.entity.Employee pm = new com.knoweb.salesmanagement.employee.entity.Employee();
+        pm.setId(UUID.randomUUID());
+        com.knoweb.salesmanagement.user.entity.User user = new com.knoweb.salesmanagement.user.entity.User();
+        user.setId(UUID.randomUUID());
+        pm.setUser(user);
+        workspace.setProjectManager(pm);
+
+        ProjectTask task = new ProjectTask();
+        task.setId(UUID.randomUUID());
+        task.setTitle("Test Delay Task");
+        task.setWorkspace(workspace);
+        task.setStatus(com.knoweb.salesmanagement.projectexecution.enums.TaskStatus.IN_PROGRESS);
+        task.setCompletionPercentage(java.math.BigDecimal.valueOf(50));
+        task.setPlannedEndDate(java.time.LocalDate.now().minusDays(3)); // Overdue by 3 days
+
+        // Act
+        taskService.evaluateDelayEscalation(task);
+
+        // Assert
+        org.mockito.ArgumentCaptor<com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent> eventCaptor = 
+            org.mockito.ArgumentCaptor.forClass(com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent.class);
+        
+        org.mockito.Mockito.verify(eventPublisher, org.mockito.Mockito.times(1)).publishEvent(eventCaptor.capture());
+        
+        com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent capturedEvent = eventCaptor.getValue();
+        assertEquals("TASK_DELAYED", capturedEvent.getEventType());
+        assertEquals("delay_esc_" + task.getId() + "_" + task.getPlannedEndDate(), capturedEvent.getDeduplicationKey());
+        assertTrue(capturedEvent.getRecipientUserIds().contains(user.getId()));
     }
 }

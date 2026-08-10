@@ -127,6 +127,7 @@
     cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap;
+    overflow: hidden;
 }
 
 .execution-tab:hover {
@@ -141,18 +142,93 @@
 
 .execution-tab-icon {
     color: #94a3b8;
+    flex-shrink: 0;
 }
 
 .execution-tab.active .execution-tab-icon {
     color: #2563eb;
 }
 
+.execution-sidebar-header {
+    display: none;
+    padding: 12px 16px;
+    align-items: center;
+    justify-content: flex-end;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.execution-sidebar-toggle {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.execution-sidebar-toggle:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+}
+
 /* Content Area */
 .execution-content {
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 24px;
+    width: 0; /* Ensures flex child can shrink below its min-content size */
 }
+
+/* Tables */
+.execution-table-container {
+    width: 100%;
+    overflow-x: auto;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+.execution-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    min-width: 800px;
+}
+
+.execution-table th, .execution-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: top;
+    line-height: 1.5;
+}
+
+.execution-table th {
+    background-color: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.execution-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.execution-table td.nowrap {
+    white-space: nowrap;
+}
+
+.execution-table td.wrap {
+    min-width: 150px;
+    word-break: break-word;
+}
+
 
 .execution-overview {
     max-width: 1200px;
@@ -439,6 +515,28 @@
         flex-direction: column;
         overflow-y: auto;
         overflow-x: hidden;
+        transition: width 0.3s ease;
+    }
+    
+    .execution-sidebar-header {
+        display: flex;
+    }
+
+    .execution-sidebar.collapsed {
+        width: 72px;
+    }
+
+    .execution-sidebar.collapsed .execution-sidebar-header {
+        justify-content: center;
+    }
+    
+    .execution-sidebar.collapsed .execution-tab {
+        justify-content: center;
+        padding: 12px;
+    }
+    
+    .execution-sidebar.collapsed .execution-tab span {
+        display: none;
     }
     
     .execution-nav {
