@@ -4,6 +4,7 @@ import com.knoweb.salesmanagement.projectexecution.enums.ExecutionWorkspaceStatu
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public class ExecutionWorkspaceDTO {
@@ -73,6 +74,10 @@ public class ExecutionWorkspaceDTO {
     private LocalDate warrantyEndDate;
     private String warrantyNotes;
 
+    private OffsetDateTime closedAt;
+    private UUID closedBy;
+    private String closedByName;
+
     public Boolean getClientAccepted() { return clientAccepted; }
     public void setClientAccepted(Boolean clientAccepted) { this.clientAccepted = clientAccepted; }
     public LocalDate getClientAcceptanceDate() { return clientAcceptanceDate; }
@@ -85,4 +90,11 @@ public class ExecutionWorkspaceDTO {
     public void setWarrantyEndDate(LocalDate warrantyEndDate) { this.warrantyEndDate = warrantyEndDate; }
     public String getWarrantyNotes() { return warrantyNotes; }
     public void setWarrantyNotes(String warrantyNotes) { this.warrantyNotes = warrantyNotes; }
+
+    public OffsetDateTime getClosedAt() { return closedAt; }
+    public void setClosedAt(OffsetDateTime closedAt) { this.closedAt = closedAt; }
+    public UUID getClosedBy() { return closedBy; }
+    public void setClosedBy(UUID closedBy) { this.closedBy = closedBy; }
+    public String getClosedByName() { return closedByName; }
+    public void setClosedByName(String closedByName) { this.closedByName = closedByName; }
 }

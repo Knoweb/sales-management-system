@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface ProjectExecutionAttachmentRepository extends JpaRepository<ProjectExecutionAttachment, UUID> {
     List<ProjectExecutionAttachment> findByWorkspaceId(UUID workspaceId);
+    boolean existsByWorkspaceIdAndAttachmentType(UUID workspaceId, String attachmentType);
 }

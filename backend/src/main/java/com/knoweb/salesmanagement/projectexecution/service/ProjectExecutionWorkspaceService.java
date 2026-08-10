@@ -16,6 +16,7 @@ import com.knoweb.salesmanagement.technicalproject.entity.TechnicalProject;
 import com.knoweb.salesmanagement.technicalproject.repository.TechnicalProjectRepository;
 import com.knoweb.salesmanagement.user.entity.User;
 import com.knoweb.salesmanagement.user.repository.UserRepository;
+import com.knoweb.salesmanagement.projectexecution.repository.ProjectExecutionAttachmentRepository;
 import com.knoweb.salesmanagement.employee.repository.EmployeeRepository;
 import com.knoweb.salesmanagement.employee.entity.Employee;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -38,8 +42,9 @@ public class ProjectExecutionWorkspaceService {
     private final EmployeeRepository employeeRepository;
     private final ProjectTaskRepository taskRepository;
     private final com.knoweb.salesmanagement.projectexecution.repository.DailyProgressUpdateRepository progressRepository;
+    private final ProjectExecutionAttachmentRepository attachmentRepository;
 
-    public ProjectExecutionWorkspaceService(ProjectExecutionWorkspaceRepository workspaceRepository, TechnicalProjectRepository technicalProjectRepository, QuotationRepository quotationRepository, ConsolidatedTechnicalEstimateRepository estimateRepository, UserRepository userRepository, ProjectTaskRepository taskRepository, EmployeeRepository employeeRepository, com.knoweb.salesmanagement.projectexecution.repository.DailyProgressUpdateRepository progressRepository) {
+    public ProjectExecutionWorkspaceService(ProjectExecutionWorkspaceRepository workspaceRepository, TechnicalProjectRepository technicalProjectRepository, QuotationRepository quotationRepository, ConsolidatedTechnicalEstimateRepository estimateRepository, UserRepository userRepository, ProjectTaskRepository taskRepository, EmployeeRepository employeeRepository, com.knoweb.salesmanagement.projectexecution.repository.DailyProgressUpdateRepository progressRepository, ProjectExecutionAttachmentRepository attachmentRepository) {
         this.workspaceRepository = workspaceRepository;
         this.technicalProjectRepository = technicalProjectRepository;
         this.quotationRepository = quotationRepository;
@@ -48,6 +53,7 @@ public class ProjectExecutionWorkspaceService {
         this.employeeRepository = employeeRepository;
         this.taskRepository = taskRepository;
         this.progressRepository = progressRepository;
+        this.attachmentRepository = attachmentRepository;
     }
 
 
@@ -131,13 +137,10 @@ public class ProjectExecutionWorkspaceService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public ExecutionWorkspaceDTO getWorkspaceById(UUID id) {
         ProjectExecutionWorkspace workspace = workspaceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Workspace not found"));
-        
-        // Recalculate progress on load to fix stale legacy records
-        recalculateWorkspaceProgress(workspace);
         
         return mapToDTO(workspace);
     }
@@ -181,6 +184,12 @@ public class ProjectExecutionWorkspaceService {
         ProjectExecutionWorkspace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new RuntimeException("Workspace not found"));
 
+        if (workspace.getStatus() == com.knoweb.salesmanagement.projectexecution.enums.ExecutionWorkspaceStatus.CLOSED) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.CONFLICT,
+                    "Project execution is closed and cannot be modified.");
+        }
+
         if (dto.getInspectionStatus() == com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus.PASSED || 
             dto.getInspectionStatus() == com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus.FAILED) {
             if (dto.getInspectionDate() == null) {
@@ -202,6 +211,28 @@ public class ProjectExecutionWorkspaceService {
         
         if (hasActiveTasks) {
             throw new IllegalArgumentException("Complete or cancel all active tasks before entering project closure details.");
+        }
+
+        // Phase 13 Dependency Locking
+        if (Boolean.TRUE.equals(workspace.getClientAccepted())) {
+            if (Boolean.FALSE.equals(dto.getClientAccepted())) {
+                throw new IllegalArgumentException("Cannot undo client acceptance once it has been recorded.");
+            }
+            if (dto.getInspectionStatus() != null && dto.getInspectionStatus() != com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus.PASSED) {
+                throw new IllegalArgumentException("Cannot change inspection status from PASSED once client has accepted.");
+            }
+            if (dto.getInspectionDate() == null && workspace.getInspectionDate() != null) {
+                throw new IllegalArgumentException("Cannot remove inspection date once client has accepted.");
+            }
+            if (dto.getDeliveryDate() == null && workspace.getDeliveryDate() != null) {
+                throw new IllegalArgumentException("Cannot remove delivery date once client has accepted.");
+            }
+            if (Boolean.FALSE.equals(dto.getInstallationCompleted()) && Boolean.TRUE.equals(workspace.getInstallationCompleted())) {
+                throw new IllegalArgumentException("Cannot mark installation as incomplete once client has accepted.");
+            }
+            if (dto.getClientAcceptanceDate() == null && workspace.getClientAcceptanceDate() != null) {
+                throw new IllegalArgumentException("Cannot remove client acceptance date once client has accepted.");
+            }
         }
 
         if (Boolean.TRUE.equals(dto.getClientAccepted())) {
@@ -339,6 +370,65 @@ public class ProjectExecutionWorkspaceService {
         dto.setWarrantyEndDate(workspace.getWarrantyEndDate());
         dto.setWarrantyNotes(workspace.getWarrantyNotes());
         
+        dto.setClosedAt(workspace.getClosedAt());
+        dto.setClosedBy(workspace.getClosedBy());
+        if (workspace.getClosedBy() != null) {
+            userRepository.findById(workspace.getClosedBy()).ifPresent(u -> {
+                dto.setClosedByName(u.getFirstName() + " " + u.getLastName());
+            });
+        }
+        
         return dto;
+    }
+
+    @Transactional
+    public ExecutionWorkspaceDTO closeWorkspace(UUID workspaceId, UUID userId) {
+        ProjectExecutionWorkspace workspace = workspaceRepository.findById(workspaceId)
+                .orElseThrow(() -> new RuntimeException("Workspace not found"));
+        
+        if (workspace.getStatus() == com.knoweb.salesmanagement.projectexecution.enums.ExecutionWorkspaceStatus.CLOSED) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.CONFLICT,
+                    "Project execution is closed and cannot be modified.");
+        }
+
+        // Checklist Validation
+        java.util.List<ProjectTask> tasks = taskRepository.findByWorkspaceId(workspaceId);
+        boolean hasActiveTasks = false;
+        for (ProjectTask t : tasks) {
+            if (t.getStatus() != com.knoweb.salesmanagement.projectexecution.enums.TaskStatus.COMPLETED && 
+                t.getStatus() != com.knoweb.salesmanagement.projectexecution.enums.TaskStatus.CANCELLED) {
+                hasActiveTasks = true;
+                break;
+            }
+        }
+        if (hasActiveTasks) {
+            throw new IllegalArgumentException("Cannot close project: active tasks exist.");
+        }
+
+        if (workspace.getInspectionStatus() != com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus.PASSED) {
+            throw new IllegalArgumentException("Cannot close project: final inspection not passed.");
+        }
+
+        if (workspace.getDeliveryDate() == null || !Boolean.TRUE.equals(workspace.getInstallationCompleted())) {
+            throw new IllegalArgumentException("Cannot close project: delivery or installation not completed.");
+        }
+
+        if (!Boolean.TRUE.equals(workspace.getClientAccepted()) || workspace.getClientAcceptanceDate() == null) {
+            throw new IllegalArgumentException("Cannot close project: client acceptance missing.");
+        }
+
+        // Check if there is at least one FINAL_DOCUMENT
+        boolean hasFinalDoc = attachmentRepository.existsByWorkspaceIdAndAttachmentType(workspaceId, "FINAL_DOCUMENT");
+        if (!hasFinalDoc) {
+            throw new IllegalArgumentException("Cannot close project: final document missing.");
+        }
+
+        workspace.setStatus(com.knoweb.salesmanagement.projectexecution.enums.ExecutionWorkspaceStatus.CLOSED);
+        workspace.setClosedAt(OffsetDateTime.now());
+        workspace.setClosedBy(userId);
+
+        workspace = workspaceRepository.save(workspace);
+        return mapToDTO(workspace);
     }
 }

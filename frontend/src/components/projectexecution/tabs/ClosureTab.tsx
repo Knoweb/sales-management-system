@@ -20,6 +20,7 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
     const [finalDocs, setFinalDocs] = useState<ProjectExecutionAttachmentDTO[]>([]);
     const [docsLoading, setDocsLoading] = useState<boolean>(false);
     const [uploadingDoc, setUploadingDoc] = useState<boolean>(false);
+    const [closing, setClosing] = useState<boolean>(false);
 
     const [formData, setFormData] = useState<ProjectClosureDTO>({
         inspectionStatus: 'PENDING',
@@ -161,16 +162,7 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
         
         setUploadingDoc(true);
         try {
-            const payload: any = { 
-                workspaceId: workspace.id, 
-                attachmentType: 'FINAL_DOCUMENT', 
-                originalFileName: file.name, 
-                mimeType: file.type, 
-                fileSize: file.size,
-                description: 'Final Handover Document', 
-                storageReference: 'mock-url-for-now-which-is-standard' 
-            };
-            await projectExecutionApi.attachments.save(workspace.id, payload);
+            await projectExecutionApi.attachments.upload(workspace.id, 'FINAL_DOCUMENT', file, 'Final Handover Document');
             setSuccess('Document uploaded successfully.');
             // Refetch docs
             const res = await projectExecutionApi.attachments.getByWorkspace(workspace.id, 'FINAL_DOCUMENT');
@@ -198,8 +190,56 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
         }
     };
 
-    const clientAcceptanceDisabled = !canEdit || formData.inspectionStatus !== 'PASSED' || !formData.deliveryDate || !formData.installationCompleted;
-    const warrantyDocsDisabled = !canEdit || !formData.clientAccepted || !formData.clientAcceptanceDate;
+    const handleDownloadDoc = async (docId: string, originalFileName: string) => {
+        try {
+            const response = await projectExecutionApi.attachments.download(docId);
+            const blob = new Blob([response.data]);
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = originalFileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Failed to download document', err);
+            setError('Failed to download document. It may have been removed or you may lack permissions.');
+        }
+    };
+
+    const handleCloseProject = async () => {
+        if (!window.confirm('Are you sure you want to permanently close this project? This action cannot be undone.')) return;
+        setClosing(true);
+        setError(null);
+        try {
+            const updatedWorkspace = await projectExecutionApi.workspaces.close(workspace.id);
+            setLocalWorkspace(updatedWorkspace);
+            setSuccess('Project closed successfully.');
+            onRefresh();
+        } catch (err: any) {
+            console.error('Failed to close project', err);
+            setError(err.response?.data?.message || err.response?.data || 'Failed to close project.');
+        } finally {
+            setClosing(false);
+        }
+    };
+
+    const isClosed = localWorkspace.status === 'CLOSED';
+    const isClientAccepted = localWorkspace.clientAccepted === true;
+    const upstreamLocked = !canEdit || isClientAccepted || isClosed;
+
+    const clientAcceptanceDisabled = !canEdit || formData.inspectionStatus !== 'PASSED' || !formData.deliveryDate || !formData.installationCompleted || isClosed;
+    const clientAcceptanceIncomplete = !formData.clientAccepted || !formData.clientAcceptanceDate;
+    const warrantyDocsDisabled = !canEdit || clientAcceptanceIncomplete || isClosed;
+
+    const chkNoActiveTasks = !hasActiveTasks && !checkingTasks;
+    const chkInspectionPassed = localWorkspace.inspectionStatus === 'PASSED';
+    const chkDeliveryCompleted = !!localWorkspace.deliveryDate && localWorkspace.installationCompleted === true;
+    const chkClientAccepted = localWorkspace.clientAccepted === true && !!localWorkspace.clientAcceptanceDate;
+    const chkFinalDocAvailable = finalDocs.length > 0;
+
+    const canClose = chkNoActiveTasks && chkInspectionPassed && chkDeliveryCompleted && chkClientAccepted && chkFinalDocAvailable;
 
     return (
         <div className="execution-tab-content">
@@ -211,7 +251,7 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
                         <span style={{ flex: '1 1 auto', wordBreak: 'normal', overflowWrap: 'break-word' }}>Complete final inspection and delivery details before closing the project.</span>
                     </div>
                 </div>
-                {canEdit && (
+                {canEdit && !isClosed && (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
                         <button 
                             className="execution-primary-button" 
@@ -229,6 +269,19 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
                     </div>
                 )}
             </div>
+
+            {isClosed && (
+                <div style={{ marginBottom: '24px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <ShieldCheck size={32} color="#16a34a" />
+                    <div>
+                        <div style={{ fontSize: '18px', fontWeight: 600, color: '#166534', marginBottom: '4px' }}>Project Closed</div>
+                        <div style={{ fontSize: '14px', color: '#15803d' }}>
+                            Closed Date: {localWorkspace.closedAt ? new Date(localWorkspace.closedAt).toLocaleString() : 'N/A'}<br/>
+                            Closed By: {localWorkspace.closedByName || 'Unknown'}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {error && (
                 <div className="execution-error-alert" style={{ marginBottom: '24px', display: 'flex', gap: '8px', alignItems: 'center', backgroundColor: '#fef2f2', color: '#b91c1c', padding: '12px 16px', borderRadius: '8px', border: '1px solid #fecaca' }}>
@@ -305,7 +358,7 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
                                 className="closure-select" 
                                 value={formData.inspectionStatus}
                                 onChange={(e) => setFormData({ ...formData, inspectionStatus: e.target.value as ProjectClosureDTO['inspectionStatus'] })}
-                                disabled={!canEdit}
+                                disabled={upstreamLocked}
                             >
                                 <option value="PENDING">PENDING</option>
                                 <option value="PASSED">PASSED</option>
@@ -320,7 +373,7 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
                                 className="closure-input"
                                 value={formData.inspectionDate || ''}
                                 onChange={(e) => setFormData({ ...formData, inspectionDate: e.target.value })}
-                                disabled={!canEdit}
+                                disabled={upstreamLocked}
                             />
                         </div>
 
@@ -331,7 +384,7 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
                                 rows={4}
                                 value={formData.inspectionNotes}
                                 onChange={(e) => setFormData({ ...formData, inspectionNotes: e.target.value })}
-                                disabled={!canEdit}
+                                disabled={!canEdit || isClosed}
                                 placeholder="Enter any notes from the final inspection..."
                             />
                         </div>
@@ -352,13 +405,13 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
                                 className="closure-input"
                                 value={formData.deliveryDate || ''}
                                 onChange={(e) => setFormData({ ...formData, deliveryDate: e.target.value })}
-                                disabled={!canEdit}
+                                disabled={upstreamLocked}
                             />
                         </div>
 
                         <div className="closure-form-group">
                             <label className="closure-form-label">Installation Status</label>
-                            <label className={`closure-checkbox-row ${!canEdit ? 'disabled' : ''}`}>
+                            <label className={`closure-checkbox-row ${upstreamLocked ? 'disabled' : ''}`}>
                                 <div className="closure-checkbox-label">
                                     Installation Completed
                                 </div>
@@ -367,7 +420,7 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
                                     className="closure-checkbox-input"
                                     checked={formData.installationCompleted}
                                     onChange={(e) => setFormData({ ...formData, installationCompleted: e.target.checked })}
-                                    disabled={!canEdit}
+                                    disabled={upstreamLocked}
                                 />
                             </label>
                         </div>
@@ -379,7 +432,7 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
                                 rows={4}
                                 value={formData.deliveryNotes}
                                 onChange={(e) => setFormData({ ...formData, deliveryNotes: e.target.value })}
-                                disabled={!canEdit}
+                                disabled={!canEdit || isClosed}
                                 placeholder="Enter any delivery or installation notes..."
                             />
                         </div>
@@ -394,7 +447,7 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
                     <div className="execution-detail-body">
                         <div className="closure-form-group">
                             <label className="closure-form-label">Client Accepted</label>
-                            <label className={`closure-checkbox-row ${clientAcceptanceDisabled ? 'disabled' : ''}`}>
+                            <label className={`closure-checkbox-row ${isClientAccepted ? 'disabled' : clientAcceptanceDisabled ? 'disabled' : ''}`}>
                                 <div className="closure-checkbox-label">
                                     Yes, Client Accepted
                                 </div>
@@ -403,7 +456,7 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
                                     className="closure-checkbox-input"
                                     checked={formData.clientAccepted}
                                     onChange={(e) => setFormData({ ...formData, clientAccepted: e.target.checked })}
-                                    disabled={clientAcceptanceDisabled}
+                                    disabled={isClientAccepted ? true : clientAcceptanceDisabled}
                                 />
                             </label>
                             {clientAcceptanceDisabled && (
@@ -421,7 +474,7 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
                                     className="closure-input"
                                     value={formData.clientAcceptanceDate || ''}
                                     onChange={(e) => setFormData({ ...formData, clientAcceptanceDate: e.target.value })}
-                                    disabled={clientAcceptanceDisabled}
+                                    disabled={upstreamLocked}
                                 />
                             </div>
                         )}
@@ -446,7 +499,7 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
                         <h3><ShieldCheck size={18} /> Warranty</h3>
                     </div>
                     <div className="execution-detail-body">
-                        {warrantyDocsDisabled && (
+                        {clientAcceptanceIncomplete && (
                             <div style={{ padding: '0 0 16px 0', fontSize: '12px', color: '#64748b' }}>
                                 Client acceptance is required before warranty and final documents.
                             </div>
@@ -478,7 +531,7 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
                                 rows={4}
                                 value={formData.warrantyNotes}
                                 onChange={(e) => setFormData({ ...formData, warrantyNotes: e.target.value })}
-                                disabled={warrantyDocsDisabled}
+                                disabled={warrantyDocsDisabled || isClosed}
                                 placeholder="Enter any warranty details..."
                             />
                         </div>
@@ -489,7 +542,7 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
                 <div className="execution-detail-card" style={{ gridColumn: '1 / -1' }}>
                     <div className="execution-detail-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h3><FileText size={18} /> Final Documents</h3>
-                        {!warrantyDocsDisabled && (
+                        {!clientAcceptanceIncomplete && !isClosed && canEdit && (
                             <div>
                                 <input 
                                     type="file" 
@@ -508,7 +561,7 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
                         )}
                     </div>
                     <div className="execution-detail-body" style={{ padding: '0' }}>
-                        {warrantyDocsDisabled ? (
+                        {clientAcceptanceIncomplete ? (
                             <div style={{ padding: '24px', textAlign: 'center', color: '#64748b', backgroundColor: '#f8fafc' }}>
                                 Client acceptance is required before warranty and final documents.
                             </div>
@@ -526,7 +579,7 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
                                             <th>File Name</th>
                                             <th>Size</th>
                                             <th>Uploaded At</th>
-                                            {canEdit && <th style={{ width: '60px' }}>Action</th>}
+                                            <th style={{ width: canEdit && !isClosed ? '120px' : '80px' }}>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -535,8 +588,15 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
                                                 <td>{doc.originalFileName}</td>
                                                 <td>{((doc.fileSize || 0) / 1024).toFixed(1)} KB</td>
                                                 <td>{doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString() : 'N/A'}</td>
-                                                {canEdit && (
-                                                    <td>
+                                                <td style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                    <button 
+                                                        style={{ background: 'none', border: 'none', color: '#2563eb', cursor: 'pointer', padding: '4px', fontSize: '13px', fontWeight: 500 }}
+                                                        onClick={() => handleDownloadDoc(doc.id!, doc.originalFileName || 'document')}
+                                                        title="Download / View"
+                                                    >
+                                                        Download
+                                                    </button>
+                                                    {canEdit && !isClosed && (
                                                         <button 
                                                             style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }}
                                                             onClick={() => handleDeleteDoc(doc.id!)}
@@ -544,8 +604,8 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
                                                         >
                                                             <Trash size={16} />
                                                         </button>
-                                                    </td>
-                                                )}
+                                                    )}
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -556,6 +616,60 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
                 </div>
 
             </div>
+
+            {/* Checklist and Close Project */}
+            {canEdit && !isClosed && (
+                <div style={{ marginTop: '32px', backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                    <div style={{ padding: '16px 20px', backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                        <h3 style={{ margin: 0, fontSize: '16px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <CheckCircle size={18} color="#0f172a" />
+                            Closure Checklist
+                        </h3>
+                    </div>
+                    <div style={{ padding: '20px' }}>
+                        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', color: chkNoActiveTasks ? '#16a34a' : '#64748b' }}>
+                                {chkNoActiveTasks ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+                                <span style={{ fontWeight: chkNoActiveTasks ? 600 : 400 }}>No Active Tasks</span>
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', color: chkInspectionPassed ? '#16a34a' : '#64748b' }}>
+                                {chkInspectionPassed ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+                                <span style={{ fontWeight: chkInspectionPassed ? 600 : 400 }}>Final Inspection Passed</span>
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', color: chkDeliveryCompleted ? '#16a34a' : '#64748b' }}>
+                                {chkDeliveryCompleted ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+                                <span style={{ fontWeight: chkDeliveryCompleted ? 600 : 400 }}>Delivery Completed</span>
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', color: chkClientAccepted ? '#16a34a' : '#64748b' }}>
+                                {chkClientAccepted ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+                                <span style={{ fontWeight: chkClientAccepted ? 600 : 400 }}>Client Accepted</span>
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', color: chkFinalDocAvailable ? '#16a34a' : '#64748b' }}>
+                                {chkFinalDocAvailable ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+                                <span style={{ fontWeight: chkFinalDocAvailable ? 600 : 400 }}>Final Document Available</span>
+                            </li>
+                        </ul>
+
+                        <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '12px' }}>
+                            <button
+                                type="button"
+                                className="execution-primary-button"
+                                style={{ backgroundColor: canClose ? '#16a34a' : '#94a3b8', borderColor: canClose ? '#15803d' : '#94a3b8' }}
+                                onClick={handleCloseProject}
+                                disabled={!canClose || closing}
+                            >
+                                <ShieldCheck size={16} />
+                                {closing ? 'Closing Project...' : 'Close Project'}
+                            </button>
+                            {!canClose && (
+                                <div style={{ fontSize: '13px', color: '#dc2626' }}>
+                                    All closure requirements must be completed before the project can be closed.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

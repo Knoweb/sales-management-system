@@ -71,11 +71,8 @@ public class ProjectMonitoringService {
         this.eventPublisher = eventPublisher;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public ProjectExecutionSummaryDTO getWorkspaceSummary(UUID workspaceId) {
-        // Recalculate progress to fix any stale legacy records
-        workspaceService.updateWorkspaceProgress(workspaceId);
-        
         ProjectExecutionSummaryDTO summary = new ProjectExecutionSummaryDTO();
         
         ProjectExecutionWorkspace workspace = workspaceRepository.findById(workspaceId)
@@ -150,9 +147,13 @@ public class ProjectMonitoringService {
 
     @Transactional
     public void submitProgressUpdate(DailyProgressUpdateDTO dto, UUID currentUserId, Collection<? extends GrantedAuthority> authorities) {
-        securityHelper.getWorkspaceAndVerifyWriteAccess(dto.getWorkspaceId(), currentUserId, authorities);
+        ProjectExecutionWorkspace workspace = securityHelper.getWorkspaceAndVerifyWriteAccess(dto.getWorkspaceId(), currentUserId, authorities);
+        
+        if (workspace.getStatus() == com.knoweb.salesmanagement.projectexecution.enums.ExecutionWorkspaceStatus.CLOSED) {
+            throw new IllegalArgumentException("Cannot submit progress updates for a CLOSED project workspace.");
+        }
+
         DailyProgressUpdate update = new DailyProgressUpdate();
-        ProjectExecutionWorkspace workspace = workspaceRepository.findById(dto.getWorkspaceId()).orElseThrow();
         update.setWorkspace(workspace);
         
         ProjectTask task = null;

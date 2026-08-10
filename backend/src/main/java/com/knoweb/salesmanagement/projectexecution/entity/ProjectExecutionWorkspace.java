@@ -93,6 +93,12 @@ public class ProjectExecutionWorkspace {
     @Column(name = "warranty_notes")
     private String warrantyNotes;
 
+    @Column(name = "closed_at")
+    private OffsetDateTime closedAt;
+
+    @Column(name = "closed_by")
+    private UUID closedBy;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
@@ -162,6 +168,12 @@ public class ProjectExecutionWorkspace {
     public void setWarrantyEndDate(LocalDate warrantyEndDate) { this.warrantyEndDate = warrantyEndDate; }
     public String getWarrantyNotes() { return warrantyNotes; }
     public void setWarrantyNotes(String warrantyNotes) { this.warrantyNotes = warrantyNotes; }
+
+    public OffsetDateTime getClosedAt() { return closedAt; }
+    public void setClosedAt(OffsetDateTime closedAt) { this.closedAt = closedAt; }
+    public UUID getClosedBy() { return closedBy; }
+    public void setClosedBy(UUID closedBy) { this.closedBy = closedBy; }
+
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
