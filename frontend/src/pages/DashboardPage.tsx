@@ -3,18 +3,14 @@ import { useAuth } from '../context/AuthContext';
 import { LayoutDashboard, Users, TrendingUp, Briefcase, Calculator, FileCheck, CircleDollarSign } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 import { Card } from '../components/Card';
-<<<<<<< Updated upstream
 import { StatCard } from '../components/StatCard';
 import { DashboardApi } from '../services/DashboardApi';
 import type { DashboardMetricsDto, SalesForecastDto, UtilizationDto } from '../services/DashboardApi';
 import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
-=======
-import { VirtualTourEffectivenessWidget } from '../features/dashboard/components/VirtualTourEffectivenessWidget';
->>>>>>> Stashed changes
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
-  
+
   const [metrics, setMetrics] = useState<DashboardMetricsDto | null>(null);
   const [forecast, setForecast] = useState<SalesForecastDto | null>(null);
   const [utilization, setUtilization] = useState<UtilizationDto[] | null>(null);
@@ -62,7 +58,7 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <>
-      <PageHeader 
+      <PageHeader
         title={`Welcome back, ${user?.firstName}!`}
         description={isSalesOfficer ? "Here is your personal sales pipeline." : "Here is the real-time company performance overview."}
         icon={<LayoutDashboard size={24} />}
@@ -72,42 +68,42 @@ export const DashboardPage: React.FC = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
         {(!isTechCoord || isGM) && (
           <>
-            <StatCard 
-              title={isSalesOfficer ? "My Active Leads" : "Total Active Leads"} 
-              value={metrics?.totalLeads || 0} 
-              icon={<Users />} 
-              trend={{ value: 12, isPositive: true }} 
-              color="blue" 
+            <StatCard
+              title={isSalesOfficer ? "My Active Leads" : "Total Active Leads"}
+              value={metrics?.totalLeads || 0}
+              icon={<Users />}
+              trend={{ value: 12, isPositive: true }}
+              color="blue"
             />
-            <StatCard 
-              title={isSalesOfficer ? "My Open Opportunities" : "Open Opportunities"} 
-              value={metrics?.activeOpportunities || 0} 
-              icon={<TrendingUp />} 
-              trend={{ value: 5, isPositive: true }} 
-              color="purple" 
+            <StatCard
+              title={isSalesOfficer ? "My Open Opportunities" : "Open Opportunities"}
+              value={metrics?.activeOpportunities || 0}
+              icon={<TrendingUp />}
+              trend={{ value: 5, isPositive: true }}
+              color="purple"
             />
-            <StatCard 
-              title="Pending Quotations" 
-              value={metrics?.pendingQuotations || 0} 
-              icon={<FileCheck />} 
-              trend={{ value: 2, isPositive: false }} 
+            <StatCard
+              title="Pending Quotations"
+              value={metrics?.pendingQuotations || 0}
+              icon={<FileCheck />}
+              trend={{ value: 2, isPositive: false }}
               color="orange"
               breakdown={metrics?.quotationBreakdown}
             />
           </>
         )}
         {(isGM || isDeptHead || isTechCoord) && (
-          <StatCard 
-            title="Active Tech Projects" 
-            value={metrics?.activeTechnicalProjects || 0} 
-            icon={<Briefcase />} 
-            color="indigo" 
+          <StatCard
+            title="Active Tech Projects"
+            value={metrics?.activeTechnicalProjects || 0}
+            icon={<Briefcase />}
+            color="indigo"
           />
         )}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-        
+
         {/* Revenue Forecast (For Sales & GM) */}
         {(isGM || isSalesOfficer) && (
           <Card className="card-primary">
@@ -116,7 +112,7 @@ export const DashboardPage: React.FC = () => {
                 <CircleDollarSign size={24} style={{ color: 'var(--color-success)' }} />
                 <h3 className="text-section-title" style={{ margin: 0 }}>Sales Pipeline Value</h3>
               </div>
-              
+
               <div style={{ display: 'flex', gap: '2rem', marginBottom: '2rem' }}>
                 <div>
                   <div className="text-label">Expected Revenue</div>
@@ -130,7 +126,6 @@ export const DashboardPage: React.FC = () => {
                     {formatCurrency(metrics?.totalConfirmedRevenue || 0)}
                   </div>
                 </div>
-<<<<<<< Updated upstream
               </div>
 
               {/* Chart */}
@@ -172,7 +167,7 @@ export const DashboardPage: React.FC = () => {
                 <Calculator size={24} style={{ color: 'var(--color-indigo)' }} />
                 <h3 className="text-section-title" style={{ margin: 0 }}>Department Utilization</h3>
               </div>
-              
+
               <div style={{ height: '380px', width: '100%', marginTop: '1rem' }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
@@ -180,24 +175,24 @@ export const DashboardPage: React.FC = () => {
                     margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                    <XAxis 
-                      dataKey="departmentName" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fontSize: 12, fill: '#6B7280' }} 
+                    <XAxis
+                      dataKey="departmentName"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: '#6B7280' }}
                       angle={-45}
                       textAnchor="end"
                       dy={10}
                       height={60}
                     />
-                    <YAxis 
-                      allowDecimals={false} 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fontSize: 12, fill: '#6B7280' }} 
-                      dx={-10} 
+                    <YAxis
+                      allowDecimals={false}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: '#6B7280' }}
+                      dx={-10}
                     />
-                    <RechartsTooltip 
+                    <RechartsTooltip
                       cursor={{ fill: 'transparent' }}
                       contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
                     />
@@ -211,24 +206,6 @@ export const DashboardPage: React.FC = () => {
           </Card>
         )}
 
-=======
-              </Card>
-            ))}
-          </div>
-        </div>
-      </Card>
-      
-      <div style={{ marginTop: '2rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-        <VirtualTourEffectivenessWidget />
-      </div>
-      
-      <div style={{ marginTop: '2rem' }}>
-        <EmptyState 
-          icon={<Activity size={48} />}
-          title="Business Modules Pending"
-          message="Phase 1 & 2 foundations are complete. Business logic, pipelines, and reporting will appear here shortly."
-        />
->>>>>>> Stashed changes
       </div>
     </>
   );

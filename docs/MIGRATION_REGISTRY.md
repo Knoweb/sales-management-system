@@ -36,7 +36,7 @@
 ## Risks and Mitigation
 - **Duplicate-version risks**: Because multiple members work on `main`, there is a high risk of duplicate version numbers.
 - **Missing/orphaned migration risks**: Migrations created by other members may become orphaned if branches diverge, though we are working directly on `main`.
-- **Latest Migration Version**: V22
-- **Next available migration versions**: V23, V24, V25. 
+- **Latest Migration Version**: V43
+- **Next available migration versions**: V44, V45, V46. 
 
 **IMPORTANT**: Migration numbers must be rechecked immediately before Step C1 because all three members work on `main`.
