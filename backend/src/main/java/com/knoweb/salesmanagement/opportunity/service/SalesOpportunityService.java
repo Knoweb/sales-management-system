@@ -30,6 +30,9 @@ import com.knoweb.salesmanagement.projectbrief.repository.ProjectBriefRepository
 import com.knoweb.salesmanagement.projectbrief.util.ProjectBriefDeadlineUtil;
 import com.knoweb.salesmanagement.user.entity.User;
 import com.knoweb.salesmanagement.user.repository.UserRepository;
+import com.knoweb.salesmanagement.audit.dto.InternalAuditLogEvent;
+import com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -60,6 +63,7 @@ public class SalesOpportunityService {
     private final ProductCategoryRepository productCategoryRepository;
     private final UserRepository userRepository;
     private final ProjectBriefRepository projectBriefRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public SalesOpportunityService(SalesOpportunityRepository opportunityRepository,
                                    OpportunityActivityRepository activityRepository,
@@ -69,7 +73,8 @@ public class SalesOpportunityService {
                                    EmployeeRepository employeeRepository,
                                    ProductCategoryRepository productCategoryRepository,
                                    UserRepository userRepository,
-                                   ProjectBriefRepository projectBriefRepository) {
+                                   ProjectBriefRepository projectBriefRepository,
+                                   ApplicationEventPublisher eventPublisher) {
         this.opportunityRepository = opportunityRepository;
         this.activityRepository = activityRepository;
         this.leadRepository = leadRepository;
@@ -79,6 +84,7 @@ public class SalesOpportunityService {
         this.productCategoryRepository = productCategoryRepository;
         this.userRepository = userRepository;
         this.projectBriefRepository = projectBriefRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     private User getAuthenticatedUser() {
@@ -177,7 +183,29 @@ public class SalesOpportunityService {
 
         logActivity(opportunity, "CONVERTED", "Lead converted to Sales Opportunity");
 
-        return mapToDTO(opportunity);
+        SalesOpportunityDTO dto = mapToDTO(opportunity);
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("OPPORTUNITY_CREATED");
+        auditEvent.setEntityType("SalesOpportunity");
+        auditEvent.setEntityId(opportunity.getId());
+        auditEvent.setAction("CREATE");
+        auditEvent.setNewState(dto);
+        eventPublisher.publishEvent(auditEvent);
+
+        if (salesOfficer.getUser() != null) {
+            InternalNotificationEvent notif = new InternalNotificationEvent();
+            notif.setEventType("OPPORTUNITY_ASSIGNED");
+            notif.setTitle("New Opportunity Assigned");
+            notif.setMessage("Lead converted. You have been assigned to opportunity: " + opportunity.getTitle());
+            notif.setEntityType("SalesOpportunity");
+            notif.setEntityId(opportunity.getId());
+            notif.setRecipientUserIds(java.util.Set.of(salesOfficer.getUser().getId()));
+            notif.setContextUrl("/sales/opportunities/" + opportunity.getId());
+            notif.setDeduplicationKey("OPPORTUNITY_ASSIGN_" + opportunity.getId() + "_" + salesOfficer.getId());
+            eventPublisher.publishEvent(notif);
+        }
+
+        return dto;
     }
 
     @Transactional
@@ -261,11 +289,22 @@ public class SalesOpportunityService {
         opp.setEstimatedValue(request.getEstimatedValue());
         opp.setExpectedCloseDate(request.getExpectedCloseDate());
         
+        SalesOpportunityDTO previousState = mapToDTO(opp);
         opp = opportunityRepository.save(opp);
         
         logActivity(opp, "UPDATED", "Opportunity details were updated");
         
-        return mapToDTO(opp);
+        SalesOpportunityDTO newState = mapToDTO(opp);
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("OPPORTUNITY_UPDATED");
+        auditEvent.setEntityType("SalesOpportunity");
+        auditEvent.setEntityId(opp.getId());
+        auditEvent.setAction("UPDATE");
+        auditEvent.setPreviousState(previousState);
+        auditEvent.setNewState(newState);
+        eventPublisher.publishEvent(auditEvent);
+
+        return newState;
     }
 
     private SalesOpportunitySummaryDTO mapToSummaryDTO(SalesOpportunity entity) {

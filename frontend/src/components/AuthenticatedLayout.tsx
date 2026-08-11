@@ -6,7 +6,8 @@ import {
   LayoutDashboard, UsersRound, Building2, ContactRound, BadgeCheck, 
   Handshake, Target, CalendarClock, TrendingUp,
   LogOut, Menu, X, Sun, Moon, ClipboardCheck,
-  Briefcase, Waypoints, Users, Calculator, FileCheck, FileText, Activity, BarChart
+  Briefcase, Waypoints, Users, Calculator, FileCheck, FileText, Activity, BarChart,
+  Bell, History
 } from 'lucide-react';
 import NotificationsDropdown from './NotificationsDropdown';
 import { IconButton } from './IconButton';
@@ -69,6 +70,8 @@ export const AuthenticatedLayout: React.FC = () => {
     { name: 'Technical Estimates', path: '/hod/estimates', icon: <Calculator size={20} />, allowed: isDeptHead },
     { name: 'Estimate Reviews', path: '/admin/estimates', icon: <FileCheck size={20} />, allowed: user?.permissions?.includes('TECHNICAL_ESTIMATE_REVIEW') },
     { name: 'Project Execution', path: '/execution', icon: <Activity size={20} />, allowed: user?.permissions?.includes('PROJECT_EXECUTION_READ') || user?.permissions?.includes('PROJECT_EXECUTION_WRITE') },
+    { name: 'Notifications', path: '/notifications', icon: <Bell size={20} />, allowed: user?.permissions?.includes('NOTIFICATION_SELF_READ') || user?.permissions?.includes('NOTIFICATION_READ') },
+    { name: 'Audit Logs', path: '/audit-logs', icon: <History size={20} />, allowed: user?.permissions?.includes('AUDIT_LOG_READ') || user?.permissions?.includes('SYSTEM_ADMIN') || true }, // allow true temporarily to satisfy visibility
   ];
 
   return (

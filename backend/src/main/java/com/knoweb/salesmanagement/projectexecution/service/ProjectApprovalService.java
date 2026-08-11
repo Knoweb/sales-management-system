@@ -11,6 +11,8 @@ import com.knoweb.salesmanagement.user.repository.UserRepository;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
+import com.knoweb.salesmanagement.audit.dto.InternalAuditLogEvent;
 
 import java.time.OffsetDateTime;
 import java.util.Collection;
@@ -25,12 +27,14 @@ public class ProjectApprovalService {
     private final ProjectTaskRepository taskRepository;
     private final UserRepository userRepository;
     private final ProjectExecutionSecurityHelper securityHelper;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public ProjectApprovalService(ProjectApprovalRequestRepository approvalRepository, ProjectTaskRepository taskRepository, UserRepository userRepository, ProjectExecutionSecurityHelper securityHelper) {
+    public ProjectApprovalService(ProjectApprovalRequestRepository approvalRepository, ProjectTaskRepository taskRepository, UserRepository userRepository, ProjectExecutionSecurityHelper securityHelper, ApplicationEventPublisher eventPublisher) {
         this.approvalRepository = approvalRepository;
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
         this.securityHelper = securityHelper;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -71,7 +75,34 @@ public class ProjectApprovalService {
         approval.setSubmittedDate(OffsetDateTime.now());
         approval.setStatus(com.knoweb.salesmanagement.projectexecution.enums.ApprovalRequestStatus.SUBMITTED);
         
-        return mapToDTO(approvalRepository.save(approval));
+        ProjectApprovalRequestDTO resultDto = mapToDTO(approvalRepository.save(approval));
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("PROJECT_APPROVAL_REQUESTED");
+        auditEvent.setEntityType("ProjectApprovalRequest");
+        auditEvent.setEntityId(approval.getId());
+        auditEvent.setAction("REQUEST");
+        auditEvent.setNewState(resultDto);
+        eventPublisher.publishEvent(auditEvent);
+
+        if (approval.getAssignedApprover() != null) {
+            try {
+                com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent notif = new com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent();
+                notif.setEventType("PROJECT_APPROVAL_REQUESTED");
+                notif.setTitle("Approval Request Received");
+                notif.setMessage("You have a new approval request: " + approval.getTitle());
+                notif.setEntityType("PROJECT_APPROVAL");
+                notif.setEntityId(approval.getId());
+                notif.setContextUrl("/execution-workspaces/" + approval.getWorkspace().getId() + "/approvals");
+                notif.setDeduplicationKey("approval_req_" + approval.getId());
+                notif.setRecipientUserIds(java.util.Set.of(approval.getAssignedApprover().getId()));
+                eventPublisher.publishEvent(notif);
+            } catch (Exception e) {
+                System.err.println("Failed to send approval request notification: " + e.getMessage());
+            }
+        }
+
+        return resultDto;
     }
     
     @Transactional
@@ -82,11 +113,41 @@ public class ProjectApprovalService {
         // For now just check general write access
         securityHelper.getWorkspaceAndVerifyWriteAccess(approval.getWorkspace().getId(), userId, authorities);
         
+        ProjectApprovalRequestDTO previousDto = mapToDTO(approval);
+        
         approval.setDecisionDate(OffsetDateTime.now());
         approval.setDecisionComment(status + ": " + comment);
         approval.setStatus(com.knoweb.salesmanagement.projectexecution.enums.ApprovalRequestStatus.valueOf(status));
         
-        return mapToDTO(approvalRepository.save(approval));
+        ProjectApprovalRequestDTO resultDto = mapToDTO(approvalRepository.save(approval));
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("PROJECT_APPROVAL_DECISION_UPDATED");
+        auditEvent.setEntityType("ProjectApprovalRequest");
+        auditEvent.setEntityId(approval.getId());
+        auditEvent.setAction("UPDATE_DECISION");
+        auditEvent.setPreviousState(previousDto);
+        auditEvent.setNewState(resultDto);
+        eventPublisher.publishEvent(auditEvent);
+
+        if (approval.getRequestedBy() != null) {
+            try {
+                com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent notif = new com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent();
+                notif.setEventType("PROJECT_APPROVAL_DECISION_UPDATED");
+                notif.setTitle("Approval Decision: " + status);
+                notif.setMessage("A decision has been made on your approval request: " + approval.getTitle());
+                notif.setEntityType("PROJECT_APPROVAL");
+                notif.setEntityId(approval.getId());
+                notif.setContextUrl("/execution-workspaces/" + approval.getWorkspace().getId() + "/approvals");
+                notif.setDeduplicationKey("approval_dec_" + approval.getId());
+                notif.setRecipientUserIds(java.util.Set.of(approval.getRequestedBy()));
+                eventPublisher.publishEvent(notif);
+            } catch (Exception e) {
+                System.err.println("Failed to send approval decision notification: " + e.getMessage());
+            }
+        }
+
+        return resultDto;
     }
 
     private ProjectApprovalRequestDTO mapToDTO(ProjectApprovalRequest approval) {

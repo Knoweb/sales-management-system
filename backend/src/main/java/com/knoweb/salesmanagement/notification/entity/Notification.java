@@ -56,6 +56,9 @@ public class Notification {
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
+    @Column(name = "delivery_status", length = 50)
+    private String deliveryStatus = "PENDING";
+
     public Notification() {
     }
 
@@ -96,4 +99,7 @@ public class Notification {
     public void setMetadata(String metadata) { this.metadata = metadata; }
 
     public OffsetDateTime getCreatedAt() { return createdAt; }
+
+    public String getDeliveryStatus() { return deliveryStatus; }
+    public void setDeliveryStatus(String deliveryStatus) { this.deliveryStatus = deliveryStatus; }
 }

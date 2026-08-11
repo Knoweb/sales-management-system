@@ -22,6 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
+import com.knoweb.salesmanagement.audit.dto.InternalAuditLogEvent;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -37,19 +39,22 @@ public class BdmApprovalService {
     private final UserRepository userRepository;
     private final WorkflowTransitionService transitionService;
     private final NotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public BdmApprovalService(BdmApprovalRepository bdmApprovalRepository,
                               BdmApprovalCommentRepository bdmApprovalCommentRepository,
                               ProjectBriefRepository projectBriefRepository,
                               UserRepository userRepository,
                               WorkflowTransitionService transitionService,
-                              NotificationService notificationService) {
+                              NotificationService notificationService,
+                              ApplicationEventPublisher eventPublisher) {
         this.bdmApprovalRepository = bdmApprovalRepository;
         this.bdmApprovalCommentRepository = bdmApprovalCommentRepository;
         this.projectBriefRepository = projectBriefRepository;
         this.userRepository = userRepository;
         this.transitionService = transitionService;
         this.notificationService = notificationService;
+        this.eventPublisher = eventPublisher;
     }
 
     private User getAuthenticatedUser() {
@@ -104,6 +109,7 @@ public class BdmApprovalService {
         
         ensurePendingApprovalExists(brief);
         BdmApproval approval = getPendingApproval(brief);
+        BdmApprovalDTO previousDto = mapToDTO(approval);
         
         User user = getAuthenticatedUser();
         transitionService.approveBdmReview(brief, user, request.getComments());
@@ -120,7 +126,17 @@ public class BdmApprovalService {
 
         notifyDecisionRecipient(approval, "APPROVE", "Project Brief Approved", "Your project brief has been approved by BDM.");
         
-        return mapToDTO(approval);
+        BdmApprovalDTO dto = mapToDTO(approval);
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("BDM_APPROVAL_APPROVED");
+        auditEvent.setEntityType("BdmApproval");
+        auditEvent.setEntityId(approval.getId());
+        auditEvent.setAction("APPROVE");
+        auditEvent.setPreviousState(previousDto);
+        auditEvent.setNewState(dto);
+        eventPublisher.publishEvent(auditEvent);
+
+        return dto;
     }
 
     @PreAuthorize("hasAuthority('BDM_APPROVAL_DECIDE')")
@@ -132,6 +148,7 @@ public class BdmApprovalService {
         ProjectBrief brief = projectBriefRepository.findById(briefId).orElseThrow();
         ensurePendingApprovalExists(brief);
         BdmApproval approval = getPendingApproval(brief);
+        BdmApprovalDTO previousDto = mapToDTO(approval);
         User user = getAuthenticatedUser();
         
         transitionService.rejectBdmReview(brief, user, request.getComments());
@@ -145,7 +162,17 @@ public class BdmApprovalService {
         
         notifyDecisionRecipient(approval, "REJECT", "Project Brief Rejected", "Your project brief has been rejected by BDM.");
         
-        return mapToDTO(approval);
+        BdmApprovalDTO dto = mapToDTO(approval);
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("BDM_APPROVAL_REJECTED");
+        auditEvent.setEntityType("BdmApproval");
+        auditEvent.setEntityId(approval.getId());
+        auditEvent.setAction("REJECT");
+        auditEvent.setPreviousState(previousDto);
+        auditEvent.setNewState(dto);
+        eventPublisher.publishEvent(auditEvent);
+
+        return dto;
     }
 
     @PreAuthorize("hasAuthority('BDM_APPROVAL_DECIDE')")
@@ -157,6 +184,7 @@ public class BdmApprovalService {
         ProjectBrief brief = projectBriefRepository.findById(briefId).orElseThrow();
         ensurePendingApprovalExists(brief);
         BdmApproval approval = getPendingApproval(brief);
+        BdmApprovalDTO previousDto = mapToDTO(approval);
         User user = getAuthenticatedUser();
         
         transitionService.returnBdmReview(brief, user, request.getComments());
@@ -170,7 +198,17 @@ public class BdmApprovalService {
         
         notifyDecisionRecipient(approval, "RETURN_FOR_REVISION", "Project Brief Returned for Revision", "Your project brief has been returned for revision by BDM.");
         
-        return mapToDTO(approval);
+        BdmApprovalDTO dto = mapToDTO(approval);
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("BDM_APPROVAL_RETURNED");
+        auditEvent.setEntityType("BdmApproval");
+        auditEvent.setEntityId(approval.getId());
+        auditEvent.setAction("RETURN");
+        auditEvent.setPreviousState(previousDto);
+        auditEvent.setNewState(dto);
+        eventPublisher.publishEvent(auditEvent);
+
+        return dto;
     }
 
     @PreAuthorize("hasAuthority('BDM_APPROVAL_DECIDE')")
@@ -182,6 +220,7 @@ public class BdmApprovalService {
         ProjectBrief brief = projectBriefRepository.findById(briefId).orElseThrow();
         ensurePendingApprovalExists(brief);
         BdmApproval approval = getPendingApproval(brief);
+        BdmApprovalDTO previousDto = mapToDTO(approval);
         User user = getAuthenticatedUser();
         
         transitionService.requestInformationBdm(brief, user, request.getComments());
@@ -195,7 +234,17 @@ public class BdmApprovalService {
         
         notifyDecisionRecipient(approval, "REQUEST_INFORMATION", "Information Requested for Project Brief", "Additional information has been requested for your project brief by BDM.");
         
-        return mapToDTO(approval);
+        BdmApprovalDTO dto = mapToDTO(approval);
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("BDM_APPROVAL_INFO_REQUESTED");
+        auditEvent.setEntityType("BdmApproval");
+        auditEvent.setEntityId(approval.getId());
+        auditEvent.setAction("REQUEST_INFO");
+        auditEvent.setPreviousState(previousDto);
+        auditEvent.setNewState(dto);
+        eventPublisher.publishEvent(auditEvent);
+
+        return dto;
     }
 
     private BdmApproval getPendingApproval(ProjectBrief brief) {

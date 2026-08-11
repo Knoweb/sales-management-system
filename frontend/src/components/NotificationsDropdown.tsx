@@ -1,31 +1,44 @@
 /* eslint-disable */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Bell, CheckCheck } from 'lucide-react';
+import { Bell, ClipboardList, CheckCircle2, AlertTriangle, AlertCircle, ArrowRight } from 'lucide-react';
 import type { NotificationDTO } from '../api/notificationApi';
 import { getMyNotifications, markNotificationAsRead } from '../api/notificationApi';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { IconButton } from './IconButton';
-import { Button } from './Button';
-import { EmptyState, LoadingState } from './FeedbackStates';
 import { useAuth } from '../context/AuthContext';
+
+const getNotificationIcon = (type: string) => {
+  const t = (type || '').toUpperCase();
+  if (t.includes('ASSIGN')) {
+    return { icon: <ClipboardList size={18} className="text-blue-600" />, bg: 'bg-blue-50' };
+  }
+  if (t.includes('APPROV') || t.includes('SUCCESS')) {
+    return { icon: <CheckCircle2 size={18} className="text-green-600" />, bg: 'bg-green-50' };
+  }
+  if (t.includes('WARN') || t.includes('DELAY')) {
+    return { icon: <AlertTriangle size={18} className="text-amber-600" />, bg: 'bg-amber-50' };
+  }
+  if (t.includes('ISSUE') || t.includes('REJECT') || t.includes('ERROR')) {
+    return { icon: <AlertCircle size={18} className="text-red-600" />, bg: 'bg-red-50' };
+  }
+  return { icon: <Bell size={18} className="text-slate-600" />, bg: 'bg-slate-50' };
+};
 
 const NotificationsDropdown: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const hasReadPermission = user?.permissions?.includes('NOTIFICATION_SELF_READ') || user?.permissions?.includes('NOTIFICATION_READ') || false;
 
   const [notifications, setNotifications] = useState<NotificationDTO[]>([]);
-  const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const loadNotifications = useCallback(async (showLoading = false) => {
+  const loadNotifications = useCallback(async () => {
     if (!hasReadPermission) return;
     try {
-      if (showLoading) setLoading(true);
       const data = await getMyNotifications();
       const responseData: any = data;
 
-      // Safely extract array from paginated response
       let extracted: NotificationDTO[] = [];
       if (Array.isArray(responseData)) {
         extracted = responseData;
@@ -33,27 +46,20 @@ const NotificationsDropdown: React.FC = () => {
         extracted = responseData.content;
       } else if (responseData && responseData.data && Array.isArray(responseData.data.content)) {
         extracted = responseData.data.content;
-      } else {
-        console.warn('Unexpected notifications API response format:', responseData);
       }
-
       setNotifications(extracted);
     } catch (err) {
       console.error('Failed to load notifications', err);
       setNotifications([]);
-    } finally {
-      if (showLoading) setLoading(false);
     }
   }, [hasReadPermission]);
 
   useEffect(() => {
     if (!hasReadPermission) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadNotifications(true);
+    void loadNotifications();
     const interval = setInterval(() => void loadNotifications(), 60000);
     return () => clearInterval(interval);
   }, [hasReadPermission, loadNotifications]);
-
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -61,16 +67,21 @@ const NotificationsDropdown: React.FC = () => {
         setIsOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsOpen(false);
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleEscape);
+    }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
     };
-  }, []);
+  }, [isOpen]);
 
-  if (!hasReadPermission) {
-    return null;
-  }
-
+  if (!hasReadPermission) return null;
 
   const handleMarkAsRead = async (id: string, e?: React.MouseEvent) => {
     if (e) {
@@ -100,111 +111,177 @@ const NotificationsDropdown: React.FC = () => {
     }
   };
 
+  const handleNotificationClick = async (notification: NotificationDTO, e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!notification.read) {
+      await handleMarkAsRead(notification.id);
+    }
+    setIsOpen(false);
+    
+    // Example mapping - navigate to real context links
+    if (notification.entityType === 'PROJECT_BRIEF' && notification.entityId) {
+      navigate(`/project-briefs/${notification.entityId}`);
+    } else if (notification.entityType === 'QUOTATION' && notification.entityId) {
+      navigate(`/quotations/${notification.entityId}`);
+    } else if (notification.entityType === 'LEAD' && notification.entityId) {
+      navigate(`/leads/${notification.entityId}`);
+    }
+  };
+
   const safeNotifications = Array.isArray(notifications) ? notifications : [];
   const unreadCount = safeNotifications.filter(n => !n.read).length;
 
   return (
-    <div ref={dropdownRef} className="relative inline-block text-left">
-      <div className="relative">
+    <div ref={dropdownRef} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+      <div style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setIsOpen(!isOpen)}>
         <IconButton
           icon={<Bell size={20} />}
           aria-label="View notifications"
-          onClick={() => setIsOpen(!isOpen)}
           variant="ghost"
           className={unreadCount > 0 ? "text-primary" : "text-gray-500"}
+          style={{ pointerEvents: 'none' }} // Let parent div handle click
         />
         {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white transform translate-x-1/4 -translate-y-1/4 bg-danger rounded-full">
+          <span 
+            className="absolute top-0 right-0 inline-flex items-center justify-center font-bold text-white bg-red-500 rounded-full"
+            style={{ width: '16px', height: '16px', fontSize: '10px', transform: 'translate(25%, -25%)' }}
+          >
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
       </div>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 md:w-96 bg-surface border border-border rounded-lg shadow-lg z-dropdown overflow-hidden flex flex-col max-h-[85vh]">
-          <div className="p-4 border-b border-border bg-surface-secondary flex justify-between items-center sticky top-0 z-10">
-            <h3 className="text-label font-semibold m-0">Notifications</h3>
+        <div 
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 8px)',
+            right: '0',
+            width: '400px',
+            maxWidth: 'calc(100vw - 24px)',
+            backgroundColor: '#FFFFFF',
+            border: '1px solid #E2E8F0',
+            borderRadius: '12px',
+            boxShadow: '0 10px 30px rgba(15, 23, 42, 0.14)',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            maxHeight: 'min(480px, calc(100vh - 100px))',
+            zIndex: 99999
+          }}
+        >
+          {/* Dropdown Header */}
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>Notifications</h3>
+              <span style={{ fontSize: '12px', color: '#64748B' }}>{unreadCount} unread</span>
+            </div>
             {unreadCount > 0 && (
-              <Button
-                variant="ghost"
+              <button
                 onClick={handleMarkAllAsRead}
-                className="text-xs"
-                style={{ padding: '4px 8px', height: 'auto' }}
+                style={{
+                  background: 'none', border: 'none', padding: 0, 
+                  color: '#3B82F6', fontSize: '12px', fontWeight: 500,
+                  cursor: 'pointer', display: 'flex', alignItems: 'center'
+                }}
               >
-                <CheckCheck size={14} className="mr-1" /> Mark all as read
-              </Button>
+                Mark all as read
+              </button>
             )}
           </div>
 
-          <div className="overflow-y-auto flex-1">
-            {loading && safeNotifications.length === 0 ? (
-              <div className="p-8">
-                <LoadingState message="Loading notifications..." />
-              </div>
-            ) : safeNotifications.length === 0 ? (
-              <div className="p-8">
-                <EmptyState
-                  icon={<Bell size={32} />}
-                  title="All caught up!"
-                  message="You don't have any notifications right now."
-                />
+          {/* Scrollable List */}
+          <div style={{ overflowY: 'auto', flex: 1 }}>
+            {safeNotifications.length === 0 ? (
+              <div style={{ height: '190px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
+                  <Bell size={16} color="#94A3B8" />
+                </div>
+                <p style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: 600, color: '#334155' }}>You're all caught up</p>
+                <p style={{ margin: 0, fontSize: '13px', color: '#64748B' }}>No new notifications right now.</p>
               </div>
             ) : (
-              <div className="divide-y divide-border">
-                {safeNotifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={`p-4 transition-colors duration-200 ${!notification.read ? 'bg-info-bg' : 'bg-transparent hover:bg-surface-secondary'}`}
-                  >
-                    <div className="flex justify-between items-start gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-body-small mb-1 truncate ${!notification.read ? 'font-semibold text-text-primary' : 'font-medium text-text-secondary'}`}>
-                          {notification.title}
-                        </p>
-                        <p className={`text-body-small line-clamp-2 ${!notification.read ? 'text-text-primary' : 'text-text-secondary'}`}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {safeNotifications.map((notification) => {
+                  const { icon, bg } = getNotificationIcon(notification.notificationType);
+                  return (
+                    <div
+                      key={notification.id}
+                      onClick={(e) => handleNotificationClick(notification, e)}
+                      style={{
+                        padding: '12px 16px',
+                        display: 'flex',
+                        gap: '12px',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid #F1F5F9',
+                        backgroundColor: notification.read ? '#FFFFFF' : '#EFF6FF',
+                        transition: 'background-color 0.2s',
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = notification.read ? '#F8FAFC' : '#E0E7FF'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = notification.read ? '#FFFFFF' : '#EFF6FF'}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+                        <div className={bg} style={{ width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          {icon}
+                        </div>
+                      </div>
+                      
+                      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+                          <span style={{ fontSize: '13px', fontWeight: notification.read ? 500 : 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: '8px' }}>
+                            {notification.title}
+                          </span>
+                          {!notification.read && (
+                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#3B82F6', flexShrink: 0, marginTop: '4px' }}></div>
+                          )}
+                        </div>
+                        <p style={{ margin: '0 0 6px', fontSize: '13px', color: notification.read ? '#64748B' : '#475569', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                           {notification.message}
                         </p>
-                        <p className="text-xs text-text-muted mt-2">
-                          {new Date(notification.createdAt).toLocaleString()}
-                        </p>
+                        <span style={{ fontSize: '11px', color: '#94A3B8' }}>
+                          {new Date(notification.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </span>
                       </div>
-
-                      {!notification.read && (
-                        <button
-                          onClick={(e) => handleMarkAsRead(notification.id, e)}
-                          className="flex-shrink-0 text-primary hover:text-primary-dark transition-colors p-1"
-                          title="Mark as read"
-                          aria-label="Mark as read"
-                        >
-                          <div className="h-2.5 w-2.5 bg-primary rounded-full"></div>
-                        </button>
-                      )}
                     </div>
-
-                    {notification.entityType === 'PROJECT_BRIEF' && notification.entityId && (
-                      <Link
-                        to={`/project-briefs/${notification.entityId}`}
-                        onClick={() => {
-                          if (!notification.read) {
-                            handleMarkAsRead(notification.id).catch(console.error);
-                          }
-                          setIsOpen(false);
-                        }}
-                        className="inline-flex items-center text-xs font-medium text-primary hover:text-primary-dark hover:underline mt-3"
-                      >
-                        View Project Brief &rarr;
-                      </Link>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
+          </div>
+
+          {/* Dropdown Footer */}
+          <div style={{ borderTop: '1px solid #E2E8F0', padding: '0', backgroundColor: '#FFFFFF' }}>
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                navigate('/notifications');
+              }}
+              style={{
+                width: '100%', background: 'none', border: 'none', padding: '12px',
+                fontSize: '13px', fontWeight: 500, color: '#3B82F6', cursor: 'pointer',
+                textAlign: 'center', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              View all notifications <ArrowRight size={14} />
+            </button>
           </div>
         </div>
       )}
+      <style>{`
+        @media (max-width: 640px) {
+          div[style*="zIndex: 99999"] {
+            position: fixed !important;
+            top: 60px !important;
+            right: 12px !important;
+            width: calc(100vw - 24px) !important;
+            max-height: calc(100vh - 80px) !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };
 
 export default NotificationsDropdown;
-

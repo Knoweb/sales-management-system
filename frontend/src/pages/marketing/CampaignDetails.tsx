@@ -85,7 +85,7 @@ const CampaignDetails: React.FC = () => {
             {getStatusBadge(summary.status)}
             <span className="roi-badge-platform">{summary.platform}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', fontSize: '14px', color: '#64748B', fontWeight: 500 }}>
+          <div style={{ display: 'flex', alignItems: 'center', fontSize: '14px', color: 'var(--color-text-secondary)', fontWeight: 500 }}>
             <Calendar size={16} style={{ marginRight: '8px' }} />
             {format(new Date(summary.startDate), 'MMMM d, yyyy')} - {summary.endDate ? format(new Date(summary.endDate), 'MMMM d, yyyy') : 'Ongoing'}
           </div>
@@ -165,28 +165,28 @@ const CampaignDetails: React.FC = () => {
               <tbody>
                 <tr>
                   <td style={{ fontWeight: 600 }}>Marketing Spend</td>
-                  <td className="roi-text-right" style={{ fontWeight: 700, color: '#0F172A' }}>{formatCurrency(summary.marketingCost)}</td>
+                  <td className="roi-text-right" style={{ fontWeight: 700, color: 'var(--color-text-primary)' }}>{formatCurrency(summary.marketingCost)}</td>
                 </tr>
                 <tr>
                   <td style={{ fontWeight: 600 }}>Attributed Revenue</td>
                   <td className="roi-text-right text-green" style={{ fontWeight: 700 }}>{formatCurrency(summary.attributedRevenue)}</td>
                 </tr>
-                <tr style={{ backgroundColor: '#F8FAFC', borderTop: '2px solid #E2E8F0', borderBottom: '2px solid #E2E8F0' }}>
-                  <td style={{ fontWeight: 700, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Net Return</td>
+                <tr style={{ backgroundColor: 'var(--color-surface-secondary)', borderTop: '2px solid var(--color-border)', borderBottom: '2px solid var(--color-border)' }}>
+                  <td style={{ fontWeight: 700, color: 'var(--color-text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Net Return</td>
                   <td className={`roi-text-right ${netReturnColor}`} style={{ fontWeight: 700 }}>
                     {formatCurrency(netReturn)}
                   </td>
                 </tr>
                 <tr>
                   <td style={{ fontWeight: 600 }}>Cost Per Lead (CPL)</td>
-                  <td className="roi-text-right" style={{ fontWeight: 700, color: '#0F172A' }}>{formatCurrency(summary.costPerLead)}</td>
+                  <td className="roi-text-right" style={{ fontWeight: 700, color: 'var(--color-text-primary)' }}>{formatCurrency(summary.costPerLead)}</td>
                 </tr>
                 <tr>
                   <td style={{ fontWeight: 600 }}>Cost Per Customer (CPC)</td>
-                  <td className="roi-text-right" style={{ fontWeight: 700, color: '#0F172A' }}>{formatCurrency(summary.costPerCustomer)}</td>
+                  <td className="roi-text-right" style={{ fontWeight: 700, color: 'var(--color-text-primary)' }}>{formatCurrency(summary.costPerCustomer)}</td>
                 </tr>
-                <tr style={{ backgroundColor: '#EFF6FF', borderTop: '2px solid #BFDBFE' }}>
-                  <td style={{ fontWeight: 700, color: '#1E40AF', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Return on Investment</td>
+                <tr style={{ backgroundColor: 'var(--color-primary-soft)', borderTop: '2px solid var(--color-primary)' }}>
+                  <td style={{ fontWeight: 700, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Return on Investment</td>
                   <td className={`roi-text-right ${roiColor}`} style={{ fontWeight: 800, fontSize: '18px' }}>{formatPercent(summary.roiPercentage)}</td>
                 </tr>
               </tbody>

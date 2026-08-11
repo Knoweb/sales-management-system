@@ -18,6 +18,9 @@ import com.knoweb.salesmanagement.lead.repository.LeadRepository;
 import com.knoweb.salesmanagement.user.entity.User;
 import com.knoweb.salesmanagement.user.repository.UserRepository;
 import com.knoweb.salesmanagement.opportunity.repository.SalesOpportunityRepository;
+import com.knoweb.salesmanagement.audit.dto.InternalAuditLogEvent;
+import com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -47,6 +50,7 @@ public class LeadService {
     private final UserRepository userRepository;
     private final LeadMapper leadMapper;
     private final SalesOpportunityRepository salesOpportunityRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public LeadService(LeadRepository leadRepository,
                        LeadActivityRepository leadActivityRepository,
@@ -56,7 +60,8 @@ public class LeadService {
                        EmployeeRepository employeeRepository,
                        UserRepository userRepository,
                        LeadMapper leadMapper,
-                       SalesOpportunityRepository salesOpportunityRepository) {
+                       SalesOpportunityRepository salesOpportunityRepository,
+                       ApplicationEventPublisher eventPublisher) {
         this.leadRepository = leadRepository;
         this.leadActivityRepository = leadActivityRepository;
         this.followUpRepository = followUpRepository;
@@ -66,6 +71,7 @@ public class LeadService {
         this.userRepository = userRepository;
         this.leadMapper = leadMapper;
         this.salesOpportunityRepository = salesOpportunityRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     private User getAuthenticatedUser() {
@@ -217,7 +223,18 @@ public class LeadService {
 
         lead = leadRepository.save(lead);
         logSystemActivity(lead, "Lead created");
-        return leadMapper.toDto(lead);
+
+        LeadDTO dto = leadMapper.toDto(lead);
+        
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("LEAD_CREATED");
+        auditEvent.setEntityType("Lead");
+        auditEvent.setEntityId(lead.getId());
+        auditEvent.setAction("CREATE");
+        auditEvent.setNewState(dto);
+        eventPublisher.publishEvent(auditEvent);
+
+        return dto;
     }
 
     @Transactional
@@ -244,9 +261,21 @@ public class LeadService {
         lead.setNotes(request.getNotes());
         lead.setInitialMeetingAt(request.getInitialMeetingAt());
 
+        LeadDTO previousState = leadMapper.toDto(lead);
         lead = leadRepository.save(lead);
         logSystemActivity(lead, "Lead details updated");
-        return leadMapper.toDto(lead);
+
+        LeadDTO newState = leadMapper.toDto(lead);
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("LEAD_UPDATED");
+        auditEvent.setEntityType("Lead");
+        auditEvent.setEntityId(lead.getId());
+        auditEvent.setAction("UPDATE");
+        auditEvent.setPreviousState(previousState);
+        auditEvent.setNewState(newState);
+        eventPublisher.publishEvent(auditEvent);
+
+        return newState;
     }
 
     @Transactional
@@ -259,10 +288,34 @@ public class LeadService {
         String oldName = lead.getAssignedTo() != null ? lead.getAssignedTo().getFirstName() + " " + lead.getAssignedTo().getLastName() : "Unassigned";
         String newName = assignee.getFirstName() + " " + assignee.getLastName();
 
+        LeadDTO previousState = leadMapper.toDto(lead);
         if (!oldName.equals(newName)) {
             lead.setAssignedTo(assignee);
             lead = leadRepository.save(lead);
             logSystemActivity(lead, "Sales Officer reassigned from " + oldName + " to " + newName);
+
+            LeadDTO newState = leadMapper.toDto(lead);
+            InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+            auditEvent.setEventType("LEAD_ASSIGNED");
+            auditEvent.setEntityType("Lead");
+            auditEvent.setEntityId(lead.getId());
+            auditEvent.setAction("ASSIGN");
+            auditEvent.setPreviousState(previousState);
+            auditEvent.setNewState(newState);
+            eventPublisher.publishEvent(auditEvent);
+
+            if (assignee.getUser() != null) {
+                InternalNotificationEvent notif = new InternalNotificationEvent();
+                notif.setEventType("LEAD_ASSIGNED");
+                notif.setTitle("New Lead Assigned");
+                notif.setMessage("You have been assigned to lead: " + lead.getTitle());
+                notif.setEntityType("Lead");
+                notif.setEntityId(lead.getId());
+                notif.setRecipientUserIds(java.util.Set.of(assignee.getUser().getId()));
+                notif.setContextUrl("/sales/leads/" + lead.getId());
+                notif.setDeduplicationKey("LEAD_ASSIGN_" + lead.getId() + "_" + assignee.getId());
+                eventPublisher.publishEvent(notif);
+            }
         }
 
         return leadMapper.toDto(lead);
@@ -296,8 +349,19 @@ public class LeadService {
             }
         }
 
+        LeadDTO previousState = leadMapper.toDto(lead);
         if (updated) {
             lead = leadRepository.save(lead);
+
+            LeadDTO newState = leadMapper.toDto(lead);
+            InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+            auditEvent.setEventType("LEAD_STATUS_CHANGED");
+            auditEvent.setEntityType("Lead");
+            auditEvent.setEntityId(lead.getId());
+            auditEvent.setAction("STATUS_CHANGE");
+            auditEvent.setPreviousState(previousState);
+            auditEvent.setNewState(newState);
+            eventPublisher.publishEvent(auditEvent);
         }
 
         return leadMapper.toDto(lead);

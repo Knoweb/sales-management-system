@@ -9,6 +9,8 @@ import com.knoweb.salesmanagement.user.repository.UserRepository;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
+import com.knoweb.salesmanagement.audit.dto.InternalAuditLogEvent;
 
 import java.time.OffsetDateTime;
 import java.util.Collection;
@@ -22,11 +24,13 @@ public class ProjectChangeRequestService {
     private final ProjectChangeRequestRepository changeRepository;
     private final UserRepository userRepository;
     private final ProjectExecutionSecurityHelper securityHelper;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public ProjectChangeRequestService(ProjectChangeRequestRepository changeRepository, UserRepository userRepository, ProjectExecutionSecurityHelper securityHelper) {
+    public ProjectChangeRequestService(ProjectChangeRequestRepository changeRepository, UserRepository userRepository, ProjectExecutionSecurityHelper securityHelper, ApplicationEventPublisher eventPublisher) {
         this.changeRepository = changeRepository;
         this.userRepository = userRepository;
         this.securityHelper = securityHelper;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -55,7 +59,34 @@ public class ProjectChangeRequestService {
         cr.setSubmittedDate(OffsetDateTime.now());
         cr.setStatus(com.knoweb.salesmanagement.projectexecution.enums.ChangeRequestStatus.SUBMITTED); // simplified
         
-        return mapToDTO(changeRepository.save(cr));
+        ProjectChangeRequestDTO resultDto = mapToDTO(changeRepository.save(cr));
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("PROJECT_CHANGE_REQUEST_CREATED");
+        auditEvent.setEntityType("ProjectChangeRequest");
+        auditEvent.setEntityId(cr.getId());
+        auditEvent.setAction("CREATE");
+        auditEvent.setNewState(resultDto);
+        eventPublisher.publishEvent(auditEvent);
+
+        if (cr.getWorkspace().getProjectManager() != null && cr.getWorkspace().getProjectManager().getUser() != null) {
+            try {
+                com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent notif = new com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent();
+                notif.setEventType("PROJECT_CHANGE_REQUEST_CREATED");
+                notif.setTitle("Change Request Submitted");
+                notif.setMessage("A new change request has been submitted: " + cr.getTitle());
+                notif.setEntityType("PROJECT_CHANGE_REQUEST");
+                notif.setEntityId(cr.getId());
+                notif.setContextUrl("/execution-workspaces/" + cr.getWorkspace().getId() + "/changes");
+                notif.setDeduplicationKey("cr_created_" + cr.getId());
+                notif.setRecipientUserIds(java.util.Set.of(cr.getWorkspace().getProjectManager().getUser().getId()));
+                eventPublisher.publishEvent(notif);
+            } catch (Exception e) {
+                System.err.println("Failed to send CR created notification: " + e.getMessage());
+            }
+        }
+
+        return resultDto;
     }
     
     @Transactional
@@ -64,13 +95,43 @@ public class ProjectChangeRequestService {
                 .orElseThrow(() -> new RuntimeException("Change request not found"));
         securityHelper.getWorkspaceAndVerifyWriteAccess(cr.getWorkspace().getId(), userId, authorities);
         
+        ProjectChangeRequestDTO previousDto = mapToDTO(cr);
+        
         User reviewer = userRepository.findById(userId).orElseThrow();
         cr.setReviewedBy(reviewer);
         cr.setReviewedDate(OffsetDateTime.now());
         cr.setDecisionComment(status + ": " + comment);
         cr.setStatus(com.knoweb.salesmanagement.projectexecution.enums.ChangeRequestStatus.valueOf(status));
         
-        return mapToDTO(changeRepository.save(cr));
+        ProjectChangeRequestDTO resultDto = mapToDTO(changeRepository.save(cr));
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("PROJECT_CHANGE_REQUEST_REVIEWED");
+        auditEvent.setEntityType("ProjectChangeRequest");
+        auditEvent.setEntityId(cr.getId());
+        auditEvent.setAction("REVIEW");
+        auditEvent.setPreviousState(previousDto);
+        auditEvent.setNewState(resultDto);
+        eventPublisher.publishEvent(auditEvent);
+
+        if (cr.getRequestedBy() != null) {
+            try {
+                com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent notif = new com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent();
+                notif.setEventType("PROJECT_CHANGE_REQUEST_REVIEWED");
+                notif.setTitle("Change Request Reviewed: " + status);
+                notif.setMessage("A decision has been made on your change request: " + cr.getTitle());
+                notif.setEntityType("PROJECT_CHANGE_REQUEST");
+                notif.setEntityId(cr.getId());
+                notif.setContextUrl("/execution-workspaces/" + cr.getWorkspace().getId() + "/changes");
+                notif.setDeduplicationKey("cr_reviewed_" + cr.getId());
+                notif.setRecipientUserIds(java.util.Set.of(cr.getRequestedBy()));
+                eventPublisher.publishEvent(notif);
+            } catch (Exception e) {
+                System.err.println("Failed to send CR reviewed notification: " + e.getMessage());
+            }
+        }
+
+        return resultDto;
     }
 
     private ProjectChangeRequestDTO mapToDTO(ProjectChangeRequest cr) {
