@@ -2,8 +2,8 @@
 
 -- Seed initial departments
 INSERT INTO departments (id, code, name, description, active, system_seeded, created_at, updated_at) VALUES 
--- ('10000000-0000-0000-0001-000000000001', 'MECHANICAL', 'Mechanical Department', 'Mechanical Engineering', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
--- ('10000000-0000-0000-0001-000000000002', 'ELECTRICAL', 'Electrical Department', 'Electrical Engineering', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('10000000-0000-0000-0001-000000000001', 'MECHANICAL', 'Mechanical Department', 'Mechanical Engineering', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('10000000-0000-0000-0001-000000000002', 'ELECTRICAL', 'Electrical Department', 'Electrical Engineering', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('10000000-0000-0000-0001-000000000003', 'ELECTRONIC', 'Electronic Department', 'Electronic Engineering', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('10000000-0000-0000-0001-000000000004', 'SOFTWARE', 'Software Department', 'Software Engineering', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('10000000-0000-0000-0001-000000000005', 'FABRICATION', 'Fabrication Department', 'Manufacturing and Fabrication', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),

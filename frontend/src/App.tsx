@@ -40,6 +40,11 @@ import { QuotationsPage } from './pages/QuotationsPage';
 import { ExecutionProjectQueue } from './pages/ExecutionProjectQueue';
 import { ExecutionWorkspaceDetails } from './pages/ExecutionWorkspaceDetails';
 
+import MarketingRoiOverview from './pages/marketing/MarketingRoiOverview';
+import CampaignList from './pages/marketing/CampaignList';
+import CampaignForm from './pages/marketing/CampaignForm';
+import CampaignDetails from './pages/marketing/CampaignDetails';
+
 import './index.css';
 import './styles/auth.css';
 import './styles/dashboard.css';
@@ -229,6 +234,33 @@ function App() {
               <Route path="/admin/estimates" element={
                 <ProtectedRoute requiredPermission="TECHNICAL_ESTIMATE_REVIEW">
                   <AdminEstimateReviewsPage />
+                </ProtectedRoute>
+              } />
+
+              {/* Marketing ROI Routes */}
+              <Route path="/marketing/roi" element={
+                <ProtectedRoute requiredPermission="MARKETING_ROI_READ">
+                  <MarketingRoiOverview />
+                </ProtectedRoute>
+              } />
+              <Route path="/marketing/campaigns" element={
+                <ProtectedRoute requiredPermission="MARKETING_ROI_READ">
+                  <CampaignList />
+                </ProtectedRoute>
+              } />
+              <Route path="/marketing/campaigns/new" element={
+                <ProtectedRoute requiredPermission="MARKETING_ROI_WRITE">
+                  <CampaignForm />
+                </ProtectedRoute>
+              } />
+              <Route path="/marketing/campaigns/:id/edit" element={
+                <ProtectedRoute requiredPermission="MARKETING_ROI_WRITE">
+                  <CampaignForm />
+                </ProtectedRoute>
+              } />
+              <Route path="/marketing/campaigns/:id" element={
+                <ProtectedRoute requiredPermission="MARKETING_ROI_READ">
+                  <CampaignDetails />
                 </ProtectedRoute>
               } />
             </Route>

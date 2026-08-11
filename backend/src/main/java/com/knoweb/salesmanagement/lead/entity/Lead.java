@@ -54,6 +54,10 @@ public class Lead {
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "marketing_campaign_id")
+    private com.knoweb.salesmanagement.marketingroi.entity.MarketingCampaign marketingCampaign;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
@@ -106,6 +110,9 @@ public class Lead {
     
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
+    
+    public com.knoweb.salesmanagement.marketingroi.entity.MarketingCampaign getMarketingCampaign() { return marketingCampaign; }
+    public void setMarketingCampaign(com.knoweb.salesmanagement.marketingroi.entity.MarketingCampaign marketingCampaign) { this.marketingCampaign = marketingCampaign; }
     
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }

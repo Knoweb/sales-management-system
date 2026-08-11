@@ -6,7 +6,7 @@ import {
   LayoutDashboard, UsersRound, Building2, ContactRound, BadgeCheck, 
   Handshake, Target, CalendarClock, TrendingUp,
   LogOut, Menu, X, Sun, Moon, ClipboardCheck,
-  Briefcase, Waypoints, Users, Calculator, FileCheck, FileText, Activity
+  Briefcase, Waypoints, Users, Calculator, FileCheck, FileText, Activity, BarChart
 } from 'lucide-react';
 import NotificationsDropdown from './NotificationsDropdown';
 import { IconButton } from './IconButton';
@@ -53,6 +53,7 @@ export const AuthenticatedLayout: React.FC = () => {
   
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} />, allowed: true },
+    { name: 'Marketing ROI', path: '/marketing/roi', icon: <BarChart size={20} />, allowed: user?.permissions?.includes('MARKETING_ROI_READ') },
     { name: 'User Management', path: '/users', icon: <UsersRound size={20} />, allowed: user?.permissions.includes('USER_READ') },
     { name: 'Departments', path: '/departments', icon: <Building2 size={20} />, allowed: user?.permissions.includes('DEPARTMENT_READ') },
     { name: 'Employees', path: '/employees', icon: <ContactRound size={20} />, allowed: user?.permissions.includes('EMPLOYEE_READ') },
