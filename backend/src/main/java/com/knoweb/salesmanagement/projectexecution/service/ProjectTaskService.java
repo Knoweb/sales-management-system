@@ -84,6 +84,10 @@ public class ProjectTaskService {
     public ProjectTaskDTO createTask(ProjectTaskDTO dto, UUID currentUserId, Collection<? extends GrantedAuthority> authorities) {
         ProjectExecutionWorkspace workspace = securityHelper.getWorkspaceAndVerifyWriteAccess(dto.getWorkspaceId(), currentUserId, authorities);
 
+        if (workspace.getStatus() == com.knoweb.salesmanagement.projectexecution.enums.ExecutionWorkspaceStatus.CLOSED) {
+            throw new IllegalArgumentException("Cannot create tasks for a CLOSED project workspace.");
+        }
+
         ProjectTask task = new ProjectTask();
         task.setWorkspace(workspace);
         task.setTitle(dto.getTitle());
@@ -129,6 +133,10 @@ public class ProjectTaskService {
                 .orElseThrow(() -> new RuntimeException("Task not found"));
 
         securityHelper.getWorkspaceAndVerifyWriteAccess(task.getWorkspace().getId(), currentUserId, authorities);
+
+        if (task.getWorkspace().getStatus() == com.knoweb.salesmanagement.projectexecution.enums.ExecutionWorkspaceStatus.CLOSED) {
+            throw new IllegalArgumentException("Cannot update tasks for a CLOSED project workspace.");
+        }
 
         if (newStatus == TaskStatus.COMPLETED) {
             BigDecimal currentPercentage = completionPercentage != null ? completionPercentage : task.getCompletionPercentage();

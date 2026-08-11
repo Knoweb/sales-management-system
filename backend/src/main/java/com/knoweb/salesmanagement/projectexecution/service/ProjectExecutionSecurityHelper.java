@@ -26,6 +26,9 @@ public class ProjectExecutionSecurityHelper {
         ProjectExecutionWorkspace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new RuntimeException("Workspace not found"));
                 
+        // Ensure that CLOSED workspaces reject any further mutations.
+        assertWorkspaceNotClosed(workspace);
+                
         boolean isSystemAdmin = authorities.stream().anyMatch(a -> a.getAuthority().equals("SYSTEM_ADMIN"));
         if (isSystemAdmin) {
             return workspace; // Admin bypass
@@ -52,5 +55,13 @@ public class ProjectExecutionSecurityHelper {
         }
         
         return workspace;
+    }
+
+    public void assertWorkspaceNotClosed(ProjectExecutionWorkspace workspace) {
+        if (workspace.getStatus() == com.knoweb.salesmanagement.projectexecution.enums.ExecutionWorkspaceStatus.CLOSED) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.CONFLICT,
+                    "Project execution is closed and cannot be modified.");
+        }
     }
 }

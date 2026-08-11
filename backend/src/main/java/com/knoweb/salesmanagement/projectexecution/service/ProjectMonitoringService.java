@@ -147,9 +147,13 @@ public class ProjectMonitoringService {
 
     @Transactional
     public void submitProgressUpdate(DailyProgressUpdateDTO dto, UUID currentUserId, Collection<? extends GrantedAuthority> authorities) {
-        securityHelper.getWorkspaceAndVerifyWriteAccess(dto.getWorkspaceId(), currentUserId, authorities);
+        ProjectExecutionWorkspace workspace = securityHelper.getWorkspaceAndVerifyWriteAccess(dto.getWorkspaceId(), currentUserId, authorities);
+        
+        if (workspace.getStatus() == com.knoweb.salesmanagement.projectexecution.enums.ExecutionWorkspaceStatus.CLOSED) {
+            throw new IllegalArgumentException("Cannot submit progress updates for a CLOSED project workspace.");
+        }
+
         DailyProgressUpdate update = new DailyProgressUpdate();
-        ProjectExecutionWorkspace workspace = workspaceRepository.findById(dto.getWorkspaceId()).orElseThrow();
         update.setWorkspace(workspace);
         
         ProjectTask task = null;
@@ -177,7 +181,7 @@ public class ProjectMonitoringService {
         update.setSupportDetails(dto.getSupportDetails());
         update.setSubmittedBy(currentUserId);
         
-        progressRepository.save(update);
+        progressRepository.saveAndFlush(update);
 
         if (task != null) {
             task.setCompletionPercentage(pct);
@@ -190,7 +194,7 @@ public class ProjectMonitoringService {
                 }
             }
             
-            taskRepository.save(task);
+            taskRepository.saveAndFlush(task);
             
             // Support Request Notification
             if (Boolean.TRUE.equals(update.getSupportRequired()) && workspace.getProjectManager() != null && workspace.getProjectManager().getUser() != null) {

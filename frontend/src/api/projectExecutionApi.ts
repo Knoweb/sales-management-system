@@ -9,12 +9,48 @@ export interface ExecutionWorkspaceDTO {
     projectCode: string;
     projectManagerId?: string;
     projectManagerName?: string;
-    status: 'PLANNED' | 'IN_PROGRESS' | 'ON_HOLD' | 'COMPLETED' | 'CANCELLED';
+    status: 'PLANNED' | 'IN_PROGRESS' | 'ON_HOLD' | 'COMPLETED' | 'CANCELLED' | 'CLOSED';
     plannedStartDate?: string;
     plannedEndDate?: string;
     actualStartDate?: string;
     actualEndDate?: string;
     overallProgress: number;
+    executionNotes?: string;
+    inspectionStatus?: 'PENDING' | 'PASSED' | 'FAILED';
+    inspectionDate?: string;
+    inspectionNotes?: string;
+    deliveryDate?: string;
+    installationCompleted?: boolean;
+    deliveryNotes?: string;
+
+    clientAccepted?: boolean;
+    clientAcceptanceDate?: string;
+    clientAcceptanceNotes?: string;
+
+    warrantyStartDate?: string;
+    warrantyEndDate?: string;
+    warrantyNotes?: string;
+
+    closedAt?: string;
+    closedBy?: string;
+    closedByName?: string;
+}
+
+export interface ProjectClosureDTO {
+    inspectionStatus: 'PENDING' | 'PASSED' | 'FAILED';
+    inspectionDate?: string | null;
+    inspectionNotes?: string;
+    deliveryDate?: string | null;
+    installationCompleted?: boolean;
+    deliveryNotes?: string;
+
+    clientAccepted?: boolean;
+    clientAcceptanceDate?: string | null;
+    clientAcceptanceNotes?: string;
+
+    warrantyStartDate?: string | null;
+    warrantyEndDate?: string | null;
+    warrantyNotes?: string;
 }
 
 export interface ProjectTaskDTO {
@@ -181,6 +217,10 @@ export const projectExecutionApi = {
         getAll: () => api.get<ExecutionWorkspaceDTO[]>(`${API_BASE}/workspaces`),
         getEligible: () => api.get<ExecutionWorkspaceDTO[]>(`${API_BASE}/workspaces/eligible`),
         getById: (id: string) => api.get<ExecutionWorkspaceDTO>(`${API_BASE}/workspaces/${id}`),
+        updateClosure: (id: string, data: ProjectClosureDTO) =>
+            api.put<ExecutionWorkspaceDTO>(`${API_BASE}/workspaces/${id}/closure`, data).then(res => res.data),
+        close: (id: string) =>
+            api.post<ExecutionWorkspaceDTO>(`${API_BASE}/workspaces/${id}/close`).then(res => res.data),
         setup: (id: string, data: Record<string, unknown>) => api.put<ExecutionWorkspaceDTO>(`${API_BASE}/workspaces/${id}/setup`, data),
     },
     tasks: {
@@ -224,8 +264,23 @@ export const projectExecutionApi = {
         report: (workspaceId: string, data: Partial<ProjectDelayReportDTO>) => api.post<ProjectDelayReportDTO>(`${API_BASE}/delays`, { ...data, workspaceId })
     },
     attachments: {
-        getByWorkspace: (workspaceId: string, type?: string) => api.get<ProjectExecutionAttachmentDTO[]>(`${API_BASE}/attachments/workspace/${workspaceId}`, { params: { type } }),
-        save: (workspaceId: string, data: Partial<ProjectExecutionAttachmentDTO>) => api.post<ProjectExecutionAttachmentDTO>(`${API_BASE}/attachments`, { ...data, workspaceId }),
+        getByWorkspace: (workspaceId: string, type?: string) => 
+            api.get<ProjectExecutionAttachmentDTO[]>(`${API_BASE}/attachments/workspace/${workspaceId}`, { params: { type } }),
+        save: (workspaceId: string, data: Partial<ProjectExecutionAttachmentDTO>) => 
+            api.post<ProjectExecutionAttachmentDTO>(`${API_BASE}/attachments`, { ...data, workspaceId }),
+        upload: async (workspaceId: string, attachmentType: string, file: File, description?: string) => {
+            const formData = new FormData();
+            formData.append('workspaceId', workspaceId);
+            formData.append('attachmentType', attachmentType);
+            formData.append('file', file);
+            if (description) formData.append('description', description);
+            
+            const response = await api.post<ProjectExecutionAttachmentDTO>(`${API_BASE}/attachments/upload`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            return response.data;
+        },
+        download: (id: string) => api.get(`${API_BASE}/attachments/${id}/download`, { responseType: 'blob' }),
         delete: (id: string) => api.delete(`${API_BASE}/attachments/${id}`)
     },
     approvals: {
@@ -251,6 +306,10 @@ export const projectExecutionApi = {
             const res = await api.get<any[]>(`${API_BASE}/lookups/departments`);
             return res.data;
         }
+    },
+    updateClosure: async (workspaceId: string, data: ProjectClosureDTO): Promise<ExecutionWorkspaceDTO> => {
+        const response = await api.put<ExecutionWorkspaceDTO>(`${API_BASE}/workspaces/${workspaceId}/closure`, data);
+        return response.data;
     }
 };
 

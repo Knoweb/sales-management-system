@@ -56,6 +56,49 @@ public class ProjectExecutionWorkspace {
     @Column(name = "updated_by")
     private UUID updatedBy;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "inspection_status", nullable = false, length = 50)
+    private com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus inspectionStatus = com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus.PENDING;
+
+    @Column(name = "inspection_date")
+    private LocalDate inspectionDate;
+
+    @Column(name = "inspection_notes")
+    private String inspectionNotes;
+
+    @Column(name = "delivery_date")
+    private LocalDate deliveryDate;
+
+    @Column(name = "installation_completed", nullable = false)
+    private Boolean installationCompleted = false;
+
+    @Column(name = "delivery_notes")
+    private String deliveryNotes;
+
+    @Column(name = "client_accepted", nullable = false)
+    private Boolean clientAccepted = false;
+
+    @Column(name = "client_acceptance_date")
+    private LocalDate clientAcceptanceDate;
+
+    @Column(name = "client_acceptance_notes")
+    private String clientAcceptanceNotes;
+
+    @Column(name = "warranty_start_date")
+    private LocalDate warrantyStartDate;
+
+    @Column(name = "warranty_end_date")
+    private LocalDate warrantyEndDate;
+
+    @Column(name = "warranty_notes")
+    private String warrantyNotes;
+
+    @Column(name = "closed_at")
+    private OffsetDateTime closedAt;
+
+    @Column(name = "closed_by")
+    private UUID closedBy;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
@@ -101,6 +144,36 @@ public class ProjectExecutionWorkspace {
     public void setCreatedBy(UUID createdBy) { this.createdBy = createdBy; }
     public UUID getUpdatedBy() { return updatedBy; }
     public void setUpdatedBy(UUID updatedBy) { this.updatedBy = updatedBy; }
+    public com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus getInspectionStatus() { return inspectionStatus; }
+    public void setInspectionStatus(com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus inspectionStatus) { this.inspectionStatus = inspectionStatus; }
+    public LocalDate getInspectionDate() { return inspectionDate; }
+    public void setInspectionDate(LocalDate inspectionDate) { this.inspectionDate = inspectionDate; }
+    public String getInspectionNotes() { return inspectionNotes; }
+    public void setInspectionNotes(String inspectionNotes) { this.inspectionNotes = inspectionNotes; }
+    public LocalDate getDeliveryDate() { return deliveryDate; }
+    public void setDeliveryDate(LocalDate deliveryDate) { this.deliveryDate = deliveryDate; }
+    public Boolean getInstallationCompleted() { return installationCompleted; }
+    public void setInstallationCompleted(Boolean installationCompleted) { this.installationCompleted = installationCompleted; }
+    public String getDeliveryNotes() { return deliveryNotes; }
+    public void setDeliveryNotes(String deliveryNotes) { this.deliveryNotes = deliveryNotes; }
+    public Boolean getClientAccepted() { return clientAccepted; }
+    public void setClientAccepted(Boolean clientAccepted) { this.clientAccepted = clientAccepted; }
+    public LocalDate getClientAcceptanceDate() { return clientAcceptanceDate; }
+    public void setClientAcceptanceDate(LocalDate clientAcceptanceDate) { this.clientAcceptanceDate = clientAcceptanceDate; }
+    public String getClientAcceptanceNotes() { return clientAcceptanceNotes; }
+    public void setClientAcceptanceNotes(String clientAcceptanceNotes) { this.clientAcceptanceNotes = clientAcceptanceNotes; }
+    public LocalDate getWarrantyStartDate() { return warrantyStartDate; }
+    public void setWarrantyStartDate(LocalDate warrantyStartDate) { this.warrantyStartDate = warrantyStartDate; }
+    public LocalDate getWarrantyEndDate() { return warrantyEndDate; }
+    public void setWarrantyEndDate(LocalDate warrantyEndDate) { this.warrantyEndDate = warrantyEndDate; }
+    public String getWarrantyNotes() { return warrantyNotes; }
+    public void setWarrantyNotes(String warrantyNotes) { this.warrantyNotes = warrantyNotes; }
+
+    public OffsetDateTime getClosedAt() { return closedAt; }
+    public void setClosedAt(OffsetDateTime closedAt) { this.closedAt = closedAt; }
+    public UUID getClosedBy() { return closedBy; }
+    public void setClosedBy(UUID closedBy) { this.closedBy = closedBy; }
+
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }

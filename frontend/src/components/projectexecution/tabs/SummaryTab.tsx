@@ -30,7 +30,12 @@ const SummaryTab: React.FC<Props> = ({ workspaceId }) => { console.log(workspace
 
     return (
         <div>
-            <h2 className="text-xl font-bold mb-4">Project Summary</h2>
+            <div className="execution-tab-header-container">
+                <div className="execution-tab-title-group">
+                    <h2 className="execution-tab-title">Overview</h2>
+                    <p className="execution-tab-subtitle">View overall project progress, task status and financial summary.</p>
+                </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="bg-surface-elevated p-4 rounded border border-border">
                     <h3 className="text-sm text-text-secondary font-medium">Overall Progress</h3>
@@ -50,8 +55,8 @@ const SummaryTab: React.FC<Props> = ({ workspaceId }) => { console.log(workspace
                     <div className="mt-2 text-sm space-y-1">
                         <p>Total Estimated Hours: <span className="font-medium">{summary.totalEstimatedHours}h</span></p>
                         <p>Total Actual Hours: <span className="font-medium">{summary.totalActualHours}h</span></p>
-                        <p>Labour Cost: <span className="font-medium">${summary.labourCostTotal}</span></p>
-                        <p>Material Cost: <span className="font-medium">${summary.materialCostTotal}</span></p>
+                        <p>Labour Cost: <span className="font-medium">LNR{summary.labourCostTotal}</span></p>
+                        <p>Material Cost: <span className="font-medium">LNR{summary.materialCostTotal}</span></p>
                     </div>
                 </div>
             </div>

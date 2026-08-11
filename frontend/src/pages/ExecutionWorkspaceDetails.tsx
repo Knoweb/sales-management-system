@@ -15,6 +15,7 @@ import LabourTab from '../components/projectexecution/tabs/LabourTab';
 import MaterialsTab from '../components/projectexecution/tabs/MaterialsTab';
 import IssuesTab from '../components/projectexecution/tabs/IssuesTab';
 import ChangeRequestsTab from '../components/projectexecution/tabs/ChangeRequestsTab';
+import ClosureTab from '../components/projectexecution/tabs/ClosureTab.tsx';
 import DocumentsTab from '../components/projectexecution/tabs/DocumentsTab';
 
 import { 
@@ -55,8 +56,10 @@ export const ExecutionWorkspaceDetails: React.FC = () => {
         }
     }, [user]);
 
-    // Check if user is system admin or the assigned project manager
-    const canEdit = !!user && (
+    const isClosed = workspace?.status === 'CLOSED';
+
+    // Check if user is system admin or the assigned project manager, AND workspace is not closed
+    const canEdit = !!user && !isClosed && (
         user.roles?.includes('SYSTEM_ADMIN') || 
         (hasWritePermission && workspace?.projectManagerId === currentEmployeeId)
     );
@@ -148,6 +151,7 @@ export const ExecutionWorkspaceDetails: React.FC = () => {
         { id: 'photos', label: 'Photos', icon: Image },
         { id: 'approvals', label: 'Approval Requests', icon: CheckSquare },
         { id: 'changes', label: 'Change Requests', icon: PenTool },
+        { id: 'closure', label: 'Closure & Delivery', icon: CheckSquare },
     ];
 
     const getStatusClass = (status: string) => {
@@ -237,7 +241,7 @@ export const ExecutionWorkspaceDetails: React.FC = () => {
                 <div className="execution-content">
                     {activeTab === 'overview' && (
                         <div className="execution-overview">
-                            <h2>Workspace Overview</h2>
+                            <h2 className="execution-tab-title">Workspace Overview</h2>
                             
                             {/* Summary Dashboard Cards */}
                             <div className="execution-stats-grid">
@@ -248,7 +252,7 @@ export const ExecutionWorkspaceDetails: React.FC = () => {
                                     { label: 'Overdue Tasks', value: summary?.overdueTasks || 0, icon: Clock, color: 'rose' },
                                     { label: 'Open Issues', value: summary?.blockedTasks || 0 /* Using blocked for issues if no open issues stat */, icon: ShieldAlert, color: 'amber' },
                                     { label: 'Labour Hours', value: `${summary?.totalActualHours || 0}h`, icon: Users, color: 'emerald' },
-                                    { label: 'Material Cost', value: `$${summary?.materialCostTotal || 0}`, icon: Wrench, color: 'slate' }
+                                    { label: 'Material Cost', value: `LNR ${summary?.materialCostTotal || 0}`, icon: Wrench, color: 'slate' }
                                 ].map((stat, idx) => (
 
                                     <div key={idx} className="execution-stat-card">
@@ -328,6 +332,7 @@ export const ExecutionWorkspaceDetails: React.FC = () => {
                     {activeTab === 'photos' && <PhotosTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
                     {activeTab === 'approvals' && <ApprovalsTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
                     {activeTab === 'changes' && <ChangeRequestsTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
+                    {activeTab === 'closure' && <ClosureTab workspace={workspace} onRefresh={loadWorkspace} canEdit={canEdit} />}
                 </div>
             </div>
             

@@ -5,6 +5,8 @@ import com.knoweb.salesmanagement.projectexecution.dto.SetupWorkspaceDTO;
 import com.knoweb.salesmanagement.projectexecution.service.ProjectExecutionWorkspaceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.knoweb.salesmanagement.security.principal.CustomUserDetails;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
@@ -56,5 +58,21 @@ public class ProjectExecutionWorkspaceController {
             @PathVariable UUID id,
             @Valid @RequestBody SetupWorkspaceDTO dto) {
         return ResponseEntity.ok(workspaceService.setupWorkspace(id, dto));
+    }
+
+    @PutMapping("/{id}/closure")
+    @PreAuthorize("hasAuthority('PROJECT_EXECUTION_WRITE')")
+    public ResponseEntity<ExecutionWorkspaceDTO> updateClosure(
+            @PathVariable UUID id,
+            @Valid @RequestBody com.knoweb.salesmanagement.projectexecution.dto.ProjectClosureDTO dto) {
+        return ResponseEntity.ok(workspaceService.updateClosure(id, dto));
+    }
+
+    @PostMapping("/{id}/close")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ExecutionWorkspaceDTO> closeWorkspace(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(workspaceService.closeWorkspace(id, userDetails.getId()));
     }
 }

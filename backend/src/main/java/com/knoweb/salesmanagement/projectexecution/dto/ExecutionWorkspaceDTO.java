@@ -4,6 +4,7 @@ import com.knoweb.salesmanagement.projectexecution.enums.ExecutionWorkspaceStatu
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public class ExecutionWorkspaceDTO {
@@ -45,4 +46,55 @@ public class ExecutionWorkspaceDTO {
     public String getExecutionNotes() { return executionNotes; }
     public void setExecutionNotes(String executionNotes) { this.executionNotes = executionNotes; }
 
+    private com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus inspectionStatus;
+    private LocalDate inspectionDate;
+    private String inspectionNotes;
+    private LocalDate deliveryDate;
+    private Boolean installationCompleted;
+    private String deliveryNotes;
+
+    public com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus getInspectionStatus() { return inspectionStatus; }
+    public void setInspectionStatus(com.knoweb.salesmanagement.projectexecution.enums.InspectionStatus inspectionStatus) { this.inspectionStatus = inspectionStatus; }
+    public LocalDate getInspectionDate() { return inspectionDate; }
+    public void setInspectionDate(LocalDate inspectionDate) { this.inspectionDate = inspectionDate; }
+    public String getInspectionNotes() { return inspectionNotes; }
+    public void setInspectionNotes(String inspectionNotes) { this.inspectionNotes = inspectionNotes; }
+    public LocalDate getDeliveryDate() { return deliveryDate; }
+    public void setDeliveryDate(LocalDate deliveryDate) { this.deliveryDate = deliveryDate; }
+    public Boolean getInstallationCompleted() { return installationCompleted; }
+    public void setInstallationCompleted(Boolean installationCompleted) { this.installationCompleted = installationCompleted; }
+    public String getDeliveryNotes() { return deliveryNotes; }
+    public void setDeliveryNotes(String deliveryNotes) { this.deliveryNotes = deliveryNotes; }
+
+    private Boolean clientAccepted;
+    private LocalDate clientAcceptanceDate;
+    private String clientAcceptanceNotes;
+
+    private LocalDate warrantyStartDate;
+    private LocalDate warrantyEndDate;
+    private String warrantyNotes;
+
+    private OffsetDateTime closedAt;
+    private UUID closedBy;
+    private String closedByName;
+
+    public Boolean getClientAccepted() { return clientAccepted; }
+    public void setClientAccepted(Boolean clientAccepted) { this.clientAccepted = clientAccepted; }
+    public LocalDate getClientAcceptanceDate() { return clientAcceptanceDate; }
+    public void setClientAcceptanceDate(LocalDate clientAcceptanceDate) { this.clientAcceptanceDate = clientAcceptanceDate; }
+    public String getClientAcceptanceNotes() { return clientAcceptanceNotes; }
+    public void setClientAcceptanceNotes(String clientAcceptanceNotes) { this.clientAcceptanceNotes = clientAcceptanceNotes; }
+    public LocalDate getWarrantyStartDate() { return warrantyStartDate; }
+    public void setWarrantyStartDate(LocalDate warrantyStartDate) { this.warrantyStartDate = warrantyStartDate; }
+    public LocalDate getWarrantyEndDate() { return warrantyEndDate; }
+    public void setWarrantyEndDate(LocalDate warrantyEndDate) { this.warrantyEndDate = warrantyEndDate; }
+    public String getWarrantyNotes() { return warrantyNotes; }
+    public void setWarrantyNotes(String warrantyNotes) { this.warrantyNotes = warrantyNotes; }
+
+    public OffsetDateTime getClosedAt() { return closedAt; }
+    public void setClosedAt(OffsetDateTime closedAt) { this.closedAt = closedAt; }
+    public UUID getClosedBy() { return closedBy; }
+    public void setClosedBy(UUID closedBy) { this.closedBy = closedBy; }
+    public String getClosedByName() { return closedByName; }
+    public void setClosedByName(String closedByName) { this.closedByName = closedByName; }
 }

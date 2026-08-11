@@ -49,7 +49,14 @@ const KanbanTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = t
     if (loading) return <p>Loading Kanban...</p>;
 
     return (
-        <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', padding: '16px 0' }}>
+        <div>
+            <div className="execution-tab-header-container">
+                <div className="execution-tab-title-group">
+                    <h2 className="execution-tab-title">Kanban</h2>
+                    <p className="execution-tab-subtitle">Visualize and manage tasks across different progress stages.</p>
+                </div>
+            </div>
+            <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', padding: '16px 0' }}>
             {COLUMNS.map((status: any) => (
                 <div key={status} style={{ minWidth: '250px', flex: 1, backgroundColor: '#f8fafc', padding: '16px', borderRadius: '8px' }}>
                     <h4 style={{ margin: '0 0 12px 0' }}>{status.replace('_', ' ')}</h4>
@@ -84,6 +91,7 @@ const KanbanTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = t
                     ))}
                 </div>
             ))}
+        </div>
         </div>
     );
 };
