@@ -1,0 +1,348 @@
+/* DepartmentEstimateEditorPage.css */
+
+.deep-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  font-family: inherit;
+}
+
+/* Page Header */
+.deep-header-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.deep-header-back-row {
+  display: flex;
+  margin-bottom: 4px;
+}
+
+.deep-header-title-area {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.deep-header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.deep-header-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.deep-header-subtitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Section Cards */
+.deep-section-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.deep-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #f3f4f6;
+  padding-bottom: 16px;
+}
+
+.deep-section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+/* Financials (%) Inputs Grid */
+.deep-financials-input-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+@media (min-width: 768px) {
+  .deep-financials-input-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.deep-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.deep-input-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Form Controls */
+.deep-input, .deep-select {
+  height: 44px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 14px;
+  color: #111827;
+  background-color: #ffffff;
+  transition: all 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.deep-input:focus, .deep-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.deep-input:disabled, .deep-select:disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Financial Summary Grid */
+.deep-financial-summary {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .deep-financial-summary {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.deep-financial-summary-item {
+  background: #f9fafb;
+  border: 1px solid #f3f4f6;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.deep-financial-summary-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.deep-financial-summary-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.deep-financial-summary-item-final {
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.deep-financial-summary-label-final {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2563eb;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.deep-financial-summary-value-final {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1d4ed8;
+}
+
+/* Timeline Grid */
+.deep-timeline-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+@media (min-width: 768px) {
+  .deep-timeline-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.deep-timeline-total-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.deep-timeline-total-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.deep-timeline-total-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* Line Items Table */
+.deep-table-container {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow-x: auto;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.deep-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.deep-table th {
+  background: #f9fafb;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.deep-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: top;
+}
+
+.deep-table tr:hover td {
+  background: #f9fafb;
+}
+
+.deep-table-align-right {
+  text-align: right !important;
+}
+
+.deep-table-total-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 44px; /* matches input height */
+}
+
+.deep-empty-state {
+  background: #f9fafb;
+  border: 2px dashed #e5e7eb;
+  border-radius: 12px;
+  padding: 48px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.deep-btn-icon-only {
+  height: 44px;
+  width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.deep-btn-icon-only:hover {
+  background: #fecaca;
+}
+
+.deep-btn-icon-only:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Utility layout */
+.deep-alert-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.deep-alert-warning {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+/* Page Level Actions */
+.deep-page-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
+}

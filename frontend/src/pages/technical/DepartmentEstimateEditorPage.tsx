@@ -2,14 +2,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getDepartmentEstimate, saveDepartmentEstimate, submitDepartmentEstimate, type DepartmentEstimateDTO, type DepartmentEstimateSaveRequest, type EstimateLineItemCategory, type DepartmentEstimateLineItemRequest } from '../../services/TechnicalCostingApi';
-import { PageHeader } from '../../components/PageHeader';
-import { Card } from '../../components/Card';
 import { StatusBadge } from '../../components/StatusBadge';
 import { LoadingState } from '../../components/FeedbackStates';
 import { Button } from '../../components/Button';
-import { Input, Select } from '../../components/Forms';
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../components/Table';
 import { Save, Send, ArrowLeft, Plus, Trash2, Calculator } from 'lucide-react';
+import './DepartmentEstimateEditorPage.css';
 
 const CATEGORIES: { value: EstimateLineItemCategory; label: string }[] = [
   { value: 'MATERIALS', label: 'Materials' },
@@ -24,6 +21,17 @@ const CATEGORIES: { value: EstimateLineItemCategory; label: string }[] = [
   { value: 'CONTINGENCY', label: 'Contingency' },
   { value: 'TAX_OTHER_COSTS', label: 'Tax & Other Costs' }
 ];
+
+const formatCurrency = (value: any): string => {
+  if (value === null || value === undefined || value === '') return '—';
+  const num = Number(value);
+  if (isNaN(num)) return '—';
+  return new Intl.NumberFormat('en-LK', {
+    style: 'currency',
+    currency: 'LKR',
+    minimumFractionDigits: 2
+  }).format(num);
+};
 
 export const DepartmentEstimateEditorPage: React.FC = () => {
   const { projectId, departmentId } = useParams<{ projectId: string; departmentId: string }>();
@@ -181,259 +189,278 @@ export const DepartmentEstimateEditorPage: React.FC = () => {
   const liveTax = (liveSubtotal + liveContingency) * (Number(formData.taxPercentage) / 100);
   const liveMargin = (liveSubtotal + liveContingency + liveTax) * (Number(formData.marginPercentage) / 100);
   const liveTotal = liveSubtotal + liveContingency + liveTax + liveMargin;
+  const totalDays = formData.designDurationDays + formData.procurementDurationDays + formData.developmentDurationDays + 
+                    formData.testingDurationDays + formData.installationDurationDays + formData.trainingDurationDays + 
+                    formData.deliveryDurationDays;
 
   if (loading) {
-    return <div className="p-8"><LoadingState message="Loading estimate..." /></div>;
+    return <div style={{ padding: '2rem' }}><LoadingState message="Loading estimate..." /></div>;
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button variant="secondary" onClick={() => navigate(-1)} icon={<ArrowLeft className="w-4 h-4" />}>Back</Button>
-          <PageHeader
-            title={`${estimate?.departmentName || 'Department'} Estimate`}
-            description={`Version ${estimate?.versionNumber || 1}`}
-          />
+    <div className="deep-container">
+      
+      {/* Page Header Card */}
+      <div className="deep-header-card">
+        <div className="deep-header-back-row">
+          <Button variant="secondary" onClick={() => navigate(-1)} icon={<ArrowLeft size={16} />}>Back</Button>
         </div>
-        <div className="flex items-center space-x-4">
-          {estimate?.status && <StatusBadge status={estimate.status} />}
-          {!isReadOnly && (
-            <>
-              <Button 
-                variant="secondary" 
-                onClick={handleSaveDraft} 
-                disabled={actionLoading} 
-                isLoading={actionLoading}
-                icon={<Save className="w-4 h-4" />}
-              >
-                Save Draft
-              </Button>
-              <Button 
-                variant="primary" 
-                onClick={handleSubmit} 
-                disabled={actionLoading || formData.lineItems.length === 0} 
-                isLoading={actionLoading}
-                icon={<Send className="w-4 h-4" />}
-              >
-                Submit Estimate
-              </Button>
-            </>
-          )}
+        <div className="deep-header-title-area">
+          <div className="deep-header-title-row">
+            <h1 className="deep-header-title">{estimate?.departmentName || 'Department'} Estimate</h1>
+            {estimate?.status && <StatusBadge status={estimate.status} />}
+          </div>
+          <p className="deep-header-subtitle">Version {estimate?.versionNumber || 1}</p>
         </div>
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 text-red-600 rounded-md border border-red-200 shadow-sm">
+        <div className="deep-alert-error">
           {error}
         </div>
       )}
 
       {estimate?.revisionNotes && estimate.status === 'REVISION_REQUESTED' && (
-        <div className="p-4 bg-yellow-50 text-yellow-800 rounded-md border border-yellow-200">
+        <div className="deep-alert-warning">
           <strong>Revision Requested:</strong> {estimate.revisionNotes}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        
-        {/* Main Editor - Line Items */}
-        <div className="lg:col-span-3 space-y-6">
-          <Card className="p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
-                <Calculator className="w-5 h-5 text-gray-500" />
-                Line Items
-              </h3>
-              {!isReadOnly && (
-              <Button variant="secondary" onClick={handleAddLineItem}>
-                <Plus className="w-4 h-4 mr-2 inline-block" />
-                Add Item
-              </Button>
-              )}
-            </div>
-
-            {formData.lineItems.length > 0 ? (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableHeader className="w-1/4">Category</TableHeader>
-                      <TableHeader className="w-1/3">Description</TableHeader>
-                      <TableHeader className="w-24">Qty</TableHeader>
-                      <TableHeader className="w-24">Unit</TableHeader>
-                      <TableHeader className="w-32">Unit Cost</TableHeader>
-                      <TableHeader className="w-32 text-right">Total</TableHeader>
-                      {!isReadOnly && <TableHeader className="w-16">Actions</TableHeader>}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {formData.lineItems.map((item, index) => (
-                      <TableRow key={index}>
-                        <TableCell>
-                          <Select
-                            value={item.category}
-                            onChange={(e: any) => updateLineItem(index, 'category', e.target.value)}
-                            disabled={isReadOnly}
-                          >
-                            {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={item.description}
-                            onChange={(e: any) => updateLineItem(index, 'description', e.target.value)}
-                            placeholder="Description"
-                            disabled={isReadOnly}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0.0001"
-                            value={item.quantity}
-                            onChange={(e: any) => updateLineItem(index, 'quantity', e.target.value)}
-                            disabled={isReadOnly}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={item.unitOfMeasure}
-                            onChange={(e: any) => updateLineItem(index, 'unitOfMeasure', e.target.value)}
-                            placeholder="e.g. Hrs"
-                            disabled={isReadOnly}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={item.unitCost}
-                            onChange={(e: any) => updateLineItem(index, 'unitCost', e.target.value)}
-                            disabled={isReadOnly}
-                          />
-                        </TableCell>
-                        <TableCell className="text-right font-medium text-gray-900 align-middle">
-                          LKR {(Number(item.quantity) * Number(item.unitCost)).toFixed(2)}
-                        </TableCell>
-                        {!isReadOnly && (
-                          <TableCell className="text-right align-middle">
-                            <button
-                              onClick={() => handleRemoveLineItem(index)}
-                              className="text-red-500 hover:text-red-700 p-1"
-                              title="Remove Item"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-md">
-                No line items added yet. Click "Add Item" to start building the estimate.
-              </div>
-            )}
-          </Card>
+      {/* Line Items Card */}
+      <div className="deep-section-card">
+        <div className="deep-section-header">
+          <h3 className="deep-section-title">
+            <Calculator size={20} style={{ color: '#6b7280' }} />
+            Line Items
+          </h3>
+          {!isReadOnly && (
+            <Button variant="secondary" onClick={handleAddLineItem}>
+              <Plus size={16} style={{ marginRight: '8px' }} />
+              Add Item
+            </Button>
+          )}
         </div>
 
-        {/* Sidebar - Timeline & Summary */}
-        <div className="lg:col-span-1 space-y-6">
-          <Card className="p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Financials (%)</h3>
-            <div className="space-y-4">
-              <Input
-                label="Contingency %"
-                type="number"
-                min="0" step="0.1"
-                value={formData.contingencyPercentage}
-                onChange={(e: any) => setFormData(prev => ({ ...prev, contingencyPercentage: Number(e.target.value) }))}
-                disabled={isReadOnly}
-              />
-              <Input
-                label="Tax %"
-                type="number"
-                min="0" step="0.1"
-                value={formData.taxPercentage}
-                onChange={(e: any) => setFormData(prev => ({ ...prev, taxPercentage: Number(e.target.value) }))}
-                disabled={isReadOnly}
-              />
-              <Input
-                label="Margin %"
-                type="number"
-                min="0" step="0.1"
-                value={formData.marginPercentage}
-                onChange={(e: any) => setFormData(prev => ({ ...prev, marginPercentage: Number(e.target.value) }))}
-                disabled={isReadOnly}
-              />
-              
-              <div className="pt-4 mt-4 border-t border-gray-200 space-y-2 text-sm">
-                <div className="flex justify-between text-gray-500">
-                  <span>Subtotal</span>
-                  <span> LKR {liveSubtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-gray-500">
-                  <span>Contingency</span>
-                  <span> LKR {liveContingency.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-gray-500">
-                  <span>Tax</span>
-                  <span> LKR {liveTax.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-gray-500">
-                  <span>Margin</span>
-                  <span> LKR {liveMargin.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between font-bold text-lg text-gray-900 pt-2 border-t border-gray-200">
-                  <span>Final Total</span>
-                  <span className="text-primary-700"> LKR {liveTotal.toFixed(2)}</span>
-                </div>
-              </div>
-            </div>
-          </Card>
+        {formData.lineItems.length > 0 ? (
+          <div className="deep-table-container">
+            <table className="deep-table">
+              <thead>
+                <tr>
+                  <th style={{ width: '20%' }}>Category</th>
+                  <th style={{ width: '30%' }}>Description</th>
+                  <th style={{ width: '10%' }}>Qty</th>
+                  <th style={{ width: '10%' }}>Unit</th>
+                  <th style={{ width: '15%' }} className="deep-table-align-right">Unit Cost</th>
+                  <th style={{ width: '15%' }} className="deep-table-align-right">Total</th>
+                  {!isReadOnly && <th style={{ width: '60px' }}></th>}
+                </tr>
+              </thead>
+              <tbody>
+                {formData.lineItems.map((item, index) => (
+                  <tr key={index}>
+                    <td>
+                      <select
+                        className="deep-select"
+                        value={item.category}
+                        onChange={(e: any) => updateLineItem(index, 'category', e.target.value)}
+                        disabled={isReadOnly}
+                      >
+                        {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                      </select>
+                    </td>
+                    <td>
+                      <input
+                        className="deep-input"
+                        value={item.description}
+                        onChange={(e: any) => updateLineItem(index, 'description', e.target.value)}
+                        placeholder="Description"
+                        disabled={isReadOnly}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        className="deep-input"
+                        type="number"
+                        step="0.01"
+                        min="0.0001"
+                        value={item.quantity}
+                        onChange={(e: any) => updateLineItem(index, 'quantity', e.target.value)}
+                        disabled={isReadOnly}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        className="deep-input"
+                        value={item.unitOfMeasure}
+                        onChange={(e: any) => updateLineItem(index, 'unitOfMeasure', e.target.value)}
+                        placeholder="e.g. Hrs"
+                        disabled={isReadOnly}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        className="deep-input deep-table-align-right"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={item.unitCost}
+                        onChange={(e: any) => updateLineItem(index, 'unitCost', e.target.value)}
+                        disabled={isReadOnly}
+                      />
+                    </td>
+                    <td>
+                      <div className="deep-table-total-text">
+                        {formatCurrency(Number(item.quantity) * Number(item.unitCost))}
+                      </div>
+                    </td>
+                    {!isReadOnly && (
+                      <td style={{ verticalAlign: 'middle', textAlign: 'center' }}>
+                        <button
+                          className="deep-btn-icon-only"
+                          onClick={() => handleRemoveLineItem(index)}
+                          title="Remove Item"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="deep-empty-state">
+            No line items added yet. Click "Add Item" to start building the estimate.
+          </div>
+        )}
+      </div>
 
-          <Card className="p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Timeline (Days)</h3>
-            <div className="space-y-3">
-              {[
-                { label: 'Design', key: 'designDurationDays' },
-                { label: 'Procurement', key: 'procurementDurationDays' },
-                { label: 'Development', key: 'developmentDurationDays' },
-                { label: 'Testing', key: 'testingDurationDays' },
-                { label: 'Installation', key: 'installationDurationDays' },
-                { label: 'Training', key: 'trainingDurationDays' },
-                { label: 'Delivery', key: 'deliveryDurationDays' }
-              ].map(field => (
-                <div key={field.key} className="flex items-center justify-between">
-                  <label className="text-sm text-gray-700 w-1/2">{field.label}</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    className="w-24 text-right"
-                    value={(formData as any)[field.key]}
-                    onChange={(e: any) => setFormData(prev => ({ ...prev, [field.key]: Number(e.target.value) }))}
-                    disabled={isReadOnly}
-                  />
-                </div>
-              ))}
-              <div className="pt-3 mt-3 border-t border-gray-200 flex justify-between font-medium text-gray-900">
-                <span>Total Days</span>
-                <span>
-                  {formData.designDurationDays + formData.procurementDurationDays + formData.developmentDurationDays + 
-                   formData.testingDurationDays + formData.installationDurationDays + formData.trainingDurationDays + 
-                   formData.deliveryDurationDays}
-                </span>
-              </div>
-            </div>
-          </Card>
+      {/* Financials Card */}
+      <div className="deep-section-card">
+        <div className="deep-section-header">
+          <h3 className="deep-section-title">Financials (%)</h3>
+        </div>
+        
+        <div className="deep-financials-input-grid">
+          <div className="deep-input-group">
+            <label className="deep-input-label">Contingency %</label>
+            <input
+              className="deep-input"
+              type="number"
+              min="0" step="0.1"
+              value={formData.contingencyPercentage}
+              onChange={(e: any) => setFormData(prev => ({ ...prev, contingencyPercentage: Number(e.target.value) }))}
+              disabled={isReadOnly}
+            />
+          </div>
+          <div className="deep-input-group">
+            <label className="deep-input-label">Tax %</label>
+            <input
+              className="deep-input"
+              type="number"
+              min="0" step="0.1"
+              value={formData.taxPercentage}
+              onChange={(e: any) => setFormData(prev => ({ ...prev, taxPercentage: Number(e.target.value) }))}
+              disabled={isReadOnly}
+            />
+          </div>
+          <div className="deep-input-group">
+            <label className="deep-input-label">Margin %</label>
+            <input
+              className="deep-input"
+              type="number"
+              min="0" step="0.1"
+              value={formData.marginPercentage}
+              onChange={(e: any) => setFormData(prev => ({ ...prev, marginPercentage: Number(e.target.value) }))}
+              disabled={isReadOnly}
+            />
+          </div>
+        </div>
+
+        <div className="deep-financial-summary">
+          <div className="deep-financial-summary-item">
+            <span className="deep-financial-summary-label">Subtotal</span>
+            <span className="deep-financial-summary-value">{formatCurrency(liveSubtotal)}</span>
+          </div>
+          <div className="deep-financial-summary-item">
+            <span className="deep-financial-summary-label">Contingency</span>
+            <span className="deep-financial-summary-value">{formatCurrency(liveContingency)}</span>
+          </div>
+          <div className="deep-financial-summary-item">
+            <span className="deep-financial-summary-label">Tax</span>
+            <span className="deep-financial-summary-value">{formatCurrency(liveTax)}</span>
+          </div>
+          <div className="deep-financial-summary-item">
+            <span className="deep-financial-summary-label">Margin</span>
+            <span className="deep-financial-summary-value">{formatCurrency(liveMargin)}</span>
+          </div>
+          <div className="deep-financial-summary-item-final">
+            <span className="deep-financial-summary-label-final">Final Total</span>
+            <span className="deep-financial-summary-value-final">{formatCurrency(liveTotal)}</span>
+          </div>
         </div>
       </div>
+
+      {/* Timeline Card */}
+      <div className="deep-section-card">
+        <div className="deep-section-header">
+          <h3 className="deep-section-title">Timeline (Days)</h3>
+        </div>
+
+        <div className="deep-timeline-grid">
+          {[
+            { label: 'Design', key: 'designDurationDays' },
+            { label: 'Procurement', key: 'procurementDurationDays' },
+            { label: 'Development', key: 'developmentDurationDays' },
+            { label: 'Testing', key: 'testingDurationDays' },
+            { label: 'Installation', key: 'installationDurationDays' },
+            { label: 'Training', key: 'trainingDurationDays' },
+            { label: 'Delivery', key: 'deliveryDurationDays' }
+          ].map(field => (
+            <div key={field.key} className="deep-input-group">
+              <label className="deep-input-label">{field.label}</label>
+              <input
+                className="deep-input"
+                type="number"
+                min="0"
+                value={(formData as any)[field.key]}
+                onChange={(e: any) => setFormData(prev => ({ ...prev, [field.key]: Number(e.target.value) }))}
+                disabled={isReadOnly}
+              />
+            </div>
+          ))}
+        </div>
+
+        <div className="deep-timeline-total-card">
+          <span className="deep-timeline-total-label">Total Timeline</span>
+          <span className="deep-timeline-total-value">{totalDays} Days</span>
+        </div>
+      </div>
+
+      {!isReadOnly && (
+        <div className="deep-page-actions">
+          <Button 
+            variant="secondary" 
+            onClick={handleSaveDraft} 
+            disabled={actionLoading} 
+            isLoading={actionLoading}
+            icon={<Save size={16} />}
+          >
+            Save Draft
+          </Button>
+          <Button 
+            variant="primary" 
+            onClick={handleSubmit} 
+            disabled={actionLoading || formData.lineItems.length === 0} 
+            isLoading={actionLoading}
+            icon={<Send size={16} />}
+          >
+            Submit Estimate
+          </Button>
+        </div>
+      )}
+
     </div>
   );
 };
-

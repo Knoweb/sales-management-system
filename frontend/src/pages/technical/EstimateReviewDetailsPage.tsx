@@ -3,20 +3,23 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getSubmittedEstimates, getLatestConsolidatedEstimate, consolidateAndApprove, requestRevision, type DepartmentEstimateDTO, type ConsolidatedTechnicalEstimateDTO } from '../../services/TechnicalCostingApi';
 import { getTechnicalProject, type TechnicalProjectDetailDTO } from '../../services/TechnicalProjectApi';
-import { Card } from '../../components/Card';
 import { StatusBadge } from '../../components/StatusBadge';
 import { LoadingState, EmptyState } from '../../components/FeedbackStates';
 import { Button } from '../../components/Button';
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../components/Table';
 import { Search, Calculator, CheckCircle, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { Textarea } from '../../components/Forms';
+import './EstimateReviewDetailsPage.css';
 
 const formatCurrency = (value: any): string => {
   if (value === null || value === undefined || value === '') return '—';
   const num = Number(value);
   if (isNaN(num)) return '—';
-  return `$${num.toFixed(2)}`;
+  return new Intl.NumberFormat('en-LK', {
+    style: 'currency',
+    currency: 'LKR',
+    minimumFractionDigits: 2
+  }).format(num);
 };
 
 const formatPercentage = (value: any): string => {
@@ -118,14 +121,14 @@ export const EstimateReviewDetailsPage: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="p-8"><LoadingState message="Loading estimate review details..." /></div>;
+    return <div style={{ padding: '2rem' }}><LoadingState message="Loading estimate review details..." /></div>;
   }
 
   if (error || !project) {
     return (
-      <div className="p-8 max-w-4xl mx-auto">
+      <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
         <EmptyState title="Unable to load project" message={error || 'Project not found.'} />
-        <div className="mt-8 flex justify-center">
+        <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center' }}>
           <Button onClick={() => navigate('/admin/estimates')} variant="secondary">Back to Estimate Reviews</Button>
         </div>
       </div>
@@ -133,106 +136,110 @@ export const EstimateReviewDetailsPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8 max-w-[90rem] mx-auto pb-12 px-4 sm:px-6 lg:px-8 pt-6">
+    <div className="erd-container">
       
       {/* Page Header */}
-      <div className="flex items-center gap-4">
-        <button 
-          onClick={() => navigate('/admin/estimates')}
-          className="p-2.5 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600 transition-colors shadow-sm"
-          title="Back to Estimate Reviews"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div className="flex-1 bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex items-center justify-between">
+      <div className="erd-page-header">
+        <div className="erd-back-btn-wrapper">
+          <Button 
+            variant="secondary"
+            onClick={() => navigate('/admin/estimates')}
+            icon={<ArrowLeft size={16} />}
+          >
+            Back to Estimate Reviews
+          </Button>
+        </div>
+        <div className="erd-header-main">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Estimate Review</h1>
+            <h1 className="erd-header-title">Estimate Review</h1>
+            <p className="erd-header-subtitle">{project.projectCode} &bull; {project.projectTitle}</p>
           </div>
+          <div><StatusBadge status={project.status} /></div>
         </div>
       </div>
       
       {/* Project Summary */}
-      <Card className="p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div>
-            <span className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Project Number</span>
-            <span className="font-semibold text-gray-900 text-lg">{project.projectCode}</span>
-          </div>
-          <div>
-            <span className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Project Name</span>
-            <span className="font-semibold text-gray-900 text-lg">{project.projectTitle}</span>
-          </div>
-          <div>
-            <span className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Client</span>
-            <span className="font-semibold text-gray-900 text-lg">{project.clientName || 'TBD'}</span>
-          </div>
-          <div>
-            <span className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Current Status</span>
-            <div><StatusBadge status={project.status} /></div>
-          </div>
+      <div className="erd-project-summary">
+        <div className="erd-summary-item">
+          <span className="erd-summary-label">Project Number</span>
+          <span className="erd-summary-value">{project.projectCode}</span>
         </div>
-      </Card>
+        <div className="erd-summary-item">
+          <span className="erd-summary-label">Project Name</span>
+          <span className="erd-summary-value">{project.projectTitle}</span>
+        </div>
+        <div className="erd-summary-item">
+          <span className="erd-summary-label">Client</span>
+          <span className="erd-summary-value">{project.clientName || 'TBD'}</span>
+        </div>
+        <div className="erd-summary-item">
+          <span className="erd-summary-label">Current Status</span>
+          <div><StatusBadge status={project.status} /></div>
+        </div>
+      </div>
 
       {/* Consolidated Estimate */}
       <div>
-        <h3 className="text-xl font-semibold text-gray-900 mb-4 ml-1">Consolidated Estimate</h3>
         {consolidatedEstimate ? (
-          <Card className={`p-8 border-2 rounded-2xl shadow-sm overflow-hidden relative ${consolidatedEstimate.status === 'APPROVED' ? 'border-green-500 bg-green-50/30' : 'border-gray-200 bg-white'}`}>
-            {consolidatedEstimate.status === 'APPROVED' && (
-              <div className="absolute top-0 left-0 w-1.5 h-full bg-green-500"></div>
-            )}
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className={`text-xl font-bold mb-1 ${consolidatedEstimate.status === 'APPROVED' ? 'text-green-900' : 'text-gray-900'}`}>
-                  Consolidated Estimate 
-                  <span className={`font-medium text-base ml-2 ${consolidatedEstimate.status === 'APPROVED' ? 'text-green-700' : 'text-gray-500'}`}>
-                    (v{consolidatedEstimate.versionNumber})
+          <div className={`erd-consolidated-card ${consolidatedEstimate.status === 'APPROVED' ? 'approved' : ''}`}>
+            <div className="erd-consolidated-header">
+              <div className="erd-consolidated-title-area">
+                <div className="erd-consolidated-title-row">
+                  <h3 className={`erd-consolidated-title ${consolidatedEstimate.status === 'APPROVED' ? 'approved' : ''}`}>
+                    Consolidated Estimate
+                  </h3>
+                  <span className={`erd-version-badge ${consolidatedEstimate.status === 'APPROVED' ? 'approved' : ''}`}>
+                    v{consolidatedEstimate.versionNumber}
                   </span>
-                </h3>
+                  <StatusBadge status={consolidatedEstimate.status} />
+                </div>
                 {consolidatedEstimate.approvedByName && (
-                  <p className="text-sm text-gray-600 font-medium">Approved by {consolidatedEstimate.approvedByName} on {consolidatedEstimate.approvedAt ? format(new Date(consolidatedEstimate.approvedAt), 'MMM d, yyyy') : ''}</p>
+                  <p className="erd-consolidated-metadata">Approved by {consolidatedEstimate.approvedByName} &bull; {consolidatedEstimate.approvedAt ? format(new Date(consolidatedEstimate.approvedAt), 'MMM d, yyyy') : ''}</p>
                 )}
               </div>
-              <StatusBadge status={consolidatedEstimate.status} />
             </div>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-              <div>
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Subtotal</p>
-                <p className="font-semibold text-gray-900 text-lg">{formatCurrency(consolidatedEstimate.subtotal)}</p>
+            <div className="erd-financial-grid">
+              <div className="erd-financial-item">
+                <span className="erd-financial-label">Subtotal</span>
+                <span className="erd-financial-value">{formatCurrency(consolidatedEstimate.subtotal)}</span>
               </div>
-              <div>
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Contingency</p>
-                <p className="font-semibold text-gray-900 text-lg">{formatCurrency(consolidatedEstimate.contingencyAmount)}</p>
+              <div className="erd-financial-item">
+                <span className="erd-financial-label">Contingency</span>
+                <span className="erd-financial-value">{formatCurrency(consolidatedEstimate.contingencyAmount)}</span>
               </div>
-              <div>
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Tax</p>
-                <p className="font-semibold text-gray-900 text-lg">{formatCurrency(consolidatedEstimate.taxAmount)}</p>
+              <div className="erd-financial-item">
+                <span className="erd-financial-label">Tax</span>
+                <span className="erd-financial-value">{formatCurrency(consolidatedEstimate.taxAmount)}</span>
               </div>
-              <div className="pl-4 border-l-2 border-gray-100">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Final Total</p>
-                <p className="font-bold text-primary-700 text-2xl">{formatCurrency(consolidatedEstimate.finalTotal)}</p>
+              <div className="erd-financial-item">
+                <span className="erd-financial-label">Margin</span>
+                <span className="erd-financial-value">LKR 0.00</span>
+              </div>
+              <div className="erd-financial-item-final">
+                <span className="erd-financial-label-final">Final Total</span>
+                <span className="erd-financial-value-final">{formatCurrency(consolidatedEstimate.finalTotal)}</span>
               </div>
             </div>
-          </Card>
+          </div>
         ) : (
-          <Card className="p-12 border-gray-200 border-dashed bg-gray-50/50 rounded-2xl shadow-none flex flex-col items-center justify-center text-center">
-            <Calculator className="h-10 w-10 text-gray-400 mb-4" />
-            <p className="text-gray-500 text-base font-medium">No consolidated estimate has been created yet.</p>
-          </Card>
+          <div className="erd-empty-card">
+            <Calculator className="erd-empty-icon" />
+            <p className="erd-empty-text">No consolidated estimate has been created yet.</p>
+          </div>
         )}
       </div>
 
       {/* Department Estimates */}
-      <Card className="p-8 rounded-2xl border-gray-200 shadow-sm bg-white">
-        <div className="flex items-center justify-between mb-8 border-b border-gray-100 pb-4">
-          <h3 className="text-xl font-semibold text-gray-900">Department Estimates</h3>
+      <div className="erd-departments-section">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+          <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#111827', margin: 0 }}>Department Estimates</h3>
           {estimates.length > 0 && (!consolidatedEstimate || consolidatedEstimate.status !== 'APPROVED') && (
             <Button 
               onClick={handleConsolidateAndApprove}
               disabled={actionLoading || estimates.some(e => e.status !== 'SUBMITTED' && e.status !== 'APPROVED')}
               isLoading={actionLoading}
-              icon={<CheckCircle className="w-4 h-4" />}
+              icon={<CheckCircle size={16} />}
               title="All departments must be SUBMITTED to consolidate."
             >
               Consolidate & Approve
@@ -241,132 +248,151 @@ export const EstimateReviewDetailsPage: React.FC = () => {
         </div>
 
         {estimates.length > 0 ? (
-          <div className="space-y-8">
-            {estimates.map(est => (
-              <div key={est.departmentId} className="border border-gray-200 rounded-xl p-6 bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
-                <div className="flex justify-between items-start mb-6">
-                  <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <h4 className="font-bold text-gray-900 text-lg">{est.departmentName}</h4>
-                      <span className="bg-gray-100 text-gray-600 text-xs font-semibold px-2 py-0.5 rounded-full">v{est.versionNumber}</span>
-                    </div>
-                    <p className="text-sm text-gray-500 font-medium">
-                      Submitted by <span className="text-gray-700">{est.submittedByName}</span> on {est.submittedAt ? format(new Date(est.submittedAt), 'MMM d, yyyy HH:mm') : '-'}
-                    </p>
+          estimates.map(est => (
+            <div key={est.departmentId} className="erd-department-card">
+              <div className="erd-department-header">
+                <div className="erd-department-title-area">
+                  <div className="erd-department-title-row">
+                    <h4 className="erd-department-title">{est.departmentName}</h4>
+                    <StatusBadge status={est.status} />
                   </div>
-                  <div className="flex flex-col items-end gap-3">
-                      <StatusBadge status={est.status} />
-                      {est.status === 'SUBMITTED' && (!consolidatedEstimate || consolidatedEstimate.status !== 'APPROVED') && (
-                        <Button 
-                          className="text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 shadow-sm text-xs py-1.5 h-auto" 
-                          onClick={() => setRevisionDeptId(est.departmentId)}
-                        >
-                          Request Revision
-                        </Button>
-                      )}
+                  <div className="erd-department-metadata-row">
+                    <span className="erd-version-badge">v{est.versionNumber}</span>
+                    <span>&bull;</span>
+                    <span>Submitted by {est.submittedByName}</span>
+                    <span>&bull;</span>
+                    <span>{est.submittedAt ? format(new Date(est.submittedAt), 'MMM d, yyyy HH:mm') : '-'}</span>
                   </div>
                 </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-6 bg-gray-50/80 p-5 rounded-lg mb-6 border border-gray-100">
-                    <div><span className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Subtotal</span><span className="font-semibold text-gray-900 text-base">{formatCurrency(est.subtotal)}</span></div>
-                    <div><span className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Contingency</span><span className="font-semibold text-gray-900 text-base">{formatPercentage(est.contingencyPercentage)} <span className="text-gray-500 font-medium text-sm ml-1">({formatCurrency(est.contingencyAmount)})</span></span></div>
-                    <div><span className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Tax</span><span className="font-semibold text-gray-900 text-base">{formatPercentage(est.taxPercentage)} <span className="text-gray-500 font-medium text-sm ml-1">({formatCurrency(est.taxAmount)})</span></span></div>
-                    <div><span className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Margin</span><span className="font-semibold text-gray-900 text-base">{formatPercentage(est.marginPercentage)} <span className="text-gray-500 font-medium text-sm ml-1">({formatCurrency(est.marginAmount)})</span></span></div>
-                    <div><span className="block text-xs font-bold text-primary-600 uppercase tracking-wider mb-1">Final Total</span><span className="font-bold text-primary-700 text-lg">{formatCurrency(est.finalTotal)}</span></div>
-                </div>
-
-                <div className="mb-6 flex items-center justify-between bg-white border border-gray-200 p-4 rounded-lg">
-                    <span className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                      <Calculator className="w-4 h-4 text-gray-400" /> Timeline
-                    </span>
-                    <span className="font-semibold text-gray-900 bg-gray-100 px-3 py-1 rounded-md">
-                      {formatDays((est.designDurationDays || 0) + (est.developmentDurationDays || 0) + (est.testingDurationDays || 0) + (est.procurementDurationDays || 0) + (est.installationDurationDays || 0) + (est.trainingDurationDays || 0) + (est.deliveryDurationDays || 0))} Days Total
-                    </span>
-                </div>
-
-                <div className="mb-6">
-                    <span className="block text-sm font-bold text-gray-700 mb-3">Line Items</span>
-                    {est.lineItems && est.lineItems.length > 0 ? (
-                      <div className="border border-gray-200 rounded-lg overflow-hidden shadow-sm bg-white">
-                        <Table>
-                          <TableHead>
-                            <TableRow className="bg-gray-50 border-b border-gray-200">
-                              <TableHeader className="text-xs font-bold text-gray-600 uppercase tracking-wider py-3">Category</TableHeader>
-                              <TableHeader className="text-xs font-bold text-gray-600 uppercase tracking-wider py-3">Description</TableHeader>
-                              <TableHeader className="text-xs font-bold text-gray-600 uppercase tracking-wider py-3 text-right">Qty</TableHeader>
-                              <TableHeader className="text-xs font-bold text-gray-600 uppercase tracking-wider py-3 text-right">Unit Cost</TableHeader>
-                              <TableHeader className="text-xs font-bold text-gray-600 uppercase tracking-wider py-3 text-right">Total</TableHeader>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {(est.lineItems || []).map((item, idx) => (
-                              <TableRow key={item.id || idx} className="hover:bg-gray-50/50 transition-colors">
-                                <TableCell className="text-sm text-gray-700 font-medium py-3 border-b border-gray-100">{item.category}</TableCell>
-                                <TableCell className="text-sm text-gray-600 py-3 border-b border-gray-100">{item.description}</TableCell>
-                                <TableCell className="text-sm text-gray-700 font-medium py-3 border-b border-gray-100 text-right">{item.quantity} <span className="text-gray-400 font-normal">{item.unitOfMeasure}</span></TableCell>
-                                <TableCell className="text-sm text-gray-700 py-3 border-b border-gray-100 text-right">{formatCurrency(item.unitCost)}</TableCell>
-                                <TableCell className="text-sm font-semibold text-gray-900 py-3 border-b border-gray-100 text-right">{formatCurrency(item.totalCost)}</TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    ) : (
-                      <div className="bg-gray-50 rounded-lg border border-gray-200 border-dashed p-6 text-center">
-                        <p className="text-sm text-gray-500 italic">No line items have been added.</p>
-                      </div>
+                <div className="erd-department-actions">
+                    {est.status === 'SUBMITTED' && (!consolidatedEstimate || consolidatedEstimate.status !== 'APPROVED') && (
+                      <Button 
+                        style={{ backgroundColor: '#fffbeb', color: '#b45309', borderColor: '#fcd34d' }}
+                        onClick={() => setRevisionDeptId(est.departmentId)}
+                      >
+                        Request Revision
+                      </Button>
                     )}
                 </div>
+              </div>
 
-                {revisionDeptId === est.departmentId && (
-                  <div className="mt-6 p-5 border border-red-200 bg-red-50/80 rounded-lg shadow-inner">
-                    <h5 className="text-sm font-bold text-red-800 mb-3 flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                      Request Revision
-                    </h5>
-                    <Textarea 
-                      value={revisionNotes}
-                      onChange={(e: any) => setRevisionNotes(e.target.value)}
-                      placeholder="Explain what needs to be changed..."
-                      rows={3}
-                      className="bg-white border-red-200 focus:border-red-400 focus:ring-red-400"
-                    />
-                    <div className="mt-4 flex space-x-3">
-                      <Button 
-                        className="text-red-700 bg-red-100 hover:bg-red-200 border border-red-300 shadow-sm" 
-                        onClick={() => handleRequestRevision(est.departmentId)}
-                        disabled={actionLoading || !revisionNotes}
-                      >
-                        Submit Request
-                      </Button>
-                      <Button 
-                        variant="secondary" 
-                        className="bg-white hover:bg-gray-50 text-gray-700 border-gray-300 shadow-sm"
-                        onClick={() => { setRevisionDeptId(null); setRevisionNotes(''); }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
+              <div className="erd-financial-summary">
+                  <div className="erd-financial-summary-item">
+                      <span className="erd-financial-summary-label">Subtotal</span>
+                      <span className="erd-financial-summary-value">{formatCurrency(est.subtotal)}</span>
                   </div>
-                )}
-                
-                <div className="mt-6 flex justify-end border-t border-gray-100 pt-5">
+                  <div className="erd-financial-summary-item">
+                      <span className="erd-financial-summary-label">Contingency {formatPercentage(est.contingencyPercentage)}</span>
+                      <span className="erd-financial-summary-value">{formatCurrency(est.contingencyAmount)}</span>
+                  </div>
+                  <div className="erd-financial-summary-item">
+                      <span className="erd-financial-summary-label">Tax {formatPercentage(est.taxPercentage)}</span>
+                      <span className="erd-financial-summary-value">{formatCurrency(est.taxAmount)}</span>
+                  </div>
+                  <div className="erd-financial-summary-item">
+                      <span className="erd-financial-summary-label">Margin {formatPercentage(est.marginPercentage)}</span>
+                      <span className="erd-financial-summary-value">{formatCurrency(est.marginAmount)}</span>
+                  </div>
+                  <div className="erd-financial-summary-item-final">
+                      <span className="erd-financial-summary-label-final">Final Total</span>
+                      <span className="erd-financial-summary-value-final">{formatCurrency(est.finalTotal)}</span>
+                  </div>
+              </div>
+
+              <div className="erd-timeline-card">
+                  <div className="erd-timeline-icon-wrapper">
+                      <Calculator className="erd-timeline-icon" />
+                  </div>
+                  <div className="erd-timeline-info">
+                      <span className="erd-timeline-label">Timeline</span>
+                      <span className="erd-timeline-value">
+                        {formatDays((est.designDurationDays || 0) + (est.developmentDurationDays || 0) + (est.testingDurationDays || 0) + (est.procurementDurationDays || 0) + (est.installationDurationDays || 0) + (est.trainingDurationDays || 0) + (est.deliveryDurationDays || 0))} Days Total
+                      </span>
+                  </div>
+              </div>
+
+              <div className="erd-table-section">
+                  <span className="erd-table-section-title">Line Items</span>
+                  {est.lineItems && est.lineItems.length > 0 ? (
+                    <div className="erd-table-container">
+                      <table className="erd-table">
+                        <thead>
+                          <tr>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th className="erd-table-align-right">Qty</th>
+                            <th className="erd-table-align-right">Unit Cost</th>
+                            <th className="erd-table-align-right">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(est.lineItems || []).map((item, idx) => (
+                            <tr key={item.id || idx}>
+                              <td className="erd-table-category">{item.category}</td>
+                              <td className="erd-table-desc">{item.description}</td>
+                              <td className="erd-table-align-right">
+                                <span className="erd-table-qty">{item.quantity}</span>
+                                <span className="erd-table-qty-uom">{item.unitOfMeasure}</span>
+                              </td>
+                              <td className="erd-table-align-right erd-table-unitcost">{formatCurrency(item.unitCost)}</td>
+                              <td className="erd-table-align-right erd-table-total">{formatCurrency(item.totalCost)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="erd-empty-table">
+                      <p>No line items have been added.</p>
+                    </div>
+                  )}
+              </div>
+
+              {revisionDeptId === est.departmentId && (
+                <div style={{ marginTop: '24px', padding: '20px', border: '1px solid #fecaca', backgroundColor: '#fef2f2', borderRadius: '8px' }}>
+                  <h5 style={{ fontSize: '14px', fontWeight: '700', color: '#991b1b', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ef4444' }}></span>
+                    Request Revision
+                  </h5>
+                  <Textarea 
+                    value={revisionNotes}
+                    onChange={(e: any) => setRevisionNotes(e.target.value)}
+                    placeholder="Explain what needs to be changed..."
+                    rows={3}
+                  />
+                  <div style={{ marginTop: '16px', display: 'flex', gap: '12px' }}>
+                    <Button 
+                      style={{ backgroundColor: '#fee2e2', color: '#b91c1c', borderColor: '#fca5a5' }}
+                      onClick={() => handleRequestRevision(est.departmentId)}
+                      disabled={actionLoading || !revisionNotes}
+                    >
+                      Submit Request
+                    </Button>
                     <Button 
                       variant="secondary" 
-                      className="bg-white hover:bg-gray-50 border-gray-200 shadow-sm text-primary-700 font-medium"
-                      onClick={() => navigate(`/hod/estimates/${projectId}/department/${est.departmentId}`)}
+                      onClick={() => { setRevisionDeptId(null); setRevisionNotes(''); }}
                     >
-                      <Search className="w-4 h-4 mr-2 inline-block text-primary-500" />
-                      View Full Estimate
+                      Cancel
                     </Button>
+                  </div>
                 </div>
+              )}
+              
+              <div className="erd-department-footer">
+                  <Button 
+                    variant="secondary" 
+                    onClick={() => navigate(`/hod/estimates/${projectId}/department/${est.departmentId}`)}
+                  >
+                    <Search size={16} style={{ marginRight: '8px' }} />
+                    View Full Estimate
+                  </Button>
               </div>
-            ))}
-          </div>
+            </div>
+          ))
         ) : (
           <EmptyState title="No estimates found" message="Departments have not started or submitted their estimates yet." />
         )}
-      </Card>
+      </div>
     </div>
   );
 };

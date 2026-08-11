@@ -1,0 +1,531 @@
+/* EstimateReviewDetailsPage.css */
+
+.erd-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  font-family: inherit;
+}
+
+/* Page Header */
+.erd-page-header {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.erd-back-btn-wrapper {
+  margin-bottom: 24px;
+}
+
+.erd-header-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.erd-header-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px 0;
+}
+
+.erd-header-subtitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: #4b5563;
+  margin: 0;
+}
+
+/* Project Summary */
+.erd-project-summary {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .erd-project-summary {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.erd-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.erd-summary-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.erd-summary-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* Consolidated Estimate */
+.erd-consolidated-card {
+  background: #ffffff;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.erd-consolidated-card.approved {
+  border-color: #22c55e;
+}
+
+.erd-consolidated-card.approved::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 100%;
+  background: #22c55e;
+}
+
+.erd-consolidated-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
+.erd-consolidated-title-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.erd-consolidated-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.erd-consolidated-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.erd-consolidated-title.approved {
+  color: #14532d;
+}
+
+.erd-version-badge {
+  background: #f3f4f6;
+  color: #374151;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.erd-version-badge.approved {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.erd-consolidated-metadata {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  margin: 0;
+}
+
+.erd-financial-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .erd-financial-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.erd-financial-item {
+  background: #f9fafb;
+  border: 1px solid #f3f4f6;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.erd-financial-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.erd-financial-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.erd-financial-item-final {
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.erd-financial-label-final {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2563eb;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.erd-financial-value-final {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1d4ed8;
+}
+
+/* Empty State / No Consolidated Estimate */
+.erd-empty-card {
+  background: #f9fafb;
+  border: 2px dashed #e5e7eb;
+  border-radius: 16px;
+  padding: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 16px;
+}
+
+.erd-empty-icon {
+  color: #9ca3af;
+  width: 40px;
+  height: 40px;
+}
+
+.erd-empty-text {
+  color: #6b7280;
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Department Estimates */
+.erd-departments-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.erd-department-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.erd-department-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (min-width: 768px) {
+  .erd-department-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+}
+
+.erd-department-title-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.erd-department-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.erd-department-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.erd-department-metadata-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.erd-department-actions {
+  flex-shrink: 0;
+}
+
+.erd-financial-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (min-width: 768px) {
+  .erd-financial-summary {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.erd-financial-summary-item {
+  background: #f9fafb;
+  border: 1px solid #f3f4f6;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.erd-financial-summary-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.erd-financial-summary-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  text-align: right;
+}
+
+.erd-financial-summary-item-final {
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.erd-financial-summary-label-final {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2563eb;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.erd-financial-summary-value-final {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1d4ed8;
+  text-align: right;
+}
+
+/* Timeline */
+.erd-timeline-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.erd-timeline-icon-wrapper {
+  background: #ffffff;
+  border: 1px solid #f3f4f6;
+  border-radius: 6px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.erd-timeline-icon {
+  width: 20px;
+  height: 20px;
+  color: #2563eb;
+}
+
+.erd-timeline-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.erd-timeline-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.erd-timeline-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* Line Items Table */
+.erd-table-section {
+  margin-bottom: 24px;
+}
+
+.erd-table-section-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 12px;
+}
+
+.erd-table-container {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow-x: auto;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.erd-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+
+.erd-table th {
+  background: #f9fafb;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.erd-table td {
+  font-size: 14px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.erd-table tr:hover td {
+  background: #f9fafb;
+}
+
+.erd-table-align-right {
+  text-align: right !important;
+}
+
+.erd-table-category {
+  color: #374151;
+  font-weight: 500;
+}
+
+.erd-table-desc {
+  color: #4b5563;
+}
+
+.erd-table-qty {
+  color: #374151;
+  font-weight: 500;
+}
+
+.erd-table-qty-uom {
+  color: #9ca3af;
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+.erd-table-unitcost {
+  color: #374151;
+}
+
+.erd-table-total {
+  color: #111827;
+  font-weight: 600;
+}
+
+.erd-empty-table {
+  background: #f9fafb;
+  border: 1px dashed #e5e7eb;
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+}
+
+.erd-empty-table p {
+  color: #6b7280;
+  font-size: 14px;
+  font-style: italic;
+  margin: 0;
+}
+
+/* Footer / Actions */
+.erd-department-footer {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #f3f4f6;
+  padding-top: 24px;
+  margin-top: 24px;
+}
