@@ -53,6 +53,19 @@ export const QuotationsPage: React.FC = () => {
     }
   };
 
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(val);
+  };
+
+  const formatStatus = (status: string) => {
+    let formatted = status.replace(/_/g, ' ').toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    if (formatted === 'Pending Top Management Approval') return 'Pending Management Approval';
+    if (formatted === 'Approved By Top Management') return 'Management Approved';
+    if (formatted === 'Rejected By Top Management') return 'Management Rejected';
+    if (formatted === 'Client Requested Revision') return 'Client Requested Changes';
+    return formatted;
+  };
+
   return (
     <div className="page-container">
       <PageHeader 
@@ -136,10 +149,10 @@ export const QuotationsPage: React.FC = () => {
                     <td style={{ fontWeight: 500 }}>{q.quotationNumber}</td>
                     <td>{q.projectTitle || 'Untitled Project'}</td>
                     <td>{q.clientDetails}</td>
-                    <td>${q.finalTotal?.toFixed(2)}</td>
+                    <td>{formatCurrency(q.finalTotal || 0)}</td>
                     <td>
                       <span className={`badge ${q.status === 'DRAFT' ? 'badge-gray' : 'badge-blue'}`}>
-                        {q.status}
+                        {formatStatus(q.status)}
                       </span>
                     </td>
                     <td style={{ textAlign: 'right' }}>

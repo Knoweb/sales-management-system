@@ -6,5 +6,6 @@ public enum OpportunityStage {
     BRIEF_SUBMITTED,
     READY_FOR_TECHNICAL_ROUTING,
     ON_HOLD,
-    LOST
+    LOST,
+    CLOSED_WON
 }

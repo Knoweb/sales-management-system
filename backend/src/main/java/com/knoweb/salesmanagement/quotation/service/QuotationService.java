@@ -69,6 +69,12 @@ public class QuotationService {
         
         quotation.setStatus(com.knoweb.salesmanagement.quotation.enums.QuotationStatus.DRAFT);
 
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails) {
+            UUID userId = ((CustomUserDetails) auth.getPrincipal()).getId();
+            quotation.setCreatedBy(userId);
+        }
+
         if (request.getItems() != null) {
             for (com.knoweb.salesmanagement.quotation.dto.QuotationItemDto itemDto : request.getItems()) {
                 com.knoweb.salesmanagement.quotation.entity.QuotationItem item = new com.knoweb.salesmanagement.quotation.entity.QuotationItem();

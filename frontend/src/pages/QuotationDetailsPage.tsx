@@ -36,6 +36,20 @@ export const QuotationDetailsPage: React.FC = () => {
 
   const isTopManagement = user?.roles.includes('TOP_MANAGEMENT') || user?.roles.includes('SYSTEM_ADMIN');
 
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(val);
+  };
+
+  const formatStatus = (status: string) => {
+    if (!status) return '';
+    let formatted = status.replace(/_/g, ' ').toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    if (formatted === 'Pending Top Management Approval') return 'Pending Management Approval';
+    if (formatted === 'Approved By Top Management') return 'Management Approved';
+    if (formatted === 'Rejected By Top Management') return 'Management Rejected';
+    if (formatted === 'Client Requested Revision') return 'Client Requested Changes';
+    return formatted;
+  };
+
   useEffect(() => {
     if (id) {
       fetchData(id);
@@ -338,7 +352,7 @@ export const QuotationDetailsPage: React.FC = () => {
                quotation.status === 'CLIENT_ACCEPTED' ? <CheckCircle className="text-green-600" /> :
                <AlertCircle className="text-red-500" />}
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600 }}>Status: {quotation.status?.replace(/_/g, ' ')}</h3>
+                <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600 }}>Status: {formatStatus(quotation.status)}</h3>
                 <p style={{ margin: '0.25rem 0 0 0', color: '#64748b', fontSize: '0.875rem' }}>
                   {quotation.status === 'DRAFT' && 'This quotation is in draft state. Submit for top management approval.'}
                   {quotation.status === 'PENDING_TOP_MANAGEMENT_APPROVAL' && 'Waiting for Top Management to review and approve.'}
@@ -414,7 +428,7 @@ export const QuotationDetailsPage: React.FC = () => {
               Date: {new Date(quotation.createdAt || '').toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
             </div>
             <div className={`badge ${quotation.status === 'DRAFT' ? 'badge-gray' : 'badge-blue'}`} style={{ marginTop: '0.75rem' }}>
-              {quotation.status?.replace(/_/g, ' ')}
+              {formatStatus(quotation.status)}
             </div>
           </div>
         </div>
@@ -454,8 +468,8 @@ export const QuotationDetailsPage: React.FC = () => {
                   <div style={{ fontWeight: 500 }}>{item.description}</div>
                 </td>
                 <td>{item.quantity}</td>
-                <td>${item.unitPrice.toFixed(2)}</td>
-                <td style={{ fontWeight: 600 }}>${item.lineTotal.toFixed(2)}</td>
+                <td>{formatCurrency(item.unitPrice)}</td>
+                <td style={{ fontWeight: 600 }}>{formatCurrency(item.lineTotal)}</td>
               </tr>
             ))}
             {!quotation.items?.length && (
@@ -471,21 +485,21 @@ export const QuotationDetailsPage: React.FC = () => {
         <div className="totals-section">
           <div className="total-row">
             <span>Subtotal</span>
-            <span style={{ fontWeight: 600, color: '#0f172a' }}>${quotation.subtotal?.toFixed(2)}</span>
+            <span style={{ fontWeight: 600, color: '#0f172a' }}>{formatCurrency(quotation.subtotal || 0)}</span>
           </div>
           <div className="total-row">
             <span>Estimated Tax (VAT)</span>
-            <span style={{ fontWeight: 600, color: '#0f172a' }}>${quotation.taxAmount?.toFixed(2)}</span>
+            <span style={{ fontWeight: 600, color: '#0f172a' }}>{formatCurrency(quotation.taxAmount || 0)}</span>
           </div>
           {quotation.discountAmount > 0 && (
             <div className="total-row" style={{ color: '#ef4444' }}>
               <span>Discount</span>
-              <span style={{ fontWeight: 600 }}>-${quotation.discountAmount?.toFixed(2)}</span>
+              <span style={{ fontWeight: 600 }}>-{formatCurrency(quotation.discountAmount || 0)}</span>
             </div>
           )}
           <div className="total-row final">
             <span>Final Total</span>
-            <span>${quotation.finalTotal?.toFixed(2)}</span>
+            <span>{formatCurrency(quotation.finalTotal || 0)}</span>
           </div>
         </div>
 
