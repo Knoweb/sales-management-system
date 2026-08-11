@@ -3,10 +3,14 @@ import { useAuth } from '../context/AuthContext';
 import { LayoutDashboard, Users, TrendingUp, Briefcase, Calculator, FileCheck, CircleDollarSign } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 import { Card } from '../components/Card';
+<<<<<<< Updated upstream
 import { StatCard } from '../components/StatCard';
 import { DashboardApi } from '../services/DashboardApi';
 import type { DashboardMetricsDto, SalesForecastDto, UtilizationDto } from '../services/DashboardApi';
 import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+=======
+import { VirtualTourEffectivenessWidget } from '../features/dashboard/components/VirtualTourEffectivenessWidget';
+>>>>>>> Stashed changes
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
@@ -126,6 +130,7 @@ export const DashboardPage: React.FC = () => {
                     {formatCurrency(metrics?.totalConfirmedRevenue || 0)}
                   </div>
                 </div>
+<<<<<<< Updated upstream
               </div>
 
               {/* Chart */}
@@ -206,6 +211,24 @@ export const DashboardPage: React.FC = () => {
           </Card>
         )}
 
+=======
+              </Card>
+            ))}
+          </div>
+        </div>
+      </Card>
+      
+      <div style={{ marginTop: '2rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+        <VirtualTourEffectivenessWidget />
+      </div>
+      
+      <div style={{ marginTop: '2rem' }}>
+        <EmptyState 
+          icon={<Activity size={48} />}
+          title="Business Modules Pending"
+          message="Phase 1 & 2 foundations are complete. Business logic, pipelines, and reporting will appear here shortly."
+        />
+>>>>>>> Stashed changes
       </div>
     </>
   );

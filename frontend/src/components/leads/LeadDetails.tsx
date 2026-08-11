@@ -5,6 +5,7 @@ import { Tabs } from '../Tabs';
 import { LeadTimeline } from './LeadTimeline';
 import { LeadFollowUps } from './LeadFollowUps';
 import { LeadAttachments } from './LeadAttachments';
+import { VirtualTourHistory } from '../../features/virtualtour/components/VirtualTourHistory';
 import { Briefcase } from 'lucide-react';
 import type { FollowUp } from '../../types/lead';
 import LeadConversionModal from '../LeadConversionModal';
@@ -26,7 +27,7 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
   const [error, setError] = useState<string | null>(null);
   const [isConversionModalOpen, setIsConversionModalOpen] = useState(false);
   
-  const [activeTab, setActiveTab] = useState<'info' | 'timeline' | 'followups' | 'attachments'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'timeline' | 'followups' | 'attachments' | 'virtualtours'>('info');
 
   const loadLead = async () => {
     try {
@@ -122,7 +123,8 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
           { id: 'info', label: 'Information' },
           { id: 'timeline', label: 'Timeline Activity' },
           { id: 'followups', label: 'Follow-Ups' },
-          { id: 'attachments', label: 'Attachments' }
+          { id: 'attachments', label: 'Attachments' },
+          { id: 'virtualtours', label: 'Virtual Tours' }
         ]} 
         activeTab={activeTab}
         onChange={(id) => setActiveTab(id as typeof activeTab)}
@@ -198,6 +200,7 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
         {activeTab === 'timeline' && <LeadTimeline leadId={leadId} />}
         {activeTab === 'followups' && <LeadFollowUps leadId={leadId} />}
         {activeTab === 'attachments' && <LeadAttachments entityId={leadId} entityType="LEAD" />}
+        {activeTab === 'virtualtours' && <VirtualTourHistory leadId={leadId} />}
       </div>
     </div>
   );

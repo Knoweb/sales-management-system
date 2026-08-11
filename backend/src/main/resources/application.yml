@@ -8,8 +8,8 @@ spring:
     name: sales-management-system
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:sales_management}
-    username: postgres
-    password: postgres
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:Poo@1016}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 5
@@ -27,7 +27,12 @@ spring:
     enabled: true
     baseline-on-migrate: true
     ignore-missing-migrations: true
+<<<<<<< Updated upstream
     validate-on-migrate: false
+=======
+    clean-on-validation-error: true
+    clean-disabled: false
+>>>>>>> Stashed changes
   servlet:
     multipart:
       max-file-size: 5MB

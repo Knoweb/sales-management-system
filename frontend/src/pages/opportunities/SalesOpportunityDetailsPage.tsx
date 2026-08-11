@@ -13,6 +13,7 @@ import { LoadingState, ErrorState, EmptyState } from '../../components/FeedbackS
 import { FileText, Activity, LayoutDashboard, TrendingUp, CheckCircle, ExternalLink, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { ClientVerificationCard } from '../../components/clients/ClientVerificationCard';
+import { VirtualTourHistory } from '../../features/virtualtour/components/VirtualTourHistory';
 
 const getWorkflowVariant = (status: string) => {
   const s = status.toUpperCase().replace(/\s+/g, '_');
@@ -108,7 +109,8 @@ const SalesOpportunityDetailsPage: React.FC = () => {
   const tabs: TabItem[] = [
     { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={18} /> },
     { id: 'activity', label: 'Activity Timeline', icon: <Activity size={18} /> },
-    { id: 'approvals', label: 'Approvals & Verification', icon: <CheckCircle size={18} /> }
+    { id: 'approvals', label: 'Approvals & Verification', icon: <CheckCircle size={18} /> },
+    { id: 'virtualtours', label: 'Virtual Tours', icon: <Activity size={18} /> }
   ];
 
   return (
@@ -513,10 +515,13 @@ const SalesOpportunityDetailsPage: React.FC = () => {
             </Card>
           </div>
         )}
+
+        {activeTab === 'virtualtours' && <VirtualTourHistory opportunityId={id!} />}
       </div>
     </div>
   );
 };
 
 export default SalesOpportunityDetailsPage;
+
 
