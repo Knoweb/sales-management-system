@@ -316,7 +316,7 @@ export const DepartmentEstimateEditorPage: React.FC = () => {
                           />
                         </TableCell>
                         <TableCell className="text-right font-medium text-gray-900 align-middle">
-                          ${(Number(item.quantity) * Number(item.unitCost)).toFixed(2)}
+                          LKR {(Number(item.quantity) * Number(item.unitCost)).toFixed(2)}
                         </TableCell>
                         {!isReadOnly && (
                           <TableCell className="text-right align-middle">
@@ -375,23 +375,23 @@ export const DepartmentEstimateEditorPage: React.FC = () => {
               <div className="pt-4 mt-4 border-t border-gray-200 space-y-2 text-sm">
                 <div className="flex justify-between text-gray-500">
                   <span>Subtotal</span>
-                  <span>${liveSubtotal.toFixed(2)}</span>
+                  <span> LKR {liveSubtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-gray-500">
                   <span>Contingency</span>
-                  <span>${liveContingency.toFixed(2)}</span>
+                  <span> LKR {liveContingency.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-gray-500">
                   <span>Tax</span>
-                  <span>${liveTax.toFixed(2)}</span>
+                  <span> LKR {liveTax.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-gray-500">
                   <span>Margin</span>
-                  <span>${liveMargin.toFixed(2)}</span>
+                  <span> LKR {liveMargin.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg text-gray-900 pt-2 border-t border-gray-200">
                   <span>Final Total</span>
-                  <span className="text-primary-700">${liveTotal.toFixed(2)}</span>
+                  <span className="text-primary-700"> LKR {liveTotal.toFixed(2)}</span>
                 </div>
               </div>
             </div>

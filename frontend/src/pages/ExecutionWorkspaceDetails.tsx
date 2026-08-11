@@ -252,7 +252,7 @@ export const ExecutionWorkspaceDetails: React.FC = () => {
                                     { label: 'Overdue Tasks', value: summary?.overdueTasks || 0, icon: Clock, color: 'rose' },
                                     { label: 'Open Issues', value: summary?.blockedTasks || 0 /* Using blocked for issues if no open issues stat */, icon: ShieldAlert, color: 'amber' },
                                     { label: 'Labour Hours', value: `${summary?.totalActualHours || 0}h`, icon: Users, color: 'emerald' },
-                                    { label: 'Material Cost', value: `LNR ${summary?.materialCostTotal || 0}`, icon: Wrench, color: 'slate' }
+                                    { label: 'Material Cost', value: `LKR ${summary?.materialCostTotal || 0}`, icon: Wrench, color: 'slate' }
                                 ].map((stat, idx) => (
 
                                     <div key={idx} className="execution-stat-card">

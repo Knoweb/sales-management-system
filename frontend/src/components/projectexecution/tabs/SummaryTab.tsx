@@ -55,8 +55,8 @@ const SummaryTab: React.FC<Props> = ({ workspaceId }) => { console.log(workspace
                     <div className="mt-2 text-sm space-y-1">
                         <p>Total Estimated Hours: <span className="font-medium">{summary.totalEstimatedHours}h</span></p>
                         <p>Total Actual Hours: <span className="font-medium">{summary.totalActualHours}h</span></p>
-                        <p>Labour Cost: <span className="font-medium">LNR{summary.labourCostTotal}</span></p>
-                        <p>Material Cost: <span className="font-medium">LNR{summary.materialCostTotal}</span></p>
+                        <p>Labour Cost: <span className="font-medium">LKR{summary.labourCostTotal}</span></p>
+                        <p>Material Cost: <span className="font-medium">LKR{summary.materialCostTotal}</span></p>
                     </div>
                 </div>
             </div>

@@ -33,6 +33,7 @@ import { ProjectTeamBuilderPage } from './pages/technical/ProjectTeamBuilderPage
 import { HODTechnicalEstimatesQueuePage } from './pages/technical/HODTechnicalEstimatesQueuePage';
 import { DepartmentEstimateEditorPage } from './pages/technical/DepartmentEstimateEditorPage';
 import { AdminEstimateReviewsPage } from './pages/technical/AdminEstimateReviewsPage';
+import { EstimateReviewDetailsPage } from './pages/technical/EstimateReviewDetailsPage';
 import { QuotationBuilderPage } from './pages/QuotationBuilderPage';
 import { QuotationFormPage } from './pages/QuotationFormPage';
 import { QuotationDetailsPage } from './pages/QuotationDetailsPage';
@@ -234,6 +235,11 @@ function App() {
               <Route path="/admin/estimates" element={
                 <ProtectedRoute requiredPermission="TECHNICAL_ESTIMATE_REVIEW">
                   <AdminEstimateReviewsPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/estimates/:projectId" element={
+                <ProtectedRoute requiredPermission="TECHNICAL_ESTIMATE_REVIEW">
+                  <EstimateReviewDetailsPage />
                 </ProtectedRoute>
               } />
 
