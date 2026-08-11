@@ -47,7 +47,7 @@ export const AdminEstimateReviewsPage: React.FC = () => {
         <div className="w-full">
             <section className="execution-section-card" style={{ height: 'fit-content' }}>
                 <div className="execution-section-header">
-                    <Briefcase size={20} color="#2563eb" />
+                    <Briefcase size={20} color="var(--color-primary)" />
                     <h2>Active Technical Projects</h2>
                     <span className="execution-section-count">{projects.length}</span>
                 </div>
@@ -55,8 +55,8 @@ export const AdminEstimateReviewsPage: React.FC = () => {
                 <div className="execution-section-content" style={{ maxHeight: '600px', overflowY: 'auto' }}>
                     {projects.length === 0 ? (
                         <div className="execution-empty-state">
-                            <div className="execution-empty-icon" style={{ backgroundColor: '#f3f4f6' }}>
-                                <Calculator size={32} color="#9ca3af" />
+                            <div className="execution-empty-icon" style={{ backgroundColor: 'var(--color-surface-secondary)' }}>
+                                <Calculator size={32} color="var(--color-text-muted)" />
                             </div>
                             <h3>No active projects</h3>
                             <p>No projects require estimates.</p>
@@ -82,7 +82,7 @@ export const AdminEstimateReviewsPage: React.FC = () => {
                                     </div>
                                     
                                     <div className="execution-card-body" style={{ marginTop: '4px', marginBottom: '16px' }}>
-                                        <p style={{ margin: '0 0 8px 0', fontSize: '15px', fontWeight: 600, color: '#0f172a' }}>{project.projectTitle || "Untitled Project"}</p>
+                                        <p style={{ margin: '0 0 8px 0', fontSize: '15px', fontWeight: 600, color: 'var(--color-text-primary)' }}>{project.projectTitle || "Untitled Project"}</p>
                                         {project.clientName && (
                                             <div className="execution-info-row">
                                                 <span className="execution-info-label">Client:</span>
@@ -109,3 +109,4 @@ export const AdminEstimateReviewsPage: React.FC = () => {
     </div>
   );
 };
+

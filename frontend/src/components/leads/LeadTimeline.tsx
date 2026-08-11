@@ -139,9 +139,9 @@ export const LeadTimeline: React.FC<LeadTimelineProps> = ({ leadId }) => {
                 style={{
                   minWidth: '110px',
                   height: '42px',
-                  backgroundColor: '#f1f5f9',
-                  color: '#475569',
-                  border: '1px solid #cbd5e1',
+                  backgroundColor: 'var(--color-surface-secondary)',
+                  color: 'var(--color-text-secondary)',
+                  border: '1px solid var(--color-border-strong)',
                   borderRadius: '9px',
                   fontWeight: 600,
                 }}
@@ -181,8 +181,8 @@ export const LeadTimeline: React.FC<LeadTimelineProps> = ({ leadId }) => {
               return (
                 <div key={activity.id} style={{ minWidth: '280px', flex: '0 0 25%', position: 'relative' }}>
                   <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#3b82f6', zIndex: 1, flexShrink: 0 }} />
-                    <div style={{ flex: 1, height: '2px', backgroundColor: isLast ? 'transparent' : '#e2e8f0' }} />
+                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: 'var(--color-primary)', zIndex: 1, flexShrink: 0 }} />
+                    <div style={{ flex: 1, height: '2px', backgroundColor: isLast ? 'transparent' : 'var(--color-border)' }} />
                   </div>
                   
                   <div style={{ paddingRight: '24px' }}>
@@ -200,10 +200,10 @@ export const LeadTimeline: React.FC<LeadTimelineProps> = ({ leadId }) => {
                     }}>
                       {activity.activityType.replace('_', ' ')}
                     </span>
-                    <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#0f172a', fontWeight: 500, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+                    <p style={{ margin: '0 0 8px', fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: 500, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
                       {activity.description}
                     </p>
-                    <p style={{ margin: 0, fontSize: '12px', color: '#64748b', fontWeight: 500 }}>
+                    <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-muted)', fontWeight: 500 }}>
                       {new Date(activity.activityDate).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                     </p>
                   </div>
@@ -216,3 +216,4 @@ export const LeadTimeline: React.FC<LeadTimelineProps> = ({ leadId }) => {
     </Card>
   );
 };
+

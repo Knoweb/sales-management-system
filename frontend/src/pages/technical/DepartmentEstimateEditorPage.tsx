@@ -230,7 +230,7 @@ export const DepartmentEstimateEditorPage: React.FC = () => {
       <div className="deep-section-card">
         <div className="deep-section-header">
           <h3 className="deep-section-title">
-            <Calculator size={20} style={{ color: '#6b7280' }} />
+            <Calculator size={20} style={{ color: 'var(--color-text-muted)' }} />
             Line Items
           </h3>
           {!isReadOnly && (

@@ -58,30 +58,30 @@ const KanbanTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = t
             </div>
             <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', padding: '16px 0' }}>
             {COLUMNS.map((status: any) => (
-                <div key={status} style={{ minWidth: '250px', flex: 1, backgroundColor: '#f8fafc', padding: '16px', borderRadius: '8px' }}>
+                <div key={status} style={{ minWidth: '250px', flex: 1, backgroundColor: 'var(--color-surface-secondary)', padding: '16px', borderRadius: '8px' }}>
                     <h4 style={{ margin: '0 0 12px 0' }}>{status.replace('_', ' ')}</h4>
                     {tasks.filter((t: any) => t.status === status).map((task: any) => (
-                        <div key={task.id} style={{ backgroundColor: '#fff', padding: '12px', border: '1px solid #e2e8f0', borderRadius: '6px', marginBottom: '8px' }}>
+                        <div key={task.id} style={{ backgroundColor: 'var(--color-surface)', padding: '12px', border: '1px solid var(--color-border)', borderRadius: '6px', marginBottom: '8px' }}>
                             <strong>{task.title}</strong>
-                            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px', marginBottom: '8px' }}>
+                            <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '4px', marginBottom: '8px' }}>
                                 {task.completionPercentage || 0}% | {task.priority}
                                 {task.plannedEndDate && ` | Due: ${task.plannedEndDate}`}
                             </div>
                             {task.status === 'COMPLETED' && (
                                 <div style={{ fontSize: '11px', marginBottom: '8px' }}>
-                                    <span style={{ color: '#64748b', fontWeight: 'bold', padding: '2px 4px', backgroundColor: '#f1f5f9', borderRadius: '4px' }}>Completed</span>
+                                    <span style={{ color: 'var(--color-text-muted)', fontWeight: 'bold', padding: '2px 4px', backgroundColor: 'var(--color-surface-secondary)', borderRadius: '4px' }}>Completed</span>
                                 </div>
                             )}
                             {task.status === 'CANCELLED' && (
                                 <div style={{ fontSize: '11px', marginBottom: '8px' }}>
-                                    <span style={{ color: '#64748b', fontWeight: 'bold', padding: '2px 4px', backgroundColor: '#f1f5f9', borderRadius: '4px' }}>Cancelled</span>
+                                    <span style={{ color: 'var(--color-text-muted)', fontWeight: 'bold', padding: '2px 4px', backgroundColor: 'var(--color-surface-secondary)', borderRadius: '4px' }}>Cancelled</span>
                                 </div>
                             )}
                             {task.status !== 'COMPLETED' && task.status !== 'CANCELLED' && task.executionStatus && (
                                 <div style={{ fontSize: '11px', marginBottom: '8px' }}>
-                                    {task.executionStatus === 'DELAYED' && <span style={{ color: '#d32f2f', fontWeight: 'bold', padding: '2px 4px', backgroundColor: '#ffebee', borderRadius: '4px' }}>DELAYED ({task.delayDays}d)</span>}
-                                    {task.executionStatus === 'NO_UPDATE' && <span style={{ color: '#ed6c02', fontWeight: 'bold', padding: '2px 4px', backgroundColor: '#fff3e0', borderRadius: '4px' }}>NO UPDATE</span>}
-                                    {task.executionStatus === 'ON_TRACK' && <span style={{ color: '#2e7d32', fontWeight: 'bold', padding: '2px 4px', backgroundColor: '#e8f5e9', borderRadius: '4px' }}>ON TRACK</span>}
+                                    {task.executionStatus === 'DELAYED' && <span style={{ color: 'var(--color-danger)', fontWeight: 'bold', padding: '2px 4px', backgroundColor: 'var(--color-danger-bg)', borderRadius: '4px' }}>DELAYED ({task.delayDays}d)</span>}
+                                    {task.executionStatus === 'NO_UPDATE' && <span style={{ color: 'var(--color-warning)', fontWeight: 'bold', padding: '2px 4px', backgroundColor: 'var(--color-warning-bg)', borderRadius: '4px' }}>NO UPDATE</span>}
+                                    {task.executionStatus === 'ON_TRACK' && <span style={{ color: 'var(--color-success)', fontWeight: 'bold', padding: '2px 4px', backgroundColor: 'var(--color-success-bg)', borderRadius: '4px' }}>ON TRACK</span>}
                                 </div>
                             )}
                             <select disabled={!canEdit} value={task.status} onChange={(e: any) => handleStatusChange(task.id, e.target.value)} style={{ width: '100%', padding: '4px' }}>
@@ -96,3 +96,5 @@ const KanbanTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = t
     );
 };
 export default KanbanTab;
+
+

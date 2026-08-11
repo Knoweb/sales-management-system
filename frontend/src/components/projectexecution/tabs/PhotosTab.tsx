@@ -17,11 +17,11 @@ const modalStyle: React.CSSProperties = {
     alignItems: 'center', justifyContent: 'center', zIndex: 1000
 };
 const modalContentStyle: React.CSSProperties = {
-    backgroundColor: '#fff', padding: '24px', borderRadius: '8px',
+    backgroundColor: 'var(--color-surface)', padding: '24px', borderRadius: '8px',
     width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto'
 };
 const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '8px', marginBottom: '16px', border: '1px solid #ccc', borderRadius: '4px'
+    width: '100%', padding: '8px', marginBottom: '16px', border: '1px solid var(--color-border-strong)', borderRadius: '4px'
 };
 
 const PhotosTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = true }) => {
@@ -80,8 +80,8 @@ const PhotosTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = t
             {loading ? <p>Loading...</p> : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
                     {photos.map((p: any) => (
-                        <div key={p.id} style={{ border: '1px solid #ccc', borderRadius: '8px', padding: '12px' }}>
-                            <div style={{ height: '100px', backgroundColor: '#eee', marginBottom: '8px' }}>No Preview Available</div>
+                        <div key={p.id} style={{ border: '1px solid var(--color-border-strong)', borderRadius: '8px', padding: '12px' }}>
+                            <div style={{ height: '100px', backgroundColor: 'var(--color-border)', marginBottom: '8px' }}>No Preview Available</div>
                             <p style={{ margin: '0 0 4px 0', fontWeight: 'bold' }}>{p.originalFileName}</p>
                             <p style={{ margin: '0 0 8px 0', fontSize: '12px' }}>{p.description || 'No description'}</p>
                             <button onClick={() => projectExecutionApi.attachments.delete(p.id!).then(fetchData)}><Trash size={14}/></button>
@@ -114,3 +114,5 @@ const PhotosTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = t
     );
 };
 export default PhotosTab;
+
+

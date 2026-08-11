@@ -60,7 +60,7 @@ export const VirtualTourForm: React.FC<VirtualTourFormProps> = ({
   return (
     <Card className="card-primary">
       <h3 className="text-section-title" style={{ marginBottom: '1rem' }}>Schedule Virtual Tour</h3>
-      {error && <div style={{ marginBottom: '1rem', padding: '12px', backgroundColor: '#fef2f2', color: '#b91c1c', borderRadius: '4px', fontSize: '14px' }}>{error}</div>}
+      {error && <div style={{ marginBottom: '1rem', padding: '12px', backgroundColor: 'var(--color-danger-bg)', color: 'var(--color-danger)', borderRadius: '4px', fontSize: '14px' }}>{error}</div>}
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div className="form-group">
           <label className="form-label">Platform</label>
@@ -69,7 +69,7 @@ export const VirtualTourForm: React.FC<VirtualTourFormProps> = ({
             required
             value={formData.platform}
             onChange={handleChange}
-            className="form-input"
+            className="form-select"
           >
             <option value="">Select Platform</option>
             <option value="Zoom">Zoom</option>
@@ -96,7 +96,7 @@ export const VirtualTourForm: React.FC<VirtualTourFormProps> = ({
             name="language"
             value={formData.language}
             onChange={handleChange}
-            className="form-input"
+            className="form-select"
           >
             <option value="English">English</option>
             <option value="Sinhala">Sinhala</option>
@@ -136,7 +136,7 @@ export const VirtualTourForm: React.FC<VirtualTourFormProps> = ({
             rows={3}
             value={formData.notes}
             onChange={handleChange}
-            className="form-input"
+            className="form-textarea"
             placeholder="Agenda or instructions for the tour..."
           />
         </div>
@@ -163,3 +163,5 @@ export const VirtualTourForm: React.FC<VirtualTourFormProps> = ({
     </Card>
   );
 };
+
+

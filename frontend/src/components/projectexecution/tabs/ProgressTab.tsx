@@ -18,11 +18,11 @@ const modalStyle: React.CSSProperties = {
     alignItems: 'center', justifyContent: 'center', zIndex: 1000
 };
 const modalContentStyle: React.CSSProperties = {
-    backgroundColor: '#fff', padding: '24px', borderRadius: '8px',
+    backgroundColor: 'var(--color-surface)', padding: '24px', borderRadius: '8px',
     width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto'
 };
 const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '8px', marginBottom: '16px', border: '1px solid #ccc', borderRadius: '4px'
+    width: '100%', padding: '8px', marginBottom: '16px', border: '1px solid var(--color-border-strong)', borderRadius: '4px'
 };
 
 const ProgressTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = true }) => {
@@ -131,7 +131,7 @@ const ProgressTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit =
                             <input type="number" min="0" max="100" required style={inputStyle} value={form.completionPercentage ?? ''} onChange={(e: any) => setForm({...form, completionPercentage: e.target.value})} />
                             
                             {form.completionPercentage !== undefined && form._currentTaskPercentage !== undefined && Number(form.completionPercentage) < Number(form._currentTaskPercentage) && (
-                                <div style={{ color: '#ed6c02', fontSize: '12px', marginTop: '-12px', marginBottom: '16px' }}>
+                                <div style={{ color: 'var(--color-warning)', fontSize: '12px', marginTop: '-12px', marginBottom: '16px' }}>
                                     Completion is lower than the current progress.
                                 </div>
                             )}
@@ -167,3 +167,5 @@ const ProgressTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit =
     );
 };
 export default ProgressTab;
+
+

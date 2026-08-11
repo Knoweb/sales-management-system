@@ -175,9 +175,9 @@ export const ContactModal: React.FC<ContactModalProps> = ({ clientId, isOpen, on
             style={{
               minWidth: '110px',
               height: '42px',
-              backgroundColor: '#f1f5f9',
-              color: '#475569',
-              border: '1px solid #cbd5e1',
+              backgroundColor: 'var(--color-surface-secondary)',
+              color: 'var(--color-text-secondary)',
+              border: '1px solid var(--color-border-strong)',
               borderRadius: '9px',
               fontWeight: 600,
             }}
@@ -192,3 +192,4 @@ export const ContactModal: React.FC<ContactModalProps> = ({ clientId, isOpen, on
     </Modal>
   );
 };
+

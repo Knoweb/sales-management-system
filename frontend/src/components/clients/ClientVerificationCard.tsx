@@ -154,8 +154,8 @@ export const ClientVerificationCard: React.FC<ClientVerificationCardProps> = ({
 
           {isBdmApprovedForCurrentVersion && status !== 'CONFIRMED' && (
             <div className="space-y-4">
-              <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px' }}>
-                <p style={{ margin: '0 0 16px', color: '#64748b', fontSize: '14px', lineHeight: 1.5 }}>
+              <div style={{ backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '16px' }}>
+                <p style={{ margin: '0 0 16px', color: 'var(--color-text-muted)', fontSize: '14px', lineHeight: 1.5 }}>
                   Download the approved project document and send it to the client. After receiving the client's approval externally, record it here.
                 </p>
                 <div className="flex flex-wrap gap-3">
@@ -201,24 +201,24 @@ export const ClientVerificationCard: React.FC<ClientVerificationCardProps> = ({
                 <CheckCircle2 size={22} color="#16A34A" />
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <span style={{ fontWeight: 600, fontSize: '15px', color: '#166534' }}>Client Approval Confirmed</span>
-                  <span style={{ fontSize: '12px', color: '#4B5563', marginTop: '2px' }}>The client has approved this Project Brief.</span>
+                  <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>The client has approved this Project Brief.</span>
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-                <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                  <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Approved On</p>
-                  <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '15px', fontWeight: 500 }}>{fmtDate(latest.decisionDate?.toString())}</p>
+                <div style={{ padding: '16px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                  <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Approved On</p>
+                  <p style={{ margin: '7px 0 0', color: 'var(--color-text-primary)', fontSize: '15px', fontWeight: 500 }}>{fmtDate(latest.decisionDate?.toString())}</p>
                 </div>
                 {latest.recordedByName && (
-                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Recorded By</p>
-                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '15px', fontWeight: 500 }}>{latest.recordedByName}</p>
+                  <div style={{ padding: '16px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Recorded By</p>
+                    <p style={{ margin: '7px 0 0', color: 'var(--color-text-primary)', fontSize: '15px', fontWeight: 500 }}>{latest.recordedByName}</p>
                   </div>
                 )}
                 {latest.projectBriefVersionNumber && (
-                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Brief Version</p>
-                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '15px', fontWeight: 500 }}>Version {latest.projectBriefVersionNumber}</p>
+                  <div style={{ padding: '16px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Brief Version</p>
+                    <p style={{ margin: '7px 0 0', color: 'var(--color-text-primary)', fontSize: '15px', fontWeight: 500 }}>Version {latest.projectBriefVersionNumber}</p>
                   </div>
                 )}
               </div>
@@ -252,16 +252,16 @@ export const ClientVerificationCard: React.FC<ClientVerificationCardProps> = ({
             <div className="space-y-4">
               <p className="text-sm text-gray-500 italic">This opportunity has legacy client verification records.</p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-                <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                  <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Generated</p>
-                  <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '15px', fontWeight: 500 }}>{fmtDate(latest.createdAt?.toString())}</p>
+                <div style={{ padding: '16px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                  <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Generated</p>
+                  <p style={{ margin: '7px 0 0', color: 'var(--color-text-primary)', fontSize: '15px', fontWeight: 500 }}>{fmtDate(latest.createdAt?.toString())}</p>
                 </div>
               </div>
             </div>
           )}
 
           {verifications.length > 1 && (
-            <details className="mt-2" style={{ paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
+            <details className="mt-2" style={{ paddingTop: '16px', borderTop: '1px solid var(--color-border)' }}>
               <summary className="text-sm font-medium text-text-muted cursor-pointer hover:text-text-secondary select-none">
                 Show {verifications.length - 1} older record{verifications.length > 2 ? 's' : ''}
               </summary>
@@ -282,3 +282,4 @@ export const ClientVerificationCard: React.FC<ClientVerificationCardProps> = ({
     </>
   );
 };
+

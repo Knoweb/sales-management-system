@@ -216,7 +216,7 @@ export const ClientsPage: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#64748b',
+                color: 'var(--color-text-muted)',
                 padding: '4px',
               }}
               aria-label="Clear search"

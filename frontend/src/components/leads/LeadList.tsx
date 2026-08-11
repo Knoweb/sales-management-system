@@ -131,7 +131,7 @@ export const LeadList: React.FC<LeadListProps> = ({ clientId, hideFilters, viewO
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#64748b',
+                  color: 'var(--color-text-muted)',
                   padding: '4px',
                 }}
                 aria-label="Clear search"
@@ -298,3 +298,4 @@ export const LeadList: React.FC<LeadListProps> = ({ clientId, hideFilters, viewO
     </div>
   );
 };
+

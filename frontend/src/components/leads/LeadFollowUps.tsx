@@ -154,9 +154,9 @@ export const LeadFollowUps: React.FC<LeadFollowUpsProps> = ({ leadId }) => {
                 style={{
                   minWidth: '110px',
                   height: '42px',
-                  backgroundColor: '#f1f5f9',
-                  color: '#475569',
-                  border: '1px solid #cbd5e1',
+                  backgroundColor: 'var(--color-surface-secondary)',
+                  color: 'var(--color-text-secondary)',
+                  border: '1px solid var(--color-border-strong)',
                   borderRadius: '9px',
                   fontWeight: 600,
                 }}
@@ -207,7 +207,7 @@ export const LeadFollowUps: React.FC<LeadFollowUpsProps> = ({ leadId }) => {
                   justifyContent: 'space-between',
                   padding: '16px', 
                   gap: '16px',
-                  backgroundColor: '#ffffff', 
+                  backgroundColor: 'var(--color-surface)', 
                   borderRadius: '10px', 
                   border: '1px solid var(--color-border)', 
                   borderLeft: `4px solid ${display.border}`,
@@ -216,8 +216,8 @@ export const LeadFollowUps: React.FC<LeadFollowUpsProps> = ({ leadId }) => {
               >
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                    <Calendar size={15} style={{ color: '#64748b' }} />
-                    <span style={{ fontSize: '15px', fontWeight: 600, color: '#0f172a' }}>
+                    <Calendar size={15} style={{ color: 'var(--color-text-muted)' }} />
+                    <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
                       {formattedDate}
                     </span>
                     <span style={{ 
@@ -234,13 +234,13 @@ export const LeadFollowUps: React.FC<LeadFollowUpsProps> = ({ leadId }) => {
                   </div>
                   
                   {fu.notes && (
-                    <div style={{ paddingLeft: '23px', fontSize: '14px', color: '#475569', lineHeight: 1.5 }}>
+                    <div style={{ paddingLeft: '23px', fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
                       {fu.notes}
                     </div>
                   )}
                   {fu.assignedToName && (
-                    <div style={{ paddingLeft: '23px', fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>
-                      Assigned to: <span style={{ fontWeight: 500, color: '#64748b' }}>{fu.assignedToName}</span>
+                    <div style={{ paddingLeft: '23px', fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                      Assigned to: <span style={{ fontWeight: 500, color: 'var(--color-text-muted)' }}>{fu.assignedToName}</span>
                     </div>
                   )}
                 </div>
@@ -273,3 +273,4 @@ export const LeadFollowUps: React.FC<LeadFollowUpsProps> = ({ leadId }) => {
     </Card>
   );
 };
+

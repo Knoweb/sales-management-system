@@ -12,7 +12,7 @@
 
 /* Page Header */
 .erd-page-header {
-  background: #ffffff;
+  background: var(--color-surface);
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 24px;
@@ -33,20 +33,20 @@
 .erd-header-title {
   font-size: 24px;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
   margin: 0 0 8px 0;
 }
 
 .erd-header-subtitle {
   font-size: 16px;
   font-weight: 500;
-  color: #4b5563;
+  color: var(--color-text-secondary);
   margin: 0;
 }
 
 /* Project Summary */
 .erd-project-summary {
-  background: #ffffff;
+  background: var(--color-surface);
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 24px;
@@ -71,7 +71,7 @@
 .erd-summary-label {
   font-size: 12px;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -79,12 +79,12 @@
 .erd-summary-value {
   font-size: 16px;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 /* Consolidated Estimate */
 .erd-consolidated-card {
-  background: #ffffff;
+  background: var(--color-surface);
   border: 2px solid #e5e7eb;
   border-radius: 16px;
   padding: 32px;
@@ -94,7 +94,7 @@
 }
 
 .erd-consolidated-card.approved {
-  border-color: #22c55e;
+  border-color: var(--color-success);
 }
 
 .erd-consolidated-card.approved::before {
@@ -104,7 +104,7 @@
   left: 0;
   width: 6px;
   height: 100%;
-  background: #22c55e;
+  background: var(--color-success);
 }
 
 .erd-consolidated-header {
@@ -131,17 +131,17 @@
 .erd-consolidated-title {
   font-size: 20px;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
   margin: 0;
 }
 
 .erd-consolidated-title.approved {
-  color: #14532d;
+  color: var(--color-success);
 }
 
 .erd-version-badge {
-  background: #f3f4f6;
-  color: #374151;
+  background: var(--color-surface-secondary);
+  color: var(--color-text-primary);
   padding: 2px 10px;
   border-radius: 999px;
   font-size: 12px;
@@ -150,13 +150,13 @@
 
 .erd-version-badge.approved {
   background: #dcfce7;
-  color: #15803d;
+  color: var(--color-success);
 }
 
 .erd-consolidated-metadata {
   font-size: 14px;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--color-text-muted);
   margin: 0;
 }
 
@@ -173,8 +173,8 @@
 }
 
 .erd-financial-item {
-  background: #f9fafb;
-  border: 1px solid #f3f4f6;
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-surface-secondary);
   border-radius: 8px;
   padding: 16px;
   display: flex;
@@ -185,7 +185,7 @@
 .erd-financial-label {
   font-size: 12px;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -193,12 +193,12 @@
 .erd-financial-value {
   font-size: 18px;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .erd-financial-item-final {
-  background: #eff6ff;
-  border: 1px solid #dbeafe;
+  background: var(--color-primary-soft);
+  border: 1px solid var(--color-primary-soft);
   border-radius: 8px;
   padding: 16px;
   display: flex;
@@ -210,7 +210,7 @@
 .erd-financial-label-final {
   font-size: 12px;
   font-weight: 700;
-  color: #2563eb;
+  color: var(--color-primary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -218,12 +218,12 @@
 .erd-financial-value-final {
   font-size: 20px;
   font-weight: 800;
-  color: #1d4ed8;
+  color: var(--color-primary-active);
 }
 
 /* Empty State / No Consolidated Estimate */
 .erd-empty-card {
-  background: #f9fafb;
+  background: var(--color-surface-secondary);
   border: 2px dashed #e5e7eb;
   border-radius: 16px;
   padding: 48px;
@@ -236,13 +236,13 @@
 }
 
 .erd-empty-icon {
-  color: #9ca3af;
+  color: var(--color-text-muted);
   width: 40px;
   height: 40px;
 }
 
 .erd-empty-text {
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 16px;
   font-weight: 500;
   margin: 0;
@@ -256,7 +256,7 @@
 }
 
 .erd-department-card {
-  background: #ffffff;
+  background: var(--color-surface);
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 24px;
@@ -293,7 +293,7 @@
 .erd-department-title {
   font-size: 20px;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
   margin: 0;
 }
 
@@ -304,7 +304,7 @@
   flex-wrap: wrap;
   font-size: 14px;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .erd-department-actions {
@@ -325,8 +325,8 @@
 }
 
 .erd-financial-summary-item {
-  background: #f9fafb;
-  border: 1px solid #f3f4f6;
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-surface-secondary);
   border-radius: 8px;
   padding: 16px;
   display: flex;
@@ -337,7 +337,7 @@
 .erd-financial-summary-label {
   font-size: 12px;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -345,13 +345,13 @@
 .erd-financial-summary-value {
   font-size: 16px;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
   text-align: right;
 }
 
 .erd-financial-summary-item-final {
-  background: #eff6ff;
-  border: 1px solid #dbeafe;
+  background: var(--color-primary-soft);
+  border: 1px solid var(--color-primary-soft);
   border-radius: 8px;
   padding: 16px;
   display: flex;
@@ -363,7 +363,7 @@
 .erd-financial-summary-label-final {
   font-size: 12px;
   font-weight: 700;
-  color: #2563eb;
+  color: var(--color-primary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -371,7 +371,7 @@
 .erd-financial-summary-value-final {
   font-size: 18px;
   font-weight: 800;
-  color: #1d4ed8;
+  color: var(--color-primary-active);
   text-align: right;
 }
 
@@ -380,7 +380,7 @@
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  background: #f9fafb;
+  background: var(--color-surface-secondary);
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 16px;
@@ -388,8 +388,8 @@
 }
 
 .erd-timeline-icon-wrapper {
-  background: #ffffff;
-  border: 1px solid #f3f4f6;
+  background: var(--color-surface);
+  border: 1px solid var(--color-surface-secondary);
   border-radius: 6px;
   padding: 8px;
   display: flex;
@@ -401,7 +401,7 @@
 .erd-timeline-icon {
   width: 20px;
   height: 20px;
-  color: #2563eb;
+  color: var(--color-primary);
 }
 
 .erd-timeline-info {
@@ -413,7 +413,7 @@
 .erd-timeline-label {
   font-size: 12px;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -421,7 +421,7 @@
 .erd-timeline-value {
   font-size: 16px;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 /* Line Items Table */
@@ -433,7 +433,7 @@
   display: block;
   font-size: 14px;
   font-weight: 700;
-  color: #374151;
+  color: var(--color-text-primary);
   margin-bottom: 12px;
 }
 
@@ -441,7 +441,7 @@
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   overflow-x: auto;
-  background: #ffffff;
+  background: var(--color-surface);
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
@@ -452,10 +452,10 @@
 }
 
 .erd-table th {
-  background: #f9fafb;
+  background: var(--color-surface-secondary);
   font-size: 12px;
   font-weight: 700;
-  color: #4b5563;
+  color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 12px 16px;
@@ -466,11 +466,11 @@
 .erd-table td {
   font-size: 14px;
   padding: 12px 16px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--color-surface-secondary);
 }
 
 .erd-table tr:hover td {
-  background: #f9fafb;
+  background: var(--color-surface-secondary);
 }
 
 .erd-table-align-right {
@@ -478,36 +478,36 @@
 }
 
 .erd-table-category {
-  color: #374151;
+  color: var(--color-text-primary);
   font-weight: 500;
 }
 
 .erd-table-desc {
-  color: #4b5563;
+  color: var(--color-text-secondary);
 }
 
 .erd-table-qty {
-  color: #374151;
+  color: var(--color-text-primary);
   font-weight: 500;
 }
 
 .erd-table-qty-uom {
-  color: #9ca3af;
+  color: var(--color-text-muted);
   font-weight: 400;
   margin-left: 4px;
 }
 
 .erd-table-unitcost {
-  color: #374151;
+  color: var(--color-text-primary);
 }
 
 .erd-table-total {
-  color: #111827;
+  color: var(--color-text-primary);
   font-weight: 600;
 }
 
 .erd-empty-table {
-  background: #f9fafb;
+  background: var(--color-surface-secondary);
   border: 1px dashed #e5e7eb;
   border-radius: 8px;
   padding: 24px;
@@ -515,7 +515,7 @@
 }
 
 .erd-empty-table p {
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 14px;
   font-style: italic;
   margin: 0;
@@ -525,7 +525,9 @@
 .erd-department-footer {
   display: flex;
   justify-content: flex-end;
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid var(--color-surface-secondary);
   padding-top: 24px;
   margin-top: 24px;
 }
+
+

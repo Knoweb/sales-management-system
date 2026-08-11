@@ -254,7 +254,7 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSuccess, 
           justifyContent: 'flex-end',
           alignItems: 'center',
           gap: '1rem',
-          borderTop: '1px solid #e2e8f0',
+          borderTop: '1px solid var(--color-border)',
           paddingTop: '1rem',
           marginTop: '0.5rem',
           flexShrink: 0
@@ -268,9 +268,9 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSuccess, 
           style={{
             minWidth: '110px',
             height: '42px',
-            backgroundColor: '#f1f5f9',
-            color: '#475569',
-            border: '1px solid #cbd5e1',
+            backgroundColor: 'var(--color-surface-secondary)',
+            color: 'var(--color-text-secondary)',
+            border: '1px solid var(--color-border-strong)',
             borderRadius: '9px',
             fontWeight: 600,
           }}
@@ -285,9 +285,9 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSuccess, 
           style={{
             minWidth: '130px',
             height: '42px',
-            backgroundColor: '#2563eb',
-            color: '#ffffff',
-            border: '1px solid #2563eb',
+            backgroundColor: 'var(--color-primary)',
+            color: 'var(--color-surface)',
+            border: '1px solid var(--color-primary)',
             borderRadius: '9px',
             fontSize: '14px',
             fontWeight: 600,
@@ -300,3 +300,4 @@ export const ClientForm: React.FC<ClientFormProps> = ({ initialData, onSuccess, 
     </form>
   );
 };
+

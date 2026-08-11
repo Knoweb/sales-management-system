@@ -233,7 +233,7 @@ export const EstimateReviewDetailsPage: React.FC = () => {
       {/* Department Estimates */}
       <div className="erd-departments-section">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-          <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#111827', margin: 0 }}>Department Estimates</h3>
+          <h3 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--color-text-primary)', margin: 0 }}>Department Estimates</h3>
           {estimates.length > 0 && (!consolidatedEstimate || consolidatedEstimate.status !== 'APPROVED') && (
             <Button 
               onClick={handleConsolidateAndApprove}
@@ -267,7 +267,7 @@ export const EstimateReviewDetailsPage: React.FC = () => {
                 <div className="erd-department-actions">
                     {est.status === 'SUBMITTED' && (!consolidatedEstimate || consolidatedEstimate.status !== 'APPROVED') && (
                       <Button 
-                        style={{ backgroundColor: '#fffbeb', color: '#b45309', borderColor: '#fcd34d' }}
+                        style={{ backgroundColor: 'var(--color-warning-bg)', color: 'var(--color-warning)', borderColor: 'var(--color-warning-bg)' }}
                         onClick={() => setRevisionDeptId(est.departmentId)}
                       >
                         Request Revision
@@ -349,9 +349,9 @@ export const EstimateReviewDetailsPage: React.FC = () => {
               </div>
 
               {revisionDeptId === est.departmentId && (
-                <div style={{ marginTop: '24px', padding: '20px', border: '1px solid #fecaca', backgroundColor: '#fef2f2', borderRadius: '8px' }}>
-                  <h5 style={{ fontSize: '14px', fontWeight: '700', color: '#991b1b', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ef4444' }}></span>
+                <div style={{ marginTop: '24px', padding: '20px', border: '1px solid var(--color-danger-bg)', backgroundColor: 'var(--color-danger-bg)', borderRadius: '8px' }}>
+                  <h5 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-danger)', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-danger)' }}></span>
                     Request Revision
                   </h5>
                   <Textarea 
@@ -362,7 +362,7 @@ export const EstimateReviewDetailsPage: React.FC = () => {
                   />
                   <div style={{ marginTop: '16px', display: 'flex', gap: '12px' }}>
                     <Button 
-                      style={{ backgroundColor: '#fee2e2', color: '#b91c1c', borderColor: '#fca5a5' }}
+                      style={{ backgroundColor: 'var(--color-danger-bg)', color: 'var(--color-danger)', borderColor: 'var(--color-danger-bg)' }}
                       onClick={() => handleRequestRevision(est.departmentId)}
                       disabled={actionLoading || !revisionNotes}
                     >
@@ -396,3 +396,5 @@ export const EstimateReviewDetailsPage: React.FC = () => {
     </div>
   );
 };
+
+

@@ -26,7 +26,7 @@ export const VirtualTourEffectivenessWidget: React.FC = () => {
       className="card-primary" 
       style={{ 
         padding: '24px', 
-        background: 'linear-gradient(135deg, var(--color-surface) 0%, #f8fafc 100%)',
+        background: 'linear-gradient(135deg, var(--color-surface) 0%, var(--color-surface-secondary) 100%)',
         borderLeft: '4px solid var(--color-primary)',
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
       }}
@@ -43,7 +43,7 @@ export const VirtualTourEffectivenessWidget: React.FC = () => {
         </div>
         <div style={{ 
           padding: '8px', 
-          backgroundColor: '#eff6ff', 
+          backgroundColor: 'var(--color-primary-soft)', 
           borderRadius: '50%',
           display: 'flex',
           alignItems: 'center',
@@ -87,3 +87,4 @@ export const VirtualTourEffectivenessWidget: React.FC = () => {
     </Card>
   );
 };
+

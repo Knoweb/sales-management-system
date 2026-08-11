@@ -141,15 +141,15 @@ export const VirtualTourHistory: React.FC<VirtualTourHistoryProps> = ({ leadId, 
                       borderRadius: '9999px',
                       fontSize: '12px',
                       fontWeight: 600,
-                      backgroundColor: tour.status === 'COMPLETED' ? '#ecfdf5' : tour.status === 'CANCELLED' ? '#fef2f2' : '#eff6ff',
-                      color: tour.status === 'COMPLETED' ? '#047857' : tour.status === 'CANCELLED' ? '#b91c1c' : '#1d4ed8'
+                      backgroundColor: tour.status === 'COMPLETED' ? 'var(--color-success-bg)' : tour.status === 'CANCELLED' ? 'var(--color-danger-bg)' : 'var(--color-primary-soft)',
+                      color: tour.status === 'COMPLETED' ? 'var(--color-success)' : tour.status === 'CANCELLED' ? 'var(--color-danger)' : 'var(--color-primary-active)'
                     }}>
                       {tour.status}
                     </span>
                     {tour.status === 'SCHEDULED' && (
                       <select
                         onChange={(e) => handleStatusChange(tour.id, e.target.value)}
-                        className="form-input"
+                        className="form-select"
                         style={{ fontSize: '12px', padding: '4px 8px', width: 'auto' }}
                         defaultValue=""
                       >
@@ -167,13 +167,13 @@ export const VirtualTourHistory: React.FC<VirtualTourHistoryProps> = ({ leadId, 
                   </div>
                 )}
                 {tour.clientResponse && (
-                  <div style={{ marginTop: '0.5rem', fontSize: '14px', color: 'var(--color-text)', backgroundColor: '#f0fdf4', borderLeft: '3px solid #16a34a', padding: '0.5rem', borderRadius: '4px' }}>
+                  <div style={{ marginTop: '0.5rem', fontSize: '14px', color: 'var(--color-text)', backgroundColor: 'var(--color-success-bg)', borderLeft: '3px solid var(--color-success)', padding: '0.5rem', borderRadius: '4px' }}>
                     <strong>Client Feedback:</strong> {tour.clientResponse}
-                    {tour.followUpRequired && <span style={{ color: '#dc2626', fontWeight: 600, marginLeft: '8px' }}>(Follow-up Required)</span>}
+                    {tour.followUpRequired && <span style={{ color: 'var(--color-danger)', fontWeight: 600, marginLeft: '8px' }}>(Follow-up Required)</span>}
                   </div>
                 )}
                 {(tour.probabilityBefore !== null && tour.probabilityBefore !== undefined) && (
-                  <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', padding: '0.5rem', backgroundColor: '#eff6ff', borderRadius: '4px' }}>
+                  <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', padding: '0.5rem', backgroundColor: 'var(--color-primary-soft)', borderRadius: '4px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <span style={{ color: 'var(--color-text-muted)' }}>Probability Before:</span>
                       <strong style={{ color: 'var(--color-primary)' }}>{tour.probabilityBefore}%</strong>
@@ -183,7 +183,7 @@ export const VirtualTourHistory: React.FC<VirtualTourHistoryProps> = ({ leadId, 
                         <span style={{ color: 'var(--color-text-muted)' }}>→</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <span style={{ color: 'var(--color-text-muted)' }}>After:</span>
-                          <strong style={{ color: tour.probabilityAfter >= tour.probabilityBefore ? '#16a34a' : '#dc2626' }}>
+                          <strong style={{ color: tour.probabilityAfter >= tour.probabilityBefore ? 'var(--color-success)' : 'var(--color-danger)' }}>
                             {tour.probabilityAfter}%
                           </strong>
                         </div>
@@ -193,14 +193,14 @@ export const VirtualTourHistory: React.FC<VirtualTourHistoryProps> = ({ leadId, 
                 )}
                 
                 {completionTourId === tour.id && (
-                  <form onSubmit={handleCompletionSubmit} style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <form onSubmit={handleCompletionSubmit} style={{ marginTop: '1rem', padding: '1rem', backgroundColor: 'var(--color-surface-secondary)', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
                     <h4 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '12px' }}>Complete Tour Metrics</h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       <div className="form-group">
                         <label className="form-label">Client Response / Feedback</label>
                         <textarea 
                           required
-                          className="form-input" 
+                          className="form-textarea" 
                           rows={2} 
                           value={completionData.clientResponse}
                           onChange={e => setCompletionData({...completionData, clientResponse: e.target.value})}
@@ -249,3 +249,5 @@ export const VirtualTourHistory: React.FC<VirtualTourHistoryProps> = ({ leadId, 
     </div>
   );
 };
+
+

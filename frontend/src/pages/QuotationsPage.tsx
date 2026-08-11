@@ -100,7 +100,7 @@ export const QuotationsPage: React.FC = () => {
                   className="form-control" 
                   value={projectId}
                   onChange={(e) => setProjectId(e.target.value)}
-                  style={{ width: '100%', padding: '0.5rem', marginTop: '0.5rem', borderRadius: '4px', border: '1px solid #ccc' }}
+                  style={{ width: '100%', padding: '0.5rem', marginTop: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border-strong)' }}
                 >
                   <option value="">-- Select Project --</option>
                   {projects.map(p => (
@@ -173,3 +173,4 @@ export const QuotationsPage: React.FC = () => {
     </div>
   );
 };
+

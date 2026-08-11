@@ -236,9 +236,9 @@ const ProjectBriefEditor: React.FC = () => {
           style={{
             height: '40px',
             paddingInline: '12px',
-            backgroundColor: '#f8fafc',
-            color: '#475569',
-            border: '1px solid #e2e8f0',
+            backgroundColor: 'var(--color-surface-secondary)',
+            color: 'var(--color-text-secondary)',
+            border: '1px solid var(--color-border)',
             borderRadius: '8px',
             fontSize: '14px',
             fontWeight: 600,
@@ -287,8 +287,8 @@ const ProjectBriefEditor: React.FC = () => {
 
                 {/* Project Information */}
                 <section>
-                  <div style={{ marginBottom: '20px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
-                    <h3 style={{ margin: 0, color: '#0f172a', fontSize: '18px', fontWeight: 600 }}>Project Information</h3>
+                  <div style={{ marginBottom: '20px', paddingBottom: '12px', borderBottom: '1px solid var(--color-border)' }}>
+                    <h3 style={{ margin: 0, color: 'var(--color-text-primary)', fontSize: '18px', fontWeight: 600 }}>Project Information</h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', columnGap: '1.5rem', rowGap: '1rem' }}>
                     <Input
@@ -337,8 +337,8 @@ const ProjectBriefEditor: React.FC = () => {
 
                 {/* Requirements */}
                 <section>
-                  <div style={{ marginBottom: '20px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
-                    <h3 style={{ margin: 0, color: '#0f172a', fontSize: '18px', fontWeight: 600 }}>Requirements</h3>
+                  <div style={{ marginBottom: '20px', paddingBottom: '12px', borderBottom: '1px solid var(--color-border)' }}>
+                    <h3 style={{ margin: 0, color: 'var(--color-text-primary)', fontSize: '18px', fontWeight: 600 }}>Requirements</h3>
                   </div>
                   <div className="flex flex-col gap-6">
                     <Textarea
@@ -429,7 +429,7 @@ const ProjectBriefEditor: React.FC = () => {
                     width: '100%',
                     marginTop: '2rem',
                     paddingTop: '1rem',
-                    borderTop: '1px solid #e2e8f0',
+                    borderTop: '1px solid var(--color-border)',
                     flexWrap: 'wrap',
                     gap: '1rem'
                   }}
@@ -458,10 +458,10 @@ const ProjectBriefEditor: React.FC = () => {
                         alignItems: 'center',
                         gap: '0.75rem',
                         padding: '0.875rem 1rem',
-                        backgroundColor: '#fffbeb',
+                        backgroundColor: 'var(--color-warning-bg)',
                         border: '1px solid #fbbf24',
                         borderRadius: '0.75rem',
-                        color: '#92400e',
+                        color: 'var(--color-warning)',
                         boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
                         marginRight: '0.5rem',
                         fontSize: '14px',
@@ -474,8 +474,8 @@ const ProjectBriefEditor: React.FC = () => {
                           width: '32px',
                           height: '32px',
                           borderRadius: '9999px',
-                          backgroundColor: '#fef3c7',
-                          color: '#d97706',
+                          backgroundColor: 'var(--color-warning-bg)',
+                          color: 'var(--color-warning)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -675,3 +675,4 @@ const ProjectBriefEditor: React.FC = () => {
 };
 
 export default ProjectBriefEditor;
+

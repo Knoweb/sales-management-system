@@ -15,11 +15,11 @@ const modalStyle: React.CSSProperties = {
     alignItems: 'center', justifyContent: 'center', zIndex: 1000
 };
 const modalContentStyle: React.CSSProperties = {
-    backgroundColor: '#fff', padding: '24px', borderRadius: '8px',
+    backgroundColor: 'var(--color-surface)', padding: '24px', borderRadius: '8px',
     width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto'
 };
 const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '8px', marginBottom: '16px', border: '1px solid #ccc', borderRadius: '4px'
+    width: '100%', padding: '8px', marginBottom: '16px', border: '1px solid var(--color-border-strong)', borderRadius: '4px'
 };
 
 const TasksTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = true }) => {
@@ -109,11 +109,11 @@ const TasksTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = tr
                                 <tr key={t.id}>
                                     <td>{t.title}</td><td>{t.status}</td>
                                     <td>
-                                        {t.executionStatus === 'DELAYED' && <span style={{ color: '#d32f2f', fontWeight: 'bold' }}>DELAYED ({t.delayDays} days)</span>}
-                                        {t.executionStatus === 'NO_UPDATE' && <span style={{ color: '#ed6c02', fontWeight: 'bold' }}>NO UPDATE</span>}
-                                        {t.executionStatus === 'ON_TRACK' && <span style={{ color: '#2e7d32', fontWeight: 'bold' }}>ON TRACK</span>}
-                                        {t.status === 'COMPLETED' && <span style={{ color: '#64748b' }}>Completed</span>}
-                                        {t.status === 'CANCELLED' && <span style={{ color: '#64748b' }}>Cancelled</span>}
+                                        {t.executionStatus === 'DELAYED' && <span style={{ color: 'var(--color-danger)', fontWeight: 'bold' }}>DELAYED ({t.delayDays} days)</span>}
+                                        {t.executionStatus === 'NO_UPDATE' && <span style={{ color: 'var(--color-warning)', fontWeight: 'bold' }}>NO UPDATE</span>}
+                                        {t.executionStatus === 'ON_TRACK' && <span style={{ color: 'var(--color-success)', fontWeight: 'bold' }}>ON TRACK</span>}
+                                        {t.status === 'COMPLETED' && <span style={{ color: 'var(--color-text-muted)' }}>Completed</span>}
+                                        {t.status === 'CANCELLED' && <span style={{ color: 'var(--color-text-muted)' }}>Cancelled</span>}
                                     </td>
                                     <td>{t.plannedEndDate || 'N/A'}</td>
                                     <td>{t.priority}</td><td>{t.completionPercentage || 0}%</td>
@@ -160,3 +160,5 @@ const TasksTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = tr
     );
 };
 export default TasksTab;
+
+

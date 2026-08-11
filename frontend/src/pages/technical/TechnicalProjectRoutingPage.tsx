@@ -251,9 +251,9 @@ export const TechnicalProjectRoutingPage: React.FC = () => {
           style={{
             height: '40px',
             paddingInline: '12px',
-            backgroundColor: '#ffffff',
-            color: '#475569',
-            border: '1px solid #e2e8f0',
+            backgroundColor: 'var(--color-surface)',
+            color: 'var(--color-text-secondary)',
+            border: '1px solid var(--color-border)',
             borderRadius: '8px',
             fontSize: '14px',
             fontWeight: 600,
@@ -275,8 +275,8 @@ export const TechnicalProjectRoutingPage: React.FC = () => {
             justifyContent: 'space-between',
             gap: '24px',
             width: '100%',
-            backgroundColor: '#ffffff',
-            border: '1px solid #e2e8f0',
+            backgroundColor: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
             borderRadius: '16px',
             padding: '24px 28px',
             boxShadow: '0 1px 3px rgba(15, 23, 42, 0.06)',
@@ -299,8 +299,8 @@ export const TechnicalProjectRoutingPage: React.FC = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: '16px',
-                backgroundColor: '#eff6ff',
-                color: '#2563eb',
+                backgroundColor: 'var(--color-primary-soft)',
+                color: 'var(--color-primary)',
               }}
             >
               <Waypoints size={28} />
@@ -313,7 +313,7 @@ export const TechnicalProjectRoutingPage: React.FC = () => {
                   fontSize: '24px',
                   lineHeight: '1.25',
                   fontWeight: 700,
-                  color: '#0f172a',
+                  color: 'var(--color-text-primary)',
                 }}
               >
                 {project.projectTitle || 'Technical Project'}
@@ -323,7 +323,7 @@ export const TechnicalProjectRoutingPage: React.FC = () => {
                 style={{
                   margin: '6px 0 0',
                   fontSize: '15px',
-                  color: '#64748b',
+                  color: 'var(--color-text-muted)',
                 }}
               >
                 Client: {project.clientName || 'Not provided'}
@@ -581,3 +581,4 @@ export const TechnicalProjectRoutingPage: React.FC = () => {
     </div>
   );
 };
+

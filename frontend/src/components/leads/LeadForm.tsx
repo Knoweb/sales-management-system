@@ -526,7 +526,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({ isOpen, onClose, onSuccess, 
             </div>
 
             {/* ── Form actions ── */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #e2e8f0', flexShrink: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--color-border)', flexShrink: 0 }}>
               <Button
                 type="button"
                 variant="secondary"
@@ -554,3 +554,4 @@ export const LeadForm: React.FC<LeadFormProps> = ({ isOpen, onClose, onSuccess, 
     </Modal>
   );
 };
+

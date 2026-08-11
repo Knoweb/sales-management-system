@@ -18,11 +18,11 @@ const modalStyle: React.CSSProperties = {
     alignItems: 'center', justifyContent: 'center', zIndex: 1000
 };
 const modalContentStyle: React.CSSProperties = {
-    backgroundColor: '#fff', padding: '24px', borderRadius: '8px',
+    backgroundColor: 'var(--color-surface)', padding: '24px', borderRadius: '8px',
     width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto'
 };
 const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '8px', marginBottom: '16px', border: '1px solid #ccc', borderRadius: '4px'
+    width: '100%', padding: '8px', marginBottom: '16px', border: '1px solid var(--color-border-strong)', borderRadius: '4px'
 };
 
 const AllocationsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = true }) => {
@@ -97,7 +97,7 @@ const AllocationsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdi
                     </thead>
                     <tbody>
                         {allocations.map((a: any) => (
-                            <tr key={a.id} style={{ borderBottom: '1px solid #eee' }}>
+                            <tr key={a.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
                                 <td>{a.employeeName || a.employeeId}</td><td>{a.roleDescription}</td><td>{a.allocationPercentage}%</td>
                                 <td>{a.isActive ? 'Yes' : 'No'}</td>
                                 <td>{a.isActive && canEdit && <button onClick={() => deactivate(a.id!)}><XCircle size={14}/></button>}</td>
@@ -138,3 +138,5 @@ const AllocationsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdi
     );
 };
 export default AllocationsTab;
+
+

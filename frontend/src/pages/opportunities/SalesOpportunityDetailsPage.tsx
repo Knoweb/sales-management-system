@@ -122,9 +122,9 @@ const SalesOpportunityDetailsPage: React.FC = () => {
           style={{
             height: '40px',
             paddingInline: '12px',
-            backgroundColor: '#f8fafc',
-            color: '#475569',
-            border: '1px solid #e2e8f0',
+            backgroundColor: 'var(--color-surface-secondary)',
+            color: 'var(--color-text-secondary)',
+            border: '1px solid var(--color-border)',
             borderRadius: '8px',
             fontSize: '14px',
             fontWeight: 600,
@@ -170,8 +170,8 @@ const SalesOpportunityDetailsPage: React.FC = () => {
                       width: 'fit-content',
                       padding: '6px 12px',
                       borderRadius: '9999px',
-                      background: '#eff6ff',
-                      color: '#1d4ed8',
+                      background: 'var(--color-primary-soft)',
+                      color: 'var(--color-primary-active)',
                       border: '1px solid #bfdbfe',
                       fontSize: '14px',
                       fontWeight: 500,
@@ -197,8 +197,8 @@ const SalesOpportunityDetailsPage: React.FC = () => {
                       width: 'fit-content',
                       padding: '6px 12px',
                       borderRadius: '9999px',
-                      background: '#eff6ff',
-                      color: '#1d4ed8',
+                      background: 'var(--color-primary-soft)',
+                      color: 'var(--color-primary-active)',
                       border: '1px solid #bfdbfe',
                       fontSize: '14px',
                       fontWeight: 500,
@@ -222,11 +222,11 @@ const SalesOpportunityDetailsPage: React.FC = () => {
 
 
       {['BRIEF_IN_PROGRESS', 'BRIEF_SUBMITTED'].includes(opportunity.stage) && (
-        <div style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', padding: '16px', display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '16px' }}>
-          <FileText size={20} style={{ color: '#d97706', marginTop: '2px', flexShrink: 0 }} />
+        <div style={{ backgroundColor: 'var(--color-warning-bg)', border: '1px solid #fde68a', borderRadius: '10px', padding: '16px', display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '16px' }}>
+          <FileText size={20} style={{ color: 'var(--color-warning)', marginTop: '2px', flexShrink: 0 }} />
           <div>
             <p style={{ margin: 0, color: '#1e293b', fontSize: '15px', fontWeight: 600 }}>Project Brief is active</p>
-            <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '13px', lineHeight: 1.5 }}>This opportunity has a project brief in progress or submitted. You can access it via the project briefs section.</p>
+            <p style={{ margin: '4px 0 0', color: 'var(--color-text-muted)', fontSize: '13px', lineHeight: 1.5 }}>This opportunity has a project brief in progress or submitted. You can access it via the project briefs section.</p>
           </div>
         </div>
       )}
@@ -238,60 +238,60 @@ const SalesOpportunityDetailsPage: React.FC = () => {
           <div className="space-y-6">
             <Card>
               <div style={{ padding: '24px' }}>
-                <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0' }}>
-                  <h2 style={{ margin: 0, color: '#0f172a', fontSize: '20px', fontWeight: 700, lineHeight: 1.3 }}>
+                <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--color-border)' }}>
+                  <h2 style={{ margin: 0, color: 'var(--color-text-primary)', fontSize: '20px', fontWeight: 700, lineHeight: 1.3 }}>
                     Opportunity Overview
                   </h2>
-                  <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '14px' }}>
+                  <p style={{ margin: '4px 0 0', color: 'var(--color-text-muted)', fontSize: '14px' }}>
                     Basic opportunity details
                   </p>
                 </div>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Client</p>
-                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{opportunity.clientName}</p>
+                  <div style={{ padding: '16px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Client</p>
+                    <p style={{ margin: '7px 0 0', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{opportunity.clientName}</p>
                   </div>
                   
-                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Value</p>
-                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>LKR {opportunity.estimatedValue.toLocaleString()}</p>
+                  <div style={{ padding: '16px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Value</p>
+                    <p style={{ margin: '7px 0 0', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>LKR {opportunity.estimatedValue.toLocaleString()}</p>
                   </div>
                   
-                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Product Category</p>
-                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{opportunity.productCategoryName || 'N/A'}</p>
+                  <div style={{ padding: '16px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Product Category</p>
+                    <p style={{ margin: '7px 0 0', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{opportunity.productCategoryName || 'N/A'}</p>
                   </div>
                   
-                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Assigned Sales Officer</p>
-                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{opportunity.assignedSalesOfficerName || 'Unassigned'}</p>
+                  <div style={{ padding: '16px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Assigned Sales Officer</p>
+                    <p style={{ margin: '7px 0 0', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{opportunity.assignedSalesOfficerName || 'Unassigned'}</p>
                   </div>
                   
-                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Expected Close Date</p>
-                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>
+                  <div style={{ padding: '16px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Expected Close Date</p>
+                    <p style={{ margin: '7px 0 0', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>
                       {opportunity.expectedCloseDate ? format(new Date(opportunity.expectedCloseDate), 'MMM d, yyyy') : 'N/A'}
                     </p>
                   </div>
                   
-                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Stage</p>
+                  <div style={{ padding: '16px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Stage</p>
                     <div style={{ margin: '7px 0 0' }}>
                       <StatusBadge status={opportunity.stage} variant={getStatusVariant(opportunity.stage)} />
                     </div>
                   </div>
                 </div>
                 
-                <div style={{ marginTop: '40px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0' }}>
-                  <h2 style={{ margin: 0, color: '#0f172a', fontSize: '18px', fontWeight: 700, lineHeight: 1.3 }}>
+                <div style={{ marginTop: '40px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--color-border)' }}>
+                  <h2 style={{ margin: 0, color: 'var(--color-text-primary)', fontSize: '18px', fontWeight: 700, lineHeight: 1.3 }}>
                     Workflow Status
                   </h2>
                 </div>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>BDM Approval</p>
+                  <div style={{ padding: '16px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>BDM Approval</p>
                     <div style={{ margin: '7px 0 0' }}>
                       {(() => {
                         const currentVersion = opportunity.projectBrief?.currentVersionNumber || 0;
@@ -313,8 +313,8 @@ const SalesOpportunityDetailsPage: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Client Verification</p>
+                  <div style={{ padding: '16px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Client Verification</p>
                     <div style={{ margin: '7px 0 0' }}>
                       {(() => {
                         const currentVersion = opportunity.projectBrief?.currentVersionNumber || 0;
@@ -340,12 +340,12 @@ const SalesOpportunityDetailsPage: React.FC = () => {
 
                 {opportunity.description && (
                   <>
-                    <div style={{ marginTop: '40px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0' }}>
-                      <h2 style={{ margin: 0, color: '#0f172a', fontSize: '18px', fontWeight: 700, lineHeight: 1.3 }}>
+                    <div style={{ marginTop: '40px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--color-border)' }}>
+                      <h2 style={{ margin: 0, color: 'var(--color-text-primary)', fontSize: '18px', fontWeight: 700, lineHeight: 1.3 }}>
                         Description
                       </h2>
                     </div>
-                    <p style={{ margin: 0, color: '#475569', fontSize: '15px', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: '15px', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
                       {opportunity.description}
                     </p>
                   </>
@@ -373,8 +373,8 @@ const SalesOpportunityDetailsPage: React.FC = () => {
                   return (
                     <div key={activity.id} style={{ minWidth: '280px', flex: '0 0 25%', position: 'relative' }}>
                       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-                        <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#3b82f6', zIndex: 1, flexShrink: 0 }} />
-                        <div style={{ flex: 1, height: '2px', backgroundColor: isLast ? 'transparent' : '#e2e8f0' }} />
+                        <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: 'var(--color-primary)', zIndex: 1, flexShrink: 0 }} />
+                        <div style={{ flex: 1, height: '2px', backgroundColor: isLast ? 'transparent' : 'var(--color-border)' }} />
                       </div>
                       
                       <div style={{ paddingRight: '24px' }}>
@@ -392,10 +392,10 @@ const SalesOpportunityDetailsPage: React.FC = () => {
                         }}>
                           SYSTEM EVENT
                         </span>
-                        <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#0f172a', fontWeight: 500, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+                        <p style={{ margin: '0 0 8px', fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: 500, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
                           {activity.description}
                         </p>
-                        <p style={{ margin: 0, fontSize: '12px', color: '#64748b', fontWeight: 500 }}>
+                        <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-muted)', fontWeight: 500 }}>
                           {format(new Date(activity.createdAt), 'MMM d, yyyy • h:mm a')}
                         </p>
                       </div>
@@ -421,30 +421,30 @@ const SalesOpportunityDetailsPage: React.FC = () => {
               ) : (
                 <div className="space-y-4">
                   {bdmApprovals.map(a => (
-                    <div key={a.id} style={{ padding: '20px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                    <div key={a.id} style={{ padding: '20px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
                       <div style={{ marginBottom: '16px' }}>
                         <StatusBadge status={a.status} variant={getWorkflowVariant(a.status)} />
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
                         <div>
-                          <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Decision Date</p>
-                          <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '15px', fontWeight: 500 }}>
+                          <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Decision Date</p>
+                          <p style={{ margin: '7px 0 0', color: 'var(--color-text-primary)', fontSize: '15px', fontWeight: 500 }}>
                             {a.createdAt ? format(new Date(a.createdAt), 'MMM d, yyyy • h:mm a') : 'N/A'}
                           </p>
                         </div>
                         <div>
-                          <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Decision By</p>
-                          <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '15px', fontWeight: 500 }}>
+                          <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Decision By</p>
+                          <p style={{ margin: '7px 0 0', color: 'var(--color-text-primary)', fontSize: '15px', fontWeight: 500 }}>
                             {a.decisionMakerName || 'Pending'}
                           </p>
                         </div>
                       </div>
                       {a.comments && a.comments.length > 0 && (
-                        <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
-                          <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Comments</p>
+                        <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--color-border)' }}>
+                          <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Comments</p>
                           {a.comments.map(c => (
-                            <p key={c.id} style={{ margin: '7px 0 0', color: '#475569', fontSize: '14px', lineHeight: 1.5 }}>
-                              {c.comment} <span style={{ fontSize: '12px', color: '#94a3b8' }}>— {c.createdByName}</span>
+                            <p key={c.id} style={{ margin: '7px 0 0', color: 'var(--color-text-secondary)', fontSize: '14px', lineHeight: 1.5 }}>
+                              {c.comment} <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>— {c.createdByName}</span>
                             </p>
                           ))}
                         </div>
@@ -488,21 +488,21 @@ const SalesOpportunityDetailsPage: React.FC = () => {
                     return (
                       <div key={h.id} style={{ display: 'flex', position: 'relative' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: '16px' }}>
-                          <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#3b82f6', marginTop: '6px', zIndex: 1 }} />
-                          <div style={{ width: '2px', flex: 1, backgroundColor: isLast ? 'transparent' : '#e2e8f0', marginTop: '4px', marginBottom: '4px' }} />
+                          <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'var(--color-primary)', marginTop: '6px', zIndex: 1 }} />
+                          <div style={{ width: '2px', flex: 1, backgroundColor: isLast ? 'transparent' : 'var(--color-border)', marginTop: '4px', marginBottom: '4px' }} />
                         </div>
                         <div style={{ paddingBottom: '24px', flex: 1 }}>
-                          <p style={{ margin: '0 0 4px', fontSize: '14px', color: '#0f172a', fontWeight: 600 }}>
+                          <p style={{ margin: '0 0 4px', fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: 600 }}>
                             {h.action}
                           </p>
-                          <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+                          <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-muted)' }}>
                             by {h.actorName || 'System'}
                           </p>
-                          <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94a3b8' }}>
+                          <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--color-text-muted)' }}>
                             {h.createdAt ? format(new Date(h.createdAt), 'MMM d, yyyy • h:mm a') : 'N/A'}
                           </p>
                           {h.comments && (
-                            <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#475569', fontStyle: 'italic', backgroundColor: '#f8fafc', padding: '8px 12px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                            <p style={{ margin: '8px 0 0', fontSize: '13px', color: 'var(--color-text-secondary)', fontStyle: 'italic', backgroundColor: 'var(--color-surface-secondary)', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--color-border)' }}>
                               "{h.comments}"
                             </p>
                           )}
@@ -523,5 +523,6 @@ const SalesOpportunityDetailsPage: React.FC = () => {
 };
 
 export default SalesOpportunityDetailsPage;
+
 
 

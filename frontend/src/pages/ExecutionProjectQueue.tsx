@@ -84,8 +84,8 @@ export const ExecutionProjectQueue: React.FC = () => {
         return (
             <div className="execution-loading">
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <div style={{ animation: 'spin 1s linear infinite', borderRadius: '50%', height: '48px', width: '48px', borderBottom: '2px solid #2563eb', marginBottom: '16px' }}></div>
-                    <span style={{ fontSize: '18px', color: '#475569', fontWeight: 500 }}>Loading Execution Dashboard...</span>
+                    <div style={{ animation: 'spin 1s linear infinite', borderRadius: '50%', height: '48px', width: '48px', borderBottom: '2px solid var(--color-primary)', marginBottom: '16px' }}></div>
+                    <span style={{ fontSize: '18px', color: 'var(--color-text-secondary)', fontWeight: 500 }}>Loading Execution Dashboard...</span>
                 </div>
             </div>
         );
@@ -99,8 +99,8 @@ export const ExecutionProjectQueue: React.FC = () => {
                         <AlertCircle size={24} />
                     </div>
                     <div>
-                        <h3 style={{ margin: '0 0 4px', fontSize: '18px', fontWeight: 600, color: '#0f172a' }}>Failed to load dashboard</h3>
-                        <p style={{ margin: '0 0 16px', color: '#475569' }}>{error}</p>
+                        <h3 style={{ margin: '0 0 4px', fontSize: '18px', fontWeight: 600, color: 'var(--color-text-primary)' }}>Failed to load dashboard</h3>
+                        <p style={{ margin: '0 0 16px', color: 'var(--color-text-secondary)' }}>{error}</p>
                         <button onClick={loadData} className="execution-secondary-button">
                             <RefreshCw size={16} />
                             Try Again
@@ -184,7 +184,7 @@ export const ExecutionProjectQueue: React.FC = () => {
             {canWrite && (
             <section className="execution-section-card">
                 <div className="execution-section-header">
-                    <PlaySquare size={20} color="#4f46e5" />
+                    <PlaySquare size={20} color="var(--color-primary)" />
                     <h2>Ready for Execution</h2>
                     <span className="execution-section-count">{eligibleProjects.length}</span>
                 </div>
@@ -193,7 +193,7 @@ export const ExecutionProjectQueue: React.FC = () => {
                     {eligibleProjects.length === 0 ? (
                         <div className="execution-empty-state">
                             <div className="execution-empty-icon">
-                                <CheckCircle2 size={32} color="#9ca3af" style={{ backgroundColor: '#f3f4f6', borderRadius: '50%', padding: '8px' }} />
+                                <CheckCircle2 size={32} color="var(--color-text-muted)" style={{ backgroundColor: 'var(--color-surface-secondary)', borderRadius: '50%', padding: '8px' }} />
                             </div>
                             <h3>No pending projects</h3>
                             <p>All eligible projects have workspaces. Projects will appear here once their quotation is client-accepted.</p>
@@ -213,10 +213,10 @@ export const ExecutionProjectQueue: React.FC = () => {
                                     </div>
                                     
                                     <div className="execution-card-body">
-                                        <p style={{ margin: 0, fontWeight: 500, color: '#0f172a' }}>{p.projectTitle || "Untitled Project"}</p>
-                                        <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>{p.clientName ? `Client: ${p.clientName}` : "Client TBD"}</p>
+                                        <p style={{ margin: 0, fontWeight: 500, color: 'var(--color-text-primary)' }}>{p.projectTitle || "Untitled Project"}</p>
+                                        <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-muted)' }}>{p.clientName ? `Client: ${p.clientName}` : "Client TBD"}</p>
                                         {p.quotationAcceptedDate && (
-                                            <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94a3b8' }}>Accepted: {p.quotationAcceptedDate}</p>
+                                            <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--color-text-muted)' }}>Accepted: {p.quotationAcceptedDate}</p>
                                         )}
                                     </div>
                                     
@@ -231,7 +231,7 @@ export const ExecutionProjectQueue: React.FC = () => {
                                             disabled={creatingId === p.technicalProjectId}
                                             className="execution-primary-button" style={{ width: '100%' }}>
                                             {creatingId === p.technicalProjectId ? (
-                                                <><div style={{ animation: 'spin 1s linear infinite', borderRadius: '50%', height: '16px', width: '16px', borderBottom: '2px solid #ffffff' }}></div> Initializing...</>
+                                                <><div style={{ animation: 'spin 1s linear infinite', borderRadius: '50%', height: '16px', width: '16px', borderBottom: '2px solid var(--color-surface)' }}></div> Initializing...</>
                                             ) : (
                                                 <><Plus size={16} /> Initialize Workspace</>
                                             )}
@@ -248,7 +248,7 @@ export const ExecutionProjectQueue: React.FC = () => {
             {/* Active Workspaces */}
             <section className="execution-section-card">
                 <div className="execution-section-header">
-                    <Briefcase size={20} color="#2563eb" />
+                    <Briefcase size={20} color="var(--color-primary)" />
                     <h2>Active Workspaces</h2>
                     <span className="execution-section-count">{workspaces.length}</span>
                 </div>
@@ -256,8 +256,8 @@ export const ExecutionProjectQueue: React.FC = () => {
                 <div className="execution-section-content">
                     {workspaces.length === 0 ? (
                         <div className="execution-empty-state">
-                            <div className="execution-empty-icon" style={{ backgroundColor: '#f3f4f6' }}>
-                                <ListTodo size={32} color="#9ca3af" />
+                            <div className="execution-empty-icon" style={{ backgroundColor: 'var(--color-surface-secondary)' }}>
+                                <ListTodo size={32} color="var(--color-text-muted)" />
                             </div>
                             <h3>No active workspaces</h3>
                             <p>Initialize a workspace from the queue above to start execution.</p>
@@ -312,7 +312,7 @@ export const ExecutionProjectQueue: React.FC = () => {
                                         
                                         <div className="execution-action-link">
                                             {w.status === 'ON_HOLD' ? (
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#dc2626', fontSize: '12px', fontWeight: 600 }}>
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-danger)', fontSize: '12px', fontWeight: 600 }}>
                                                     <AlertTriangle size={14} /> Blocked
                                                 </span>
                                             ) : <div />}
@@ -331,3 +331,5 @@ export const ExecutionProjectQueue: React.FC = () => {
         </div>
     );
 };
+
+

@@ -90,7 +90,7 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
                   width: 'fit-content',
                   padding: '6px 12px',
                   borderRadius: '9999px',
-                  background: '#ecfdf5',
+                  background: 'var(--color-success-bg)',
                   color: '#047857',
                   border: '1px solid #a7f3d0',
                   fontSize: '14px',
@@ -135,35 +135,35 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
           <div className="space-y-6 mb-6">
             <Card>
               <div style={{ padding: '24px' }}>
-                <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0' }}>
-                  <h2 style={{ margin: 0, color: '#0f172a', fontSize: '20px', fontWeight: 700, lineHeight: 1.3 }}>
+                <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--color-border)' }}>
+                  <h2 style={{ margin: 0, color: 'var(--color-text-primary)', fontSize: '20px', fontWeight: 700, lineHeight: 1.3 }}>
                     Lead Information
                   </h2>
-                  <p style={{ margin: '6px 0 0', color: '#64748b', fontSize: '14px', lineHeight: 1.5 }}>
+                  <p style={{ margin: '6px 0 0', color: 'var(--color-text-muted)', fontSize: '14px', lineHeight: 1.5 }}>
                     Basic lead details
                   </p>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '14px' }}>
-                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Source</p>
-                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{lead.inquirySource ? lead.inquirySource.replace('_', ' ') : 'N/A'}</p>
+                  <div style={{ padding: '16px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Source</p>
+                    <p style={{ margin: '7px 0 0', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{lead.inquirySource ? lead.inquirySource.replace('_', ' ') : 'N/A'}</p>
                   </div>
-                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Contact</p>
-                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{lead.contactName || 'N/A'}</p>
+                  <div style={{ padding: '16px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Contact</p>
+                    <p style={{ margin: '7px 0 0', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{lead.contactName || 'N/A'}</p>
                   </div>
-                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Product</p>
-                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{lead.interestedProduct || 'N/A'}</p>
+                  <div style={{ padding: '16px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Product</p>
+                    <p style={{ margin: '7px 0 0', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{lead.interestedProduct || 'N/A'}</p>
                   </div>
-                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Assigned To</p>
-                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{lead.assignedToName || 'Unassigned'}</p>
+                  <div style={{ padding: '16px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Assigned To</p>
+                    <p style={{ margin: '7px 0 0', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{lead.assignedToName || 'Unassigned'}</p>
                   </div>
-                  <div style={{ gridColumn: '1 / -1', padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Next Follow-up</p>
-                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{nextFollowUp ? new Date(nextFollowUp.followUpDate).toLocaleString() : 'None Scheduled'}</p>
+                  <div style={{ gridColumn: '1 / -1', padding: '16px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Next Follow-up</p>
+                    <p style={{ margin: '7px 0 0', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{nextFollowUp ? new Date(nextFollowUp.followUpDate).toLocaleString() : 'None Scheduled'}</p>
                   </div>
                 </div>
               </div>
@@ -171,12 +171,12 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
             
             <Card>
               <div style={{ padding: '24px' }}>
-                <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0' }}>
-                  <h2 style={{ margin: 0, color: '#0f172a', fontSize: '20px', fontWeight: 700, lineHeight: 1.3 }}>
+                <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--color-border)' }}>
+                  <h2 style={{ margin: 0, color: 'var(--color-text-primary)', fontSize: '20px', fontWeight: 700, lineHeight: 1.3 }}>
                     Initial Request
                   </h2>
                 </div>
-                <p style={{ margin: 0, color: '#475569', fontSize: '15px', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+                <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: '15px', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
                   {lead.initialRequest || 'No initial request details provided.'}
                 </p>
               </div>
@@ -184,12 +184,12 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
 
             <Card>
               <div style={{ padding: '24px' }}>
-                <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0' }}>
-                  <h2 style={{ margin: 0, color: '#0f172a', fontSize: '20px', fontWeight: 700, lineHeight: 1.3 }}>
+                <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--color-border)' }}>
+                  <h2 style={{ margin: 0, color: 'var(--color-text-primary)', fontSize: '20px', fontWeight: 700, lineHeight: 1.3 }}>
                     Notes
                   </h2>
                 </div>
-                <p style={{ margin: 0, color: '#475569', fontSize: '15px', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+                <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: '15px', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
                   {lead.notes || 'No additional notes.'}
                 </p>
               </div>
@@ -205,3 +205,4 @@ export const LeadDetails: React.FC<LeadDetailsProps> = ({ leadId }) => {
     </div>
   );
 };
+

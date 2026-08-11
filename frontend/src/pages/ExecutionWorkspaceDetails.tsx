@@ -110,8 +110,8 @@ export const ExecutionWorkspaceDetails: React.FC = () => {
         return (
             <div className="execution-page" style={{ alignItems: 'center', justifyContent: 'center' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <div style={{ animation: 'spin 1s linear infinite', borderRadius: '50%', height: '48px', width: '48px', borderBottom: '2px solid #2563eb', marginBottom: '16px' }}></div>
-                    <span style={{ fontSize: '18px', color: '#475569', fontWeight: 500 }}>Loading Workspace...</span>
+                    <div style={{ animation: 'spin 1s linear infinite', borderRadius: '50%', height: '48px', width: '48px', borderBottom: '2px solid var(--color-primary)', marginBottom: '16px' }}></div>
+                    <span style={{ fontSize: '18px', color: 'var(--color-text-secondary)', fontWeight: 500 }}>Loading Workspace...</span>
                 </div>
             </div>
         );
@@ -120,13 +120,13 @@ export const ExecutionWorkspaceDetails: React.FC = () => {
     if (error || !workspace) {
         return (
             <div className="execution-page">
-                <div className="execution-error-card" style={{ backgroundColor: '#ffffff', margin: '40px auto' }}>
-                    <div className="execution-error-icon" style={{ backgroundColor: '#fef2f2', padding: '12px', borderRadius: '50%' }}>
-                        <AlertTriangle size={24} color="#dc2626" />
+                <div className="execution-error-card" style={{ backgroundColor: 'var(--color-surface)', margin: '40px auto' }}>
+                    <div className="execution-error-icon" style={{ backgroundColor: 'var(--color-danger-bg)', padding: '12px', borderRadius: '50%' }}>
+                        <AlertTriangle size={24} color="var(--color-danger)" />
                     </div>
                     <div>
-                        <h3 style={{ margin: '0 0 4px', fontSize: '18px', fontWeight: 600, color: '#0f172a' }}>Error</h3>
-                        <p style={{ margin: '0 0 16px', color: '#475569' }}>{error || "Workspace not found"}</p>
+                        <h3 style={{ margin: '0 0 4px', fontSize: '18px', fontWeight: 600, color: 'var(--color-text-primary)' }}>Error</h3>
+                        <p style={{ margin: '0 0 16px', color: 'var(--color-text-secondary)' }}>{error || "Workspace not found"}</p>
                         <button onClick={() => navigate('/execution')} className="execution-secondary-button">
                             <ArrowLeft size={16} />
                             Back to Queue
@@ -187,7 +187,7 @@ export const ExecutionWorkspaceDetails: React.FC = () => {
                 
                 <div className="execution-header-actions">
                     {!hasWritePermission && (
-                        <div className="execution-status-pill" style={{ backgroundColor: '#f1f5f9', color: '#64748b', border: '1px solid #cbd5e1' }}>
+                        <div className="execution-status-pill" style={{ backgroundColor: 'var(--color-surface-secondary)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border-strong)' }}>
                             Read Only
                         </div>
                     )}
@@ -345,3 +345,4 @@ export const ExecutionWorkspaceDetails: React.FC = () => {
         </div>
     );
 };
+

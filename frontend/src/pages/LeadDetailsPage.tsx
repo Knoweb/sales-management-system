@@ -16,9 +16,9 @@ export const LeadDetailsPage: React.FC = () => {
           style={{
             height: '40px',
             paddingInline: '12px',
-            backgroundColor: '#f8fafc',
-            color: '#475569',
-            border: '1px solid #e2e8f0',
+            backgroundColor: 'var(--color-surface-secondary)',
+            color: 'var(--color-text-secondary)',
+            border: '1px solid var(--color-border)',
             borderRadius: '8px',
             fontSize: '14px',
             fontWeight: 600,
@@ -43,3 +43,4 @@ export const LeadDetailsPage: React.FC = () => {
     </div>
   );
 };
+

@@ -160,6 +160,7 @@ export const QuotationDetailsPage: React.FC = () => {
             }
           }
           
+          /* BASE STYLES (Light Mode + Print) */
           .invoice-card {
             background: white;
             border-radius: 12px;
@@ -205,6 +206,18 @@ export const QuotationDetailsPage: React.FC = () => {
             margin: 0 0 0.5rem 0;
             letter-spacing: -0.02em;
           }
+
+          .invoice-meta-ref {
+            color: #64748b;
+            font-size: 0.875rem;
+            font-weight: 500;
+          }
+
+          .invoice-meta-date {
+            color: #64748b;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+          }
           
           .invoice-details-grid {
             display: grid;
@@ -231,6 +244,24 @@ export const QuotationDetailsPage: React.FC = () => {
             font-weight: 500;
             line-height: 1.5;
             white-space: pre-line;
+          }
+
+          .project-title {
+            font-weight: 700;
+            color: #2563eb;
+          }
+
+          .project-desc {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #475569;
+          }
+
+          .scope-section {
+            margin-bottom: 2rem;
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 8px;
           }
           
           .modern-table {
@@ -266,6 +297,12 @@ export const QuotationDetailsPage: React.FC = () => {
           .modern-table tr:last-child td {
             border-bottom: none;
           }
+
+          .empty-items {
+            text-align: center;
+            padding: 3rem;
+            color: #94a3b8;
+          }
           
           .totals-section {
             width: 100%;
@@ -280,6 +317,15 @@ export const QuotationDetailsPage: React.FC = () => {
             padding: 0.75rem 1rem;
             color: #475569;
             font-size: 0.9375rem;
+          }
+
+          .total-amount {
+            font-weight: 600;
+            color: #0f172a;
+          }
+
+          .discount-row {
+            color: #ef4444;
           }
           
           .total-row.final {
@@ -324,6 +370,49 @@ export const QuotationDetailsPage: React.FC = () => {
             align-items: center;
             justify-content: space-between;
           }
+
+          /* DARK MODE SCREEN OVERRIDES */
+          @media screen {
+            [data-theme="dark"] .invoice-card {
+              background: var(--color-surface);
+              color: var(--color-text-primary);
+              box-shadow: var(--shadow-md);
+              border-top: 6px solid var(--color-primary);
+            }
+            [data-theme="dark"] .company-details { color: var(--color-text-muted); }
+            [data-theme="dark"] .company-details strong { color: var(--color-text-primary); }
+            [data-theme="dark"] .invoice-meta h1 { color: var(--color-primary); }
+            [data-theme="dark"] .invoice-meta-ref,
+            [data-theme="dark"] .invoice-meta-date { color: var(--color-text-muted); }
+            [data-theme="dark"] .invoice-header { border-bottom: 1px solid var(--color-border); }
+            [data-theme="dark"] .invoice-details-grid { background: var(--color-surface-secondary); }
+            [data-theme="dark"] .details-section h3 { color: var(--color-text-muted); }
+            [data-theme="dark"] .details-section p { color: var(--color-text-primary); }
+            [data-theme="dark"] .project-title { color: var(--color-primary); }
+            [data-theme="dark"] .project-desc { color: var(--color-text-secondary); }
+            [data-theme="dark"] .scope-section { background: var(--color-surface-secondary); }
+            [data-theme="dark"] .modern-table th {
+              background: var(--color-surface-secondary);
+              color: var(--color-text-secondary);
+              border-bottom: 2px solid var(--color-border-strong);
+            }
+            [data-theme="dark"] .modern-table td {
+              border-bottom: 1px solid var(--color-border);
+              color: var(--color-text-primary);
+            }
+            [data-theme="dark"] .empty-items { color: var(--color-text-muted); }
+            [data-theme="dark"] .total-row { color: var(--color-text-secondary); }
+            [data-theme="dark"] .total-amount { color: var(--color-text-primary); }
+            /* Discount row stays red (semantic) */
+            [data-theme="dark"] .total-row.final {
+              background: var(--color-primary-active);
+              color: white; 
+              box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+            }
+            [data-theme="dark"] .terms-grid { border-top: 1px solid var(--color-border); }
+            [data-theme="dark"] .term-block h4 { color: var(--color-text-primary); }
+            [data-theme="dark"] .term-block p { color: var(--color-text-muted); }
+          }
         `}
       </style>
 
@@ -344,7 +433,7 @@ export const QuotationDetailsPage: React.FC = () => {
         
         {/* Action Banner Based on Status */}
         <div className="card no-print" style={{ marginBottom: '2rem' }}>
-          <div className="card-body" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f8fafc' }}>
+          <div className="card-body" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--color-surface-secondary)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               {quotation.status === 'DRAFT' || quotation.status === 'RETURNED_FOR_CORRECTION' ? <AlertCircle className="text-gray-500" /> :
                quotation.status === 'PENDING_TOP_MANAGEMENT_APPROVAL' ? <Clock className="text-orange-500" /> :
@@ -353,7 +442,7 @@ export const QuotationDetailsPage: React.FC = () => {
                <AlertCircle className="text-red-500" />}
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600 }}>Status: {formatStatus(quotation.status)}</h3>
-                <p style={{ margin: '0.25rem 0 0 0', color: '#64748b', fontSize: '0.875rem' }}>
+                <p style={{ margin: '0.25rem 0 0 0', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
                   {quotation.status === 'DRAFT' && 'This quotation is in draft state. Submit for top management approval.'}
                   {quotation.status === 'PENDING_TOP_MANAGEMENT_APPROVAL' && 'Waiting for Top Management to review and approve.'}
                   {quotation.status === 'APPROVED_BY_TOP_MANAGEMENT' && 'Approved by top management. Ready to be sent to the client.'}
@@ -421,10 +510,10 @@ export const QuotationDetailsPage: React.FC = () => {
           
           <div className="invoice-meta">
             <h1>QUOTATION</h1>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', fontWeight: 500 }}>
+            <div className="invoice-meta-ref">
               Ref No: {quotation.quotationNumber}
             </div>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+            <div className="invoice-meta-date">
               Date: {new Date(quotation.createdAt || '').toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
             </div>
             <div className={`badge ${quotation.status === 'DRAFT' ? 'badge-gray' : 'badge-blue'}`} style={{ marginTop: '0.75rem' }}>
@@ -440,13 +529,13 @@ export const QuotationDetailsPage: React.FC = () => {
           </div>
           <div className="details-section">
             <h3>Project Description</h3>
-            <p style={{ fontWeight: 700, color: '#2563eb' }}>{quotation.projectTitle}</p>
-            <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#475569' }}>{quotation.projectDescription}</p>
+            <p className="project-title">{quotation.projectTitle}</p>
+            <p className="project-desc">{quotation.projectDescription}</p>
           </div>
         </div>
         
         {quotation.scopeOfWork && (
-          <div className="details-section" style={{ marginBottom: '2rem', background: '#f8fafc', padding: '1.5rem', borderRadius: '8px' }}>
+          <div className="details-section scope-section">
             <h3>Scope of Work</h3>
             <p>{quotation.scopeOfWork}</p>
           </div>
@@ -474,7 +563,7 @@ export const QuotationDetailsPage: React.FC = () => {
             ))}
             {!quotation.items?.length && (
               <tr>
-                <td colSpan={4} style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
+                <td colSpan={4} className="empty-items">
                   No items in this quotation.
                 </td>
               </tr>
@@ -485,14 +574,14 @@ export const QuotationDetailsPage: React.FC = () => {
         <div className="totals-section">
           <div className="total-row">
             <span>Subtotal</span>
-            <span style={{ fontWeight: 600, color: '#0f172a' }}>{formatCurrency(quotation.subtotal || 0)}</span>
+            <span className="total-amount">{formatCurrency(quotation.subtotal || 0)}</span>
           </div>
           <div className="total-row">
             <span>Estimated Tax (VAT)</span>
-            <span style={{ fontWeight: 600, color: '#0f172a' }}>{formatCurrency(quotation.taxAmount || 0)}</span>
+            <span className="total-amount">{formatCurrency(quotation.taxAmount || 0)}</span>
           </div>
           {quotation.discountAmount > 0 && (
-            <div className="total-row" style={{ color: '#ef4444' }}>
+            <div className="total-row discount-row">
               <span>Discount</span>
               <span style={{ fontWeight: 600 }}>-{formatCurrency(quotation.discountAmount || 0)}</span>
             </div>
@@ -547,26 +636,27 @@ export const QuotationDetailsPage: React.FC = () => {
                     record.action === 'REJECT' ? '#dc2626' : 
                     record.action === 'SUBMIT_FOR_APPROVAL' ? '#2563eb' : '#f97316'
                   }`,
-                  backgroundColor: '#f8fafc',
+                  backgroundColor: 'var(--color-surface-secondary)',
                   borderRadius: '0 8px 8px 0'
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                     <strong>{record.action.replace(/_/g, ' ')}</strong>
-                    <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
+                    <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
                       {new Date(record.createdAt).toLocaleString()}
                     </span>
                   </div>
-                  <div style={{ fontSize: '0.875rem', color: '#475569', marginBottom: '0.5rem' }}>
+                  <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>
                     By: {record.createdByName}
                   </div>
                   {record.comments && (
                     <div style={{ 
                       padding: '0.75rem', 
-                      backgroundColor: 'white', 
+                      backgroundColor: 'var(--color-surface)', 
                       borderRadius: '4px', 
-                      border: '1px solid #e2e8f0',
+                      border: '1px solid var(--color-border)',
                       fontSize: '0.875rem',
-                      whiteSpace: 'pre-line'
+                      whiteSpace: 'pre-line',
+                      color: 'var(--color-text-primary)'
                     }}>
                       "{record.comments}"
                     </div>
@@ -593,3 +683,4 @@ export const QuotationDetailsPage: React.FC = () => {
     </div>
   );
 };
+

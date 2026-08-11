@@ -17,11 +17,11 @@ const modalStyle: React.CSSProperties = {
     alignItems: 'center', justifyContent: 'center', zIndex: 1000
 };
 const modalContentStyle: React.CSSProperties = {
-    backgroundColor: '#fff', padding: '24px', borderRadius: '8px',
+    backgroundColor: 'var(--color-surface)', padding: '24px', borderRadius: '8px',
     width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto'
 };
 const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '8px', marginBottom: '16px', border: '1px solid #ccc', borderRadius: '4px'
+    width: '100%', padding: '8px', marginBottom: '16px', border: '1px solid var(--color-border-strong)', borderRadius: '4px'
 };
 
 const MaterialsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = true }) => {
@@ -81,7 +81,7 @@ const MaterialsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit 
                     </thead>
                     <tbody>
                         {materials.map((r: any) => (
-                            <tr key={r.id} style={{ borderBottom: '1px solid #eee' }}>
+                            <tr key={r.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
                                 <td>{r.usageDate}</td><td>{r.materialName}</td><td>{r.quantity} {r.unit}</td><td>${r.totalCost}</td>
                                 <td>{r.approvedById ? 'Approved' : 'Pending'}</td>
                                 <td>
@@ -131,3 +131,5 @@ const MaterialsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit 
     );
 };
 export default MaterialsTab;
+
+

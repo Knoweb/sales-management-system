@@ -70,9 +70,9 @@ export const ClientDetailsPage: React.FC = () => {
           style={{
             height: '40px',
             paddingInline: '12px',
-            backgroundColor: '#f8fafc',
-            color: '#475569',
-            border: '1px solid #e2e8f0',
+            backgroundColor: 'var(--color-surface-secondary)',
+            color: 'var(--color-text-secondary)',
+            border: '1px solid var(--color-border)',
             borderRadius: '8px',
             fontSize: '14px',
             fontWeight: 600,
@@ -113,36 +113,36 @@ export const ClientDetailsPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start mb-6">
             <Card>
               <div style={{ padding: '24px' }}>
-                <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0' }}>
-                  <h2 style={{ margin: 0, color: '#0f172a', fontSize: '20px', fontWeight: 700, lineHeight: 1.3 }}>
+                <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--color-border)' }}>
+                  <h2 style={{ margin: 0, color: 'var(--color-text-primary)', fontSize: '20px', fontWeight: 700, lineHeight: 1.3 }}>
                     Client Information
                   </h2>
-                  <p style={{ margin: '6px 0 0', color: '#64748b', fontSize: '14px', lineHeight: 1.5 }}>
+                  <p style={{ margin: '6px 0 0', color: 'var(--color-text-muted)', fontSize: '14px', lineHeight: 1.5 }}>
                     Basic client details
                   </p>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '14px' }}>
-                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Client Name</p>
-                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{client.name}</p>
+                  <div style={{ padding: '16px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Client Name</p>
+                    <p style={{ margin: '7px 0 0', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-word' }}>{client.name}</p>
                   </div>
-                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Client Type</p>
-                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5 }}>{client.clientType.replace('_', ' ')}</p>
+                  <div style={{ padding: '16px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Client Type</p>
+                    <p style={{ margin: '7px 0 0', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 600, lineHeight: 1.5 }}>{client.clientType.replace('_', ' ')}</p>
                   </div>
-                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Registration Number</p>
-                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5 }}>{client.registrationNumber || 'N/A'}</p>
+                  <div style={{ padding: '16px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Registration Number</p>
+                    <p style={{ margin: '7px 0 0', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 600, lineHeight: 1.5 }}>{client.registrationNumber || 'N/A'}</p>
                   </div>
-                  <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Industry</p>
-                    <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5 }}>{client.industry || 'N/A'}</p>
+                  <div style={{ padding: '16px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Industry</p>
+                    <p style={{ margin: '7px 0 0', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 600, lineHeight: 1.5 }}>{client.industry || 'N/A'}</p>
                   </div>
-                  <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                  <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', padding: '16px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
                     <div>
-                      <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Current Status</p>
-                      <p style={{ margin: '6px 0 0', color: '#475569', fontSize: '14px' }}>Client availability</p>
+                      <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Current Status</p>
+                      <p style={{ margin: '6px 0 0', color: 'var(--color-text-secondary)', fontSize: '14px' }}>Client availability</p>
                     </div>
                     <StatusBadge status={client.active ? 'Active' : 'Inactive'} variant={client.active ? 'success' : 'error'} />
                   </div>
@@ -152,27 +152,27 @@ export const ClientDetailsPage: React.FC = () => {
 
             <Card>
               <div style={{ padding: '24px' }}>
-                <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0' }}>
-                  <h2 style={{ margin: 0, color: '#0f172a', fontSize: '20px', fontWeight: 700, lineHeight: 1.3 }}>
+                <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--color-border)' }}>
+                  <h2 style={{ margin: 0, color: 'var(--color-text-primary)', fontSize: '20px', fontWeight: 700, lineHeight: 1.3 }}>
                     Contact Information
                   </h2>
-                  <p style={{ margin: '6px 0 0', color: '#64748b', fontSize: '14px', lineHeight: 1.5 }}>
+                  <p style={{ margin: '6px 0 0', color: 'var(--color-text-muted)', fontSize: '14px', lineHeight: 1.5 }}>
                     Primary contact details
                   </p>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '14px' }}>
-                  <div style={{ padding: '18px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Email</p>
-                    <p style={{ margin: '8px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-all' }}>{client.email || 'N/A'}</p>
+                  <div style={{ padding: '18px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Email</p>
+                    <p style={{ margin: '8px 0 0', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, wordBreak: 'break-all' }}>{client.email || 'N/A'}</p>
                   </div>
-                  <div style={{ padding: '18px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Phone</p>
-                    <p style={{ margin: '8px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5 }}>{client.phone || 'N/A'}</p>
+                  <div style={{ padding: '18px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Phone</p>
+                    <p style={{ margin: '8px 0 0', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 600, lineHeight: 1.5 }}>{client.phone || 'N/A'}</p>
                   </div>
-                  <div style={{ gridColumn: '1 / -1', padding: '18px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Address</p>
-                    <p style={{ margin: '8px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, whiteSpace: 'pre-line' }}>{client.address || 'N/A'}</p>
+                  <div style={{ gridColumn: '1 / -1', padding: '18px', backgroundColor: 'var(--color-surface-secondary)', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Address</p>
+                    <p style={{ margin: '8px 0 0', color: 'var(--color-text-primary)', fontSize: '16px', fontWeight: 600, lineHeight: 1.5, whiteSpace: 'pre-line' }}>{client.address || 'N/A'}</p>
                   </div>
                 </div>
               </div>
@@ -201,3 +201,4 @@ export const ClientDetailsPage: React.FC = () => {
     </div>
   );
 };
+
