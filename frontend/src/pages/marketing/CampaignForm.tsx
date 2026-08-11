@@ -107,12 +107,12 @@ const CampaignForm: React.FC = () => {
         {/* Section: Campaign Information */}
         <div className="roi-form-card">
           <div className="roi-form-header">
-            <div style={{ width: '32px', height: '32px', backgroundColor: '#EFF6FF', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', marginRight: '12px' }}>
+            <div style={{ width: '32px', height: '32px', backgroundColor: 'var(--color-primary-soft)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', marginRight: '12px' }}>
               <Megaphone size={16} />
             </div>
             <div>
-              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', margin: 0 }}>Campaign Information</h3>
-              <p style={{ fontSize: '12px', color: '#64748B', margin: 0, fontWeight: 500 }}>Core details about the marketing effort</p>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>Campaign Information</h3>
+              <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', margin: 0, fontWeight: 500 }}>Core details about the marketing effort</p>
             </div>
           </div>
           <div className="roi-form-body">
@@ -186,8 +186,8 @@ const CampaignForm: React.FC = () => {
                 <Calendar size={16} />
               </div>
               <div>
-                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', margin: 0 }}>Campaign Period</h3>
-                <p style={{ fontSize: '12px', color: '#64748B', margin: 0, fontWeight: 500 }}>Timeline for the campaign</p>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>Campaign Period</h3>
+                <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', margin: 0, fontWeight: 500 }}>Timeline for the campaign</p>
               </div>
             </div>
             <div className="roi-form-body">
@@ -226,8 +226,8 @@ const CampaignForm: React.FC = () => {
                 <DollarSign size={16} />
               </div>
               <div>
-                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', margin: 0 }}>Budget</h3>
-                <p style={{ fontSize: '12px', color: '#64748B', margin: 0, fontWeight: 500 }}>Marketing investment tracking</p>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>Budget</h3>
+                <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', margin: 0, fontWeight: 500 }}>Marketing investment tracking</p>
               </div>
             </div>
             <div className="roi-form-body">
@@ -237,7 +237,7 @@ const CampaignForm: React.FC = () => {
                 </label>
                 <div style={{ position: 'relative' }}>
                   <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, paddingLeft: '12px', display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
-                    <span style={{ color: '#64748B', fontSize: '14px', fontWeight: 500 }}>LKR</span>
+                    <span style={{ color: 'var(--color-text-secondary)', fontSize: '14px', fontWeight: 500 }}>LKR</span>
                   </div>
                   <input
                     type="number"
@@ -264,8 +264,8 @@ const CampaignForm: React.FC = () => {
               <FileText size={16} />
             </div>
             <div>
-              <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', margin: 0 }}>Additional Information</h3>
-              <p style={{ fontSize: '12px', color: '#64748B', margin: 0, fontWeight: 500 }}>Notes and targeting details</p>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>Additional Information</h3>
+              <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', margin: 0, fontWeight: 500 }}>Notes and targeting details</p>
             </div>
           </div>
           <div className="roi-form-body">

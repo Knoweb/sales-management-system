@@ -19,6 +19,8 @@ import com.knoweb.salesmanagement.user.repository.UserRepository;
 import com.knoweb.salesmanagement.projectexecution.repository.ProjectExecutionAttachmentRepository;
 import com.knoweb.salesmanagement.employee.repository.EmployeeRepository;
 import com.knoweb.salesmanagement.employee.entity.Employee;
+import com.knoweb.salesmanagement.audit.dto.InternalAuditLogEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,8 +45,9 @@ public class ProjectExecutionWorkspaceService {
     private final ProjectTaskRepository taskRepository;
     private final com.knoweb.salesmanagement.projectexecution.repository.DailyProgressUpdateRepository progressRepository;
     private final ProjectExecutionAttachmentRepository attachmentRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public ProjectExecutionWorkspaceService(ProjectExecutionWorkspaceRepository workspaceRepository, TechnicalProjectRepository technicalProjectRepository, QuotationRepository quotationRepository, ConsolidatedTechnicalEstimateRepository estimateRepository, UserRepository userRepository, ProjectTaskRepository taskRepository, EmployeeRepository employeeRepository, com.knoweb.salesmanagement.projectexecution.repository.DailyProgressUpdateRepository progressRepository, ProjectExecutionAttachmentRepository attachmentRepository) {
+    public ProjectExecutionWorkspaceService(ProjectExecutionWorkspaceRepository workspaceRepository, TechnicalProjectRepository technicalProjectRepository, QuotationRepository quotationRepository, ConsolidatedTechnicalEstimateRepository estimateRepository, UserRepository userRepository, ProjectTaskRepository taskRepository, EmployeeRepository employeeRepository, com.knoweb.salesmanagement.projectexecution.repository.DailyProgressUpdateRepository progressRepository, ProjectExecutionAttachmentRepository attachmentRepository, ApplicationEventPublisher eventPublisher) {
         this.workspaceRepository = workspaceRepository;
         this.technicalProjectRepository = technicalProjectRepository;
         this.quotationRepository = quotationRepository;
@@ -54,6 +57,7 @@ public class ProjectExecutionWorkspaceService {
         this.taskRepository = taskRepository;
         this.progressRepository = progressRepository;
         this.attachmentRepository = attachmentRepository;
+        this.eventPublisher = eventPublisher;
     }
 
 
@@ -94,7 +98,17 @@ public class ProjectExecutionWorkspaceService {
         }
 
         workspace = workspaceRepository.save(workspace);
-        return mapToDTO(workspace);
+        ExecutionWorkspaceDTO dto = mapToDTO(workspace);
+        
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("EXECUTION_WORKSPACE_CREATED");
+        auditEvent.setEntityType("ProjectExecutionWorkspace");
+        auditEvent.setEntityId(workspace.getId());
+        auditEvent.setAction("CREATE");
+        auditEvent.setNewState(dto);
+        eventPublisher.publishEvent(auditEvent);
+
+        return dto;
     }
 
     @Transactional(readOnly = true)
@@ -175,8 +189,20 @@ public class ProjectExecutionWorkspaceService {
         workspace.setStatus(dto.getStatus());
         workspace.setExecutionNotes(dto.getExecutionNotes());
 
+        ExecutionWorkspaceDTO previousState = mapToDTO(workspace);
         workspace = workspaceRepository.save(workspace);
-        return mapToDTO(workspace);
+        ExecutionWorkspaceDTO newState = mapToDTO(workspace);
+        
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("EXECUTION_WORKSPACE_SETUP");
+        auditEvent.setEntityType("ProjectExecutionWorkspace");
+        auditEvent.setEntityId(workspace.getId());
+        auditEvent.setAction("SETUP");
+        auditEvent.setPreviousState(previousState);
+        auditEvent.setNewState(newState);
+        eventPublisher.publishEvent(auditEvent);
+
+        return newState;
     }
     
     @Transactional
@@ -283,8 +309,20 @@ public class ProjectExecutionWorkspaceService {
         workspace.setWarrantyEndDate(dto.getWarrantyEndDate());
         workspace.setWarrantyNotes(dto.getWarrantyNotes());
 
+        ExecutionWorkspaceDTO previousState = mapToDTO(workspace);
         workspace = workspaceRepository.save(workspace);
-        return mapToDTO(workspace);
+        ExecutionWorkspaceDTO newState = mapToDTO(workspace);
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("EXECUTION_WORKSPACE_CLOSURE_UPDATED");
+        auditEvent.setEntityType("ProjectExecutionWorkspace");
+        auditEvent.setEntityId(workspace.getId());
+        auditEvent.setAction("UPDATE");
+        auditEvent.setPreviousState(previousState);
+        auditEvent.setNewState(newState);
+        eventPublisher.publishEvent(auditEvent);
+
+        return newState;
     }
     
     @Transactional
@@ -428,7 +466,19 @@ public class ProjectExecutionWorkspaceService {
         workspace.setClosedAt(OffsetDateTime.now());
         workspace.setClosedBy(userId);
 
+        ExecutionWorkspaceDTO previousState = mapToDTO(workspace);
         workspace = workspaceRepository.save(workspace);
-        return mapToDTO(workspace);
+        ExecutionWorkspaceDTO newState = mapToDTO(workspace);
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("EXECUTION_WORKSPACE_CLOSED");
+        auditEvent.setEntityType("ProjectExecutionWorkspace");
+        auditEvent.setEntityId(workspace.getId());
+        auditEvent.setAction("CLOSE");
+        auditEvent.setPreviousState(previousState);
+        auditEvent.setNewState(newState);
+        eventPublisher.publishEvent(auditEvent);
+
+        return newState;
     }
 }

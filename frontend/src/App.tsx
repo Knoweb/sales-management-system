@@ -46,6 +46,11 @@ import CampaignList from './pages/marketing/CampaignList';
 import CampaignForm from './pages/marketing/CampaignForm';
 import CampaignDetails from './pages/marketing/CampaignDetails';
 
+import NotificationsPage from './pages/notifications/NotificationsPage';
+import NotificationPreferencesPanel from './pages/notifications/NotificationPreferencesPanel';
+import AuditLogPage from './pages/audit/AuditLogPage';
+import AuditDiffViewer from './pages/audit/AuditDiffViewer';
+
 import './index.css';
 import './styles/auth.css';
 import './styles/dashboard.css';
@@ -269,6 +274,12 @@ function App() {
                   <CampaignDetails />
                 </ProtectedRoute>
               } />
+              
+              {/* Notification & Audit Routes */}
+              <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/notifications/preferences" element={<NotificationPreferencesPanel />} />
+              <Route path="/audit-logs" element={<AuditLogPage />} />
+              <Route path="/audit-logs/:id" element={<AuditDiffViewer />} />
             </Route>
 
             <Route path="/" element={<Navigate to="/dashboard" replace />} />

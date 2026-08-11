@@ -1,6 +1,7 @@
 package com.knoweb.salesmanagement.notification.controller;
 
 import com.knoweb.salesmanagement.notification.dto.NotificationDTO;
+import com.knoweb.salesmanagement.notification.dto.NotificationPreferenceDTO;
 import com.knoweb.salesmanagement.notification.service.NotificationService;
 import com.knoweb.salesmanagement.security.principal.CustomUserDetails;
 import org.springframework.data.domain.Page;
@@ -11,6 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -62,5 +64,19 @@ public class NotificationController {
     public void markAllAsRead(Authentication authentication) {
         UUID userId = getUserId(authentication);
         notificationService.markAllAsRead(userId);
+    }
+
+    @GetMapping("/preferences")
+    @PreAuthorize("hasAuthority('NOTIFICATION_MANAGE_PREFERENCES')")
+    public List<NotificationPreferenceDTO> getPreferences(Authentication authentication) {
+        UUID userId = getUserId(authentication);
+        return notificationService.getUserPreferences(userId);
+    }
+
+    @PutMapping("/preferences")
+    @PreAuthorize("hasAuthority('NOTIFICATION_MANAGE_PREFERENCES')")
+    public void savePreferences(@RequestBody List<NotificationPreferenceDTO> preferences, Authentication authentication) {
+        UUID userId = getUserId(authentication);
+        notificationService.saveUserPreferences(userId, preferences);
     }
 }

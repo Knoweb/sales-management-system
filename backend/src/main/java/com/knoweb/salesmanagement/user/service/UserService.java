@@ -9,8 +9,11 @@ import com.knoweb.salesmanagement.user.dto.SafeUserDto;
 import com.knoweb.salesmanagement.user.dto.UpdateUserRequest;
 import com.knoweb.salesmanagement.user.dto.UpdateUserRolesRequest;
 import com.knoweb.salesmanagement.user.dto.UpdateUserStatusRequest;
+import com.knoweb.salesmanagement.audit.dto.InternalAuditLogEvent;
+import com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent;
 import com.knoweb.salesmanagement.user.entity.User;
 import com.knoweb.salesmanagement.user.repository.UserRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,12 +32,14 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, RefreshTokenService refreshTokenService) {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, RefreshTokenService refreshTokenService, ApplicationEventPublisher eventPublisher) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenService = refreshTokenService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -74,6 +79,15 @@ public class UserService {
         user.setRoles(roles);
 
         user = userRepository.save(user);
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("USER_CREATED");
+        auditEvent.setEntityType("User");
+        auditEvent.setEntityId(user.getId());
+        auditEvent.setAction("CREATE");
+        auditEvent.setNewState(SafeUserDto.fromEntity(user));
+        eventPublisher.publishEvent(auditEvent);
+
         return SafeUserDto.fromEntity(user);
     }
 
@@ -118,8 +132,18 @@ public class UserService {
             refreshTokenService.revokeAllTokensForUser(user);
         }
 
+        SafeUserDto previousState = SafeUserDto.fromEntity(user);
         user.setActive(request.isActive());
         userRepository.save(user);
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("USER_STATUS_CHANGE");
+        auditEvent.setEntityType("User");
+        auditEvent.setEntityId(user.getId());
+        auditEvent.setAction("STATUS_CHANGE");
+        auditEvent.setPreviousState(previousState);
+        auditEvent.setNewState(SafeUserDto.fromEntity(user));
+        eventPublisher.publishEvent(auditEvent);
     }
 
     @Transactional
@@ -150,8 +174,29 @@ public class UserService {
             roles.add(role);
         }
         
+        SafeUserDto previousState = SafeUserDto.fromEntity(user);
         user.setRoles(roles);
         userRepository.save(user);
+        
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("USER_ROLE_UPDATE");
+        auditEvent.setEntityType("User");
+        auditEvent.setEntityId(user.getId());
+        auditEvent.setAction("UPDATE");
+        auditEvent.setPreviousState(previousState);
+        auditEvent.setNewState(SafeUserDto.fromEntity(user));
+        eventPublisher.publishEvent(auditEvent);
+
+        InternalNotificationEvent notifEvent = new InternalNotificationEvent();
+        notifEvent.setEventType("USER_ROLE_UPDATE");
+        notifEvent.setTitle("Roles Updated");
+        notifEvent.setMessage("Your system roles have been updated.");
+        notifEvent.setEntityType("User");
+        notifEvent.setEntityId(user.getId());
+        notifEvent.setRecipientUserIds(Set.of(user.getId()));
+        notifEvent.setDeduplicationKey("USER_ROLE_UPDATE_" + user.getId() + "_" + System.currentTimeMillis());
+        eventPublisher.publishEvent(notifEvent);
+
         
         // Revoke tokens to force new token with updated roles
         refreshTokenService.revokeAllTokensForUser(user);

@@ -11,6 +11,8 @@ import com.knoweb.salesmanagement.user.repository.UserRepository;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
+import com.knoweb.salesmanagement.audit.dto.InternalAuditLogEvent;
 
 import java.time.OffsetDateTime;
 import java.util.Collection;
@@ -25,12 +27,14 @@ public class ProjectIssueService {
     private final ProjectTaskRepository taskRepository;
     private final UserRepository userRepository;
     private final ProjectExecutionSecurityHelper securityHelper;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public ProjectIssueService(ProjectIssueRepository issueRepository, ProjectTaskRepository taskRepository, UserRepository userRepository, ProjectExecutionSecurityHelper securityHelper) {
+    public ProjectIssueService(ProjectIssueRepository issueRepository, ProjectTaskRepository taskRepository, UserRepository userRepository, ProjectExecutionSecurityHelper securityHelper, ApplicationEventPublisher eventPublisher) {
         this.issueRepository = issueRepository;
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
         this.securityHelper = securityHelper;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -67,7 +71,34 @@ public class ProjectIssueService {
             issue.setOwner(owner);
         }
         
-        return mapToDTO(issueRepository.save(issue));
+        ProjectIssueDTO resultDto = mapToDTO(issueRepository.save(issue));
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("PROJECT_ISSUE_REPORTED");
+        auditEvent.setEntityType("ProjectIssue");
+        auditEvent.setEntityId(issue.getId());
+        auditEvent.setAction("REPORT");
+        auditEvent.setNewState(resultDto);
+        eventPublisher.publishEvent(auditEvent);
+
+        if (issue.getWorkspace().getProjectManager() != null && issue.getWorkspace().getProjectManager().getUser() != null) {
+            try {
+                com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent notif = new com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent();
+                notif.setEventType("PROJECT_ISSUE_REPORTED");
+                notif.setTitle("Project Issue Reported");
+                notif.setMessage("A new issue was reported: " + issue.getTitle());
+                notif.setEntityType("PROJECT_ISSUE");
+                notif.setEntityId(issue.getId());
+                notif.setContextUrl("/execution-workspaces/" + issue.getWorkspace().getId() + "/issues");
+                notif.setDeduplicationKey("issue_report_" + issue.getId());
+                notif.setRecipientUserIds(java.util.Set.of(issue.getWorkspace().getProjectManager().getUser().getId()));
+                eventPublisher.publishEvent(notif);
+            } catch (Exception e) {
+                System.err.println("Failed to send issue notification: " + e.getMessage());
+            }
+        }
+
+        return resultDto;
     }
     
     @Transactional
@@ -77,6 +108,8 @@ public class ProjectIssueService {
                 
         securityHelper.getWorkspaceAndVerifyWriteAccess(issue.getWorkspace().getId(), userId, authorities);
         
+        ProjectIssueDTO previousDto = mapToDTO(issue);
+
         issue.setStatus(com.knoweb.salesmanagement.projectexecution.enums.IssueStatus.valueOf(status));
         if (resolutionNote != null && !resolutionNote.isBlank()) {
             issue.setResolutionNote(resolutionNote);
@@ -86,7 +119,18 @@ public class ProjectIssueService {
             issue.setResolvedDate(OffsetDateTime.now());
         }
         
-        return mapToDTO(issueRepository.save(issue));
+        ProjectIssueDTO resultDto = mapToDTO(issueRepository.save(issue));
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("PROJECT_ISSUE_STATUS_UPDATED");
+        auditEvent.setEntityType("ProjectIssue");
+        auditEvent.setEntityId(issue.getId());
+        auditEvent.setAction("UPDATE_STATUS");
+        auditEvent.setPreviousState(previousDto);
+        auditEvent.setNewState(resultDto);
+        eventPublisher.publishEvent(auditEvent);
+
+        return resultDto;
     }
 
     private ProjectIssueDTO mapToDTO(ProjectIssue issue) {

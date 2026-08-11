@@ -4,7 +4,6 @@
   display: flex;
   min-height: 100vh;
   background-color: var(--app-background);
-  overflow-x: hidden;
 }
 
 /* Sidebar Styles */

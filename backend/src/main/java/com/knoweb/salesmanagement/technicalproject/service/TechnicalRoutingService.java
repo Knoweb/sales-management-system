@@ -23,6 +23,8 @@ import com.knoweb.salesmanagement.technicalproject.repository.TechnicalProjectDe
 import com.knoweb.salesmanagement.technicalproject.repository.TechnicalProjectRepository;
 import com.knoweb.salesmanagement.user.entity.User;
 import com.knoweb.salesmanagement.user.repository.UserRepository;
+import com.knoweb.salesmanagement.audit.dto.InternalAuditLogEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -48,6 +50,7 @@ public class TechnicalRoutingService {
     private final UserRepository userRepository;
     private final BdmApprovalRepository bdmApprovalRepository;
     private final ClientVerificationRepository clientVerificationRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public TechnicalRoutingService(TechnicalProjectRepository technicalProjectRepository,
                                    ProjectBriefRepository projectBriefRepository,
@@ -57,7 +60,8 @@ public class TechnicalRoutingService {
                                    TechnicalProjectHistoryHelper historyHelper,
                                    UserRepository userRepository,
                                    BdmApprovalRepository bdmApprovalRepository,
-                                   ClientVerificationRepository clientVerificationRepository) {
+                                   ClientVerificationRepository clientVerificationRepository,
+                                   ApplicationEventPublisher eventPublisher) {
         this.technicalProjectRepository = technicalProjectRepository;
         this.projectBriefRepository = projectBriefRepository;
         this.departmentAssignmentRepository = departmentAssignmentRepository;
@@ -67,6 +71,7 @@ public class TechnicalRoutingService {
         this.userRepository = userRepository;
         this.bdmApprovalRepository = bdmApprovalRepository;
         this.clientVerificationRepository = clientVerificationRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     private User getAuthenticatedUser() {
@@ -338,6 +343,15 @@ public class TechnicalRoutingService {
         
         try {
             technicalProjectRepository.save(tp);
+            
+            InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+            auditEvent.setEventType("TECHNICAL_PROJECT_ROUTED");
+            auditEvent.setEntityType("TechnicalProject");
+            auditEvent.setEntityId(tp.getId());
+            auditEvent.setAction("ROUTE");
+            auditEvent.setNewState(getTechnicalProjectDetail(tp.getId())); // Snapshot using DTO
+            eventPublisher.publishEvent(auditEvent);
+            
         } catch (ObjectOptimisticLockingFailureException e) {
             throw new ResourceConflictException("Optimistic lock conflict: project was modified by another user.");
         }
@@ -428,6 +442,15 @@ public class TechnicalRoutingService {
         
         try {
             technicalProjectRepository.save(tp);
+
+            InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+            auditEvent.setEventType("TECHNICAL_PROJECT_ROUTING_REVISED");
+            auditEvent.setEntityType("TechnicalProject");
+            auditEvent.setEntityId(tp.getId());
+            auditEvent.setAction("UPDATE");
+            auditEvent.setNewState(getTechnicalProjectDetail(tp.getId())); // Snapshot using DTO
+            eventPublisher.publishEvent(auditEvent);
+            
         } catch (ObjectOptimisticLockingFailureException e) {
             throw new ResourceConflictException("Optimistic lock conflict: project was modified by another user.");
         }

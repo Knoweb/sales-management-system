@@ -25,6 +25,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
+import com.knoweb.salesmanagement.audit.dto.InternalAuditLogEvent;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -47,6 +49,7 @@ public class ClientVerificationService {
     private final WorkflowHistoryRepository workflowHistoryRepository;
     private final BdmApprovalRepository bdmApprovalRepository;
     private final ProjectBriefVersionRepository projectBriefVersionRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ClientVerificationService(ClientVerificationRepository clientVerificationRepository,
                                      ProjectBriefRepository projectBriefRepository,
@@ -56,7 +59,8 @@ public class ClientVerificationService {
                                      EncryptionService encryptionService,
                                      WorkflowHistoryRepository workflowHistoryRepository,
                                      BdmApprovalRepository bdmApprovalRepository,
-                                     ProjectBriefVersionRepository projectBriefVersionRepository) {
+                                     ProjectBriefVersionRepository projectBriefVersionRepository,
+                                     ApplicationEventPublisher eventPublisher) {
         this.clientVerificationRepository = clientVerificationRepository;
         this.projectBriefRepository = projectBriefRepository;
         this.userRepository = userRepository;
@@ -66,6 +70,7 @@ public class ClientVerificationService {
         this.workflowHistoryRepository = workflowHistoryRepository;
         this.bdmApprovalRepository = bdmApprovalRepository;
         this.projectBriefVersionRepository = projectBriefVersionRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     private User getAuthenticatedUser() {
@@ -307,7 +312,18 @@ public class ClientVerificationService {
         // Update overall workflow using transition service if necessary
         transitionService.confirmClientVerification(brief, user.getFirstName() + " " + user.getLastName(), "Manually marked as confirmed");
 
-        return mapToDTO(verification);
+        ClientVerificationDTO resultDto = mapToDTO(verification);
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("CLIENT_VERIFICATION_CONFIRMED");
+        auditEvent.setEntityType("ClientVerification");
+        auditEvent.setEntityId(verification.getId());
+        auditEvent.setAction("MARK_CONFIRMED");
+        auditEvent.setPreviousState(previousState);
+        auditEvent.setNewState(resultDto);
+        eventPublisher.publishEvent(auditEvent);
+
+        return resultDto;
     }
 
     @PreAuthorize("hasAuthority('CLIENT_VERIFICATION_CREATE') or hasAuthority('CLIENT_VERIFICATION_READ_LINK')")
@@ -389,7 +405,18 @@ public class ClientVerificationService {
         
         notifyDecisionRecipient(verification, "CONFIRM", "Client Verification Confirmed", "The client has confirmed the verification request.");
         
-        return mapToDTO(verification);
+        ClientVerificationDTO resultDto = mapToDTO(verification);
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("CLIENT_VERIFICATION_CONFIRMED");
+        auditEvent.setEntityType("ClientVerification");
+        auditEvent.setEntityId(verification.getId());
+        auditEvent.setAction("CONFIRM");
+        auditEvent.setPreviousState("PENDING");
+        auditEvent.setNewState(resultDto);
+        eventPublisher.publishEvent(auditEvent);
+
+        return resultDto;
     }
 
     @Transactional
@@ -422,7 +449,18 @@ public class ClientVerificationService {
         
         notifyDecisionRecipient(verification, "REQUEST_CHANGES", "Client Requested Changes", "The client has requested changes during verification.");
         
-        return mapToDTO(verification);
+        ClientVerificationDTO resultDto = mapToDTO(verification);
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("CLIENT_VERIFICATION_CHANGES_REQUESTED");
+        auditEvent.setEntityType("ClientVerification");
+        auditEvent.setEntityId(verification.getId());
+        auditEvent.setAction("REQUEST_CHANGES");
+        auditEvent.setPreviousState("PENDING");
+        auditEvent.setNewState(resultDto);
+        eventPublisher.publishEvent(auditEvent);
+
+        return resultDto;
     }
 
     @Transactional
@@ -455,7 +493,18 @@ public class ClientVerificationService {
         
         notifyDecisionRecipient(verification, "REJECT", "Client Verification Rejected", "The client has rejected the verification request.");
         
-        return mapToDTO(verification);
+        ClientVerificationDTO resultDto = mapToDTO(verification);
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("CLIENT_VERIFICATION_REJECTED");
+        auditEvent.setEntityType("ClientVerification");
+        auditEvent.setEntityId(verification.getId());
+        auditEvent.setAction("REJECT");
+        auditEvent.setPreviousState("PENDING");
+        auditEvent.setNewState(resultDto);
+        eventPublisher.publishEvent(auditEvent);
+
+        return resultDto;
     }
 
     @PreAuthorize("hasAuthority('CLIENT_VERIFICATION_READ')")

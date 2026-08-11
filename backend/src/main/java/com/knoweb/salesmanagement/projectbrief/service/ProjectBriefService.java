@@ -42,6 +42,8 @@ import java.util.stream.Collectors;
 import com.knoweb.salesmanagement.approval.repository.BdmApprovalRepository;
 import com.knoweb.salesmanagement.approval.entity.BdmApproval;
 import com.knoweb.salesmanagement.approval.enums.BdmApprovalStatus;
+import com.knoweb.salesmanagement.audit.dto.InternalAuditLogEvent;
+import org.springframework.context.ApplicationEventPublisher;
 
 @Service
 public class ProjectBriefService {
@@ -58,6 +60,7 @@ public class ProjectBriefService {
     private final WorkflowTransitionService workflowTransitionService;
     private final JsonMapper jsonMapper;
     private final BdmApprovalRepository bdmApprovalRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ProjectBriefService(ProjectBriefRepository projectBriefRepository,
                                ProjectBriefVersionRepository versionRepository,
@@ -70,7 +73,8 @@ public class ProjectBriefService {
                                NotificationService notificationService,
                                WorkflowTransitionService workflowTransitionService,
                                JsonMapper jsonMapper,
-                               BdmApprovalRepository bdmApprovalRepository) {
+                               BdmApprovalRepository bdmApprovalRepository,
+                               ApplicationEventPublisher eventPublisher) {
         this.projectBriefRepository = projectBriefRepository;
         this.versionRepository = versionRepository;
         this.attachmentRepository = attachmentRepository;
@@ -83,6 +87,7 @@ public class ProjectBriefService {
         this.workflowTransitionService = workflowTransitionService;
         this.jsonMapper = jsonMapper;
         this.bdmApprovalRepository = bdmApprovalRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     private User getAuthenticatedUser() {
@@ -151,7 +156,16 @@ public class ProjectBriefService {
 
         opportunityService.logActivity(opp, "BRIEF_STARTED", "Project Brief drafting started");
 
-        return mapToDTO(brief);
+        ProjectBriefDTO dto = mapToDTO(brief);
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("PROJECT_BRIEF_CREATED");
+        auditEvent.setEntityType("ProjectBrief");
+        auditEvent.setEntityId(brief.getId());
+        auditEvent.setAction("CREATE");
+        auditEvent.setNewState(dto);
+        eventPublisher.publishEvent(auditEvent);
+
+        return dto;
     }
 
     private void validateMandatorySubmissionFields(ProjectBrief brief) {
@@ -210,8 +224,20 @@ public class ProjectBriefService {
             brief.getRequiredDepartments().clear();
         }
 
+        ProjectBriefDTO previousState = mapToDTO(brief);
         brief = projectBriefRepository.save(brief);
-        return mapToDTO(brief);
+
+        ProjectBriefDTO newState = mapToDTO(brief);
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("PROJECT_BRIEF_UPDATED");
+        auditEvent.setEntityType("ProjectBrief");
+        auditEvent.setEntityId(brief.getId());
+        auditEvent.setAction("UPDATE");
+        auditEvent.setPreviousState(previousState);
+        auditEvent.setNewState(newState);
+        eventPublisher.publishEvent(auditEvent);
+
+        return newState;
     }
 
     @Transactional
@@ -254,6 +280,14 @@ public class ProjectBriefService {
             throw new ResourceConflictException("Version conflict! This version number was already created by another request. Please refresh and try again.");
         }
         
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("PROJECT_BRIEF_VERSION_SAVED");
+        auditEvent.setEntityType("ProjectBrief");
+        auditEvent.setEntityId(brief.getId());
+        auditEvent.setAction("SAVE_VERSION");
+        auditEvent.setNewState(snapshotDto != null ? snapshotDto : mapToDTO(brief));
+        eventPublisher.publishEvent(auditEvent);
+
         return snapshotDto != null ? snapshotDto : mapToDTO(brief);
     }
 
@@ -332,6 +366,14 @@ public class ProjectBriefService {
                     "PB_SUBMITTED_" + brief.getId().toString()
             );
         }
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("PROJECT_BRIEF_SUBMITTED");
+        auditEvent.setEntityType("ProjectBrief");
+        auditEvent.setEntityId(brief.getId());
+        auditEvent.setAction("SUBMIT");
+        auditEvent.setNewState(snapshotDto != null ? snapshotDto : mapToDTO(brief));
+        eventPublisher.publishEvent(auditEvent);
 
         return snapshotDto != null ? snapshotDto : mapToDTO(brief);
     }

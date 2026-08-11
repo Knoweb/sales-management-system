@@ -152,7 +152,7 @@ export const QuotationsPage: React.FC = () => {
                     <td>{formatCurrency(q.finalTotal || 0)}</td>
                     <td>
                       <span className={`badge ${q.status === 'DRAFT' ? 'badge-gray' : 'badge-blue'}`}>
-                        {formatStatus(q.status)}
+                        {formatStatus(q.status || '')}
                       </span>
                     </td>
                     <td style={{ textAlign: 'right' }}>

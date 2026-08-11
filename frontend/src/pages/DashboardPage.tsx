@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, Users, TrendingUp, Building2, Briefcase, Calculator, FileCheck, CircleDollarSign } from 'lucide-react';
+import { LayoutDashboard, Users, TrendingUp, Briefcase, Calculator, FileCheck, CircleDollarSign } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 import { Card } from '../components/Card';
 import { StatCard } from '../components/StatCard';
@@ -146,11 +146,11 @@ export const DashboardPage: React.FC = () => {
                       dataKey="value"
                       nameKey="formattedStage"
                     >
-                      {(forecast?.forecastByStage || []).map((entry, index) => (
+                      {(forecast?.forecastByStage || []).map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <RechartsTooltip formatter={(value: number) => formatCurrency(value)} />
+                    <RechartsTooltip formatter={(value: any) => formatCurrency(Number(value))} />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>

@@ -32,6 +32,7 @@ import java.time.LocalDate;
 
 import org.springframework.context.ApplicationEventPublisher;
 import com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent;
+import com.knoweb.salesmanagement.audit.dto.InternalAuditLogEvent;
 
 @Service
 public class ProjectTaskService {
@@ -124,7 +125,33 @@ public class ProjectTaskService {
         
         workspaceService.updateWorkspaceProgress(workspace.getId());
         
-        return mapToDTO(task);
+        ProjectTaskDTO resultDto = mapToDTO(task);
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("PROJECT_TASK_CREATED");
+        auditEvent.setEntityType("ProjectTask");
+        auditEvent.setEntityId(task.getId());
+        auditEvent.setAction("CREATE");
+        auditEvent.setNewState(resultDto);
+        eventPublisher.publishEvent(auditEvent);
+
+        if (task.getAssignee() != null && task.getAssignee().getUser() != null) {
+            try {
+                InternalNotificationEvent notif = new InternalNotificationEvent();
+                notif.setEventType("TASK_ASSIGNED");
+                notif.setTitle("New Task Assigned");
+                notif.setMessage("You have been assigned to task: " + task.getTitle());
+                notif.setEntityType("PROJECT_TASK");
+                notif.setEntityId(task.getId());
+                notif.setContextUrl("/execution-workspaces/" + task.getWorkspace().getId() + "/tasks");
+                notif.setDeduplicationKey("task_assign_" + task.getId() + "_" + task.getAssignee().getUser().getId());
+                notif.setRecipientUserIds(Set.of(task.getAssignee().getUser().getId()));
+                eventPublisher.publishEvent(notif);
+            } catch (Exception e) {
+                System.err.println("Failed to send task assignment notification: " + e.getMessage());
+            }
+        }
+
+        return resultDto;
     }
 
     @Transactional
@@ -133,6 +160,8 @@ public class ProjectTaskService {
                 .orElseThrow(() -> new RuntimeException("Task not found"));
 
         securityHelper.getWorkspaceAndVerifyWriteAccess(task.getWorkspace().getId(), currentUserId, authorities);
+
+        ProjectTaskDTO previousDto = mapToDTO(task);
 
         if (task.getWorkspace().getStatus() == com.knoweb.salesmanagement.projectexecution.enums.ExecutionWorkspaceStatus.CLOSED) {
             throw new IllegalArgumentException("Cannot update tasks for a CLOSED project workspace.");
@@ -181,7 +210,34 @@ public class ProjectTaskService {
         evaluateDelayEscalation(task);
         workspaceService.updateWorkspaceProgress(task.getWorkspace().getId());
 
-        return mapToDTO(task);
+        ProjectTaskDTO resultDto = mapToDTO(task);
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("PROJECT_TASK_STATUS_UPDATED");
+        auditEvent.setEntityType("ProjectTask");
+        auditEvent.setEntityId(task.getId());
+        auditEvent.setAction("UPDATE_STATUS");
+        auditEvent.setPreviousState(previousDto);
+        auditEvent.setNewState(resultDto);
+        eventPublisher.publishEvent(auditEvent);
+
+        if (task.getWorkspace().getProjectManager() != null && task.getWorkspace().getProjectManager().getUser() != null) {
+            try {
+                InternalNotificationEvent notif = new InternalNotificationEvent();
+                notif.setEventType("TASK_STATUS_UPDATED");
+                notif.setTitle("Task Status Updated");
+                notif.setMessage("Task '" + task.getTitle() + "' status changed to " + newStatus.name());
+                notif.setEntityType("PROJECT_TASK");
+                notif.setEntityId(task.getId());
+                notif.setContextUrl("/execution-workspaces/" + task.getWorkspace().getId() + "/tasks");
+                notif.setDeduplicationKey("task_status_" + task.getId() + "_" + newStatus.name() + "_" + System.currentTimeMillis());
+                notif.setRecipientUserIds(Set.of(task.getWorkspace().getProjectManager().getUser().getId()));
+                eventPublisher.publishEvent(notif);
+            } catch (Exception e) {
+                System.err.println("Failed to send task status notification: " + e.getMessage());
+            }
+        }
+
+        return resultDto;
     }
 
     @Transactional
@@ -203,6 +259,14 @@ public class ProjectTaskService {
         dep.setTask(task);
         dep.setPredecessor(predecessor);
         dependencyRepository.save(dep);
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("PROJECT_TASK_DEPENDENCY_ADDED");
+        auditEvent.setEntityType("ProjectTask");
+        auditEvent.setEntityId(task.getId());
+        auditEvent.setAction("ADD_DEPENDENCY");
+        auditEvent.setNewState("Predecessor ID: " + predecessorId);
+        eventPublisher.publishEvent(auditEvent);
     }
     
     private boolean isCircularDependency(UUID currentTaskId, UUID targetTaskId) {
@@ -322,6 +386,9 @@ public class ProjectTaskService {
                 .orElseThrow(() -> new RuntimeException("Task not found"));
         securityHelper.getWorkspaceAndVerifyWriteAccess(task.getWorkspace().getId(), userId, authorities);
         
+        ProjectTaskDTO previousDto = mapToDTO(task);
+        Employee oldAssignee = task.getAssignee();
+        
         task.setTitle(dto.getTitle());
         task.setDescription(dto.getDescription());
         task.setPlannedStartDate(dto.getPlannedStartDate());
@@ -340,6 +407,34 @@ public class ProjectTaskService {
         task = taskRepository.save(task);
         evaluateDelayEscalation(task);
         workspaceService.updateWorkspaceProgress(task.getWorkspace().getId());
-        return mapToDTO(task);
+
+        ProjectTaskDTO resultDto = mapToDTO(task);
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("PROJECT_TASK_DETAILS_UPDATED");
+        auditEvent.setEntityType("ProjectTask");
+        auditEvent.setEntityId(task.getId());
+        auditEvent.setAction("UPDATE_DETAILS");
+        auditEvent.setPreviousState(previousDto);
+        auditEvent.setNewState(resultDto);
+        eventPublisher.publishEvent(auditEvent);
+
+        if (task.getAssignee() != null && !task.getAssignee().equals(oldAssignee) && task.getAssignee().getUser() != null) {
+            try {
+                InternalNotificationEvent notif = new InternalNotificationEvent();
+                notif.setEventType("TASK_ASSIGNED");
+                notif.setTitle("Task Assigned");
+                notif.setMessage("You have been assigned to task: " + task.getTitle());
+                notif.setEntityType("PROJECT_TASK");
+                notif.setEntityId(task.getId());
+                notif.setContextUrl("/execution-workspaces/" + task.getWorkspace().getId() + "/tasks");
+                notif.setDeduplicationKey("task_assign_" + task.getId() + "_" + task.getAssignee().getUser().getId() + "_" + System.currentTimeMillis());
+                notif.setRecipientUserIds(Set.of(task.getAssignee().getUser().getId()));
+                eventPublisher.publishEvent(notif);
+            } catch (Exception e) {
+                System.err.println("Failed to send task assignment notification: " + e.getMessage());
+            }
+        }
+
+        return resultDto;
     }
 }

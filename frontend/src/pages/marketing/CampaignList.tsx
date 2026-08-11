@@ -99,12 +99,12 @@ const CampaignList: React.FC = () => {
             <tbody>
               {campaigns.map((c: any) => (
                 <tr key={c.id}>
-                  <td style={{ fontWeight: 700, color: '#0F172A' }}>{c.name}</td>
+                  <td style={{ fontWeight: 700, color: 'var(--color-text-primary)' }}>{c.name}</td>
                   <td><span className="roi-badge-platform">{c.platform}</span></td>
                   <td>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       <span style={{ fontWeight: 600 }}>{format(new Date(c.startDate), 'MMM d, yyyy')}</span>
-                      <span style={{ fontSize: '12px', color: '#94A3B8' }}>{c.endDate ? format(new Date(c.endDate), 'MMM d, yyyy') : 'Ongoing'}</span>
+                      <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{c.endDate ? format(new Date(c.endDate), 'MMM d, yyyy') : 'Ongoing'}</span>
                     </div>
                   </td>
                   <td style={{ textAlign: 'center' }}>

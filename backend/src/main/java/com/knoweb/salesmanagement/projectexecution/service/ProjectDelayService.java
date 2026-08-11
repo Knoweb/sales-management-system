@@ -11,6 +11,8 @@ import com.knoweb.salesmanagement.user.repository.UserRepository;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
+import com.knoweb.salesmanagement.audit.dto.InternalAuditLogEvent;
 
 import java.time.OffsetDateTime;
 import java.util.Collection;
@@ -25,12 +27,14 @@ public class ProjectDelayService {
     private final ProjectTaskRepository taskRepository;
     private final UserRepository userRepository;
     private final ProjectExecutionSecurityHelper securityHelper;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public ProjectDelayService(ProjectDelayReportRepository delayRepository, ProjectTaskRepository taskRepository, UserRepository userRepository, ProjectExecutionSecurityHelper securityHelper) {
+    public ProjectDelayService(ProjectDelayReportRepository delayRepository, ProjectTaskRepository taskRepository, UserRepository userRepository, ProjectExecutionSecurityHelper securityHelper, ApplicationEventPublisher eventPublisher) {
         this.delayRepository = delayRepository;
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
         this.securityHelper = securityHelper;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -64,7 +68,34 @@ public class ProjectDelayService {
         delay.setStatus(com.knoweb.salesmanagement.projectexecution.enums.DelayStatus.REPORTED);
         
         // Use an unofficial status field handled by client if needed or a dedicated field in future
-        return mapToDTO(delayRepository.save(delay));
+        ProjectDelayReportDTO resultDto = mapToDTO(delayRepository.save(delay));
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("PROJECT_DELAY_REPORTED");
+        auditEvent.setEntityType("ProjectDelayReport");
+        auditEvent.setEntityId(delay.getId());
+        auditEvent.setAction("REPORT");
+        auditEvent.setNewState(resultDto);
+        eventPublisher.publishEvent(auditEvent);
+
+        if (delay.getWorkspace().getProjectManager() != null && delay.getWorkspace().getProjectManager().getUser() != null) {
+            try {
+                com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent notif = new com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent();
+                notif.setEventType("PROJECT_DELAY_REPORTED");
+                notif.setTitle("Project Delay Reported");
+                notif.setMessage("A delay was reported for task: " + (delay.getTask() != null ? delay.getTask().getTitle() : "N/A"));
+                notif.setEntityType("PROJECT_DELAY");
+                notif.setEntityId(delay.getId());
+                notif.setContextUrl("/execution-workspaces/" + delay.getWorkspace().getId() + "/delays");
+                notif.setDeduplicationKey("delay_report_" + delay.getId());
+                notif.setRecipientUserIds(java.util.Set.of(delay.getWorkspace().getProjectManager().getUser().getId()));
+                eventPublisher.publishEvent(notif);
+            } catch (Exception e) {
+                System.err.println("Failed to send delay notification: " + e.getMessage());
+            }
+        }
+
+        return resultDto;
     }
 
     private ProjectDelayReportDTO mapToDTO(ProjectDelayReport delay) {

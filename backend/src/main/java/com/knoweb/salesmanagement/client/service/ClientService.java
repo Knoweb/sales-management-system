@@ -12,6 +12,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
+import com.knoweb.salesmanagement.audit.dto.InternalAuditLogEvent;
 
 import java.util.UUID;
 
@@ -21,11 +23,13 @@ public class ClientService {
     private final ClientRepository clientRepository;
     private final ClientContactRepository clientContactRepository;
     private final ClientMapper clientMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public ClientService(ClientRepository clientRepository, ClientContactRepository clientContactRepository, ClientMapper clientMapper) {
+    public ClientService(ClientRepository clientRepository, ClientContactRepository clientContactRepository, ClientMapper clientMapper, ApplicationEventPublisher eventPublisher) {
         this.clientRepository = clientRepository;
         this.clientContactRepository = clientContactRepository;
         this.clientMapper = clientMapper;
+        this.eventPublisher = eventPublisher;
     }
 
     @PreAuthorize("hasAuthority('CLIENT_READ')")
@@ -66,7 +70,17 @@ public class ClientService {
         client.setClientType(request.getClientType());
         
         client = clientRepository.save(client);
-        return clientMapper.toDto(client);
+        ClientDTO dto = clientMapper.toDto(client);
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("CLIENT_CREATED");
+        auditEvent.setEntityType("Client");
+        auditEvent.setEntityId(client.getId());
+        auditEvent.setAction("CREATE");
+        auditEvent.setNewState(dto);
+        eventPublisher.publishEvent(auditEvent);
+
+        return dto;
     }
 
     @PreAuthorize("hasAuthority('CLIENT_UPDATE')")
@@ -94,7 +108,17 @@ public class ClientService {
         client.setClientType(request.getClientType());
 
         client = clientRepository.save(client);
-        return clientMapper.toDto(client);
+        ClientDTO dto = clientMapper.toDto(client);
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("CLIENT_UPDATED");
+        auditEvent.setEntityType("Client");
+        auditEvent.setEntityId(client.getId());
+        auditEvent.setAction("UPDATE");
+        auditEvent.setNewState(dto);
+        eventPublisher.publishEvent(auditEvent);
+
+        return dto;
     }
 
     @PreAuthorize("hasAuthority('CLIENT_DELETE')")
@@ -135,7 +159,17 @@ public class ClientService {
         }
 
         contact = clientContactRepository.save(contact);
-        return clientMapper.toContactDto(contact);
+        ClientContactDTO dto = clientMapper.toContactDto(contact);
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("CLIENT_CONTACT_ADDED");
+        auditEvent.setEntityType("ClientContact");
+        auditEvent.setEntityId(contact.getId());
+        auditEvent.setAction("CREATE");
+        auditEvent.setNewState(dto);
+        eventPublisher.publishEvent(auditEvent);
+
+        return dto;
     }
 
     @PreAuthorize("hasAuthority('CLIENT_UPDATE')")
@@ -160,7 +194,17 @@ public class ClientService {
         contact.setPrimary(request.isPrimary());
 
         contact = clientContactRepository.save(contact);
-        return clientMapper.toContactDto(contact);
+        ClientContactDTO dto = clientMapper.toContactDto(contact);
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("CLIENT_CONTACT_UPDATED");
+        auditEvent.setEntityType("ClientContact");
+        auditEvent.setEntityId(contact.getId());
+        auditEvent.setAction("UPDATE");
+        auditEvent.setNewState(dto);
+        eventPublisher.publishEvent(auditEvent);
+
+        return dto;
     }
 
     @PreAuthorize("hasAuthority('CLIENT_READ')")

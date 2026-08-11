@@ -5,6 +5,8 @@ import com.knoweb.salesmanagement.quotation.entity.Quotation;
 import com.knoweb.salesmanagement.quotation.repository.QuotationRepository;
 import com.knoweb.salesmanagement.quotation.repository.QuotationApprovalHistoryRepository;
 import com.knoweb.salesmanagement.security.principal.CustomUserDetails;
+import com.knoweb.salesmanagement.audit.dto.InternalAuditLogEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,13 +22,16 @@ public class QuotationService {
     private final QuotationRepository quotationRepository;
     private final QuotationApprovalHistoryRepository approvalHistoryRepository;
     private final com.knoweb.salesmanagement.user.repository.UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public QuotationService(QuotationRepository quotationRepository, 
                             QuotationApprovalHistoryRepository approvalHistoryRepository,
-                            com.knoweb.salesmanagement.user.repository.UserRepository userRepository) {
+                            com.knoweb.salesmanagement.user.repository.UserRepository userRepository,
+                            ApplicationEventPublisher eventPublisher) {
         this.quotationRepository = quotationRepository;
         this.approvalHistoryRepository = approvalHistoryRepository;
         this.userRepository = userRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -88,7 +93,17 @@ public class QuotationService {
         }
 
         Quotation saved = quotationRepository.save(quotation);
-        return mapToDto(saved);
+        QuotationDto dto = mapToDto(saved);
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("QUOTATION_CREATED");
+        auditEvent.setEntityType("Quotation");
+        auditEvent.setEntityId(saved.getId());
+        auditEvent.setAction("CREATE");
+        auditEvent.setNewState(dto);
+        eventPublisher.publishEvent(auditEvent);
+
+        return dto;
     }
 
     @Transactional
@@ -129,8 +144,20 @@ public class QuotationService {
             }
         }
 
+        QuotationDto previousState = mapToDto(quotation);
         Quotation saved = quotationRepository.save(quotation);
-        return mapToDto(saved);
+        QuotationDto newState = mapToDto(saved);
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("QUOTATION_UPDATED");
+        auditEvent.setEntityType("Quotation");
+        auditEvent.setEntityId(saved.getId());
+        auditEvent.setAction("UPDATE");
+        auditEvent.setPreviousState(previousState);
+        auditEvent.setNewState(newState);
+        eventPublisher.publishEvent(auditEvent);
+
+        return newState;
     }
 
     @Transactional
@@ -144,11 +171,23 @@ public class QuotationService {
         }
         
         quotation.setStatus(com.knoweb.salesmanagement.quotation.enums.QuotationStatus.PENDING_TOP_MANAGEMENT_APPROVAL);
+        
+        QuotationDto previousState = mapToDto(quotation);
         Quotation saved = quotationRepository.save(quotation);
         
         recordApprovalHistory(saved, "SUBMIT_FOR_APPROVAL", "Submitted for top management approval");
         
-        return mapToDto(saved);
+        QuotationDto newState = mapToDto(saved);
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("QUOTATION_SUBMITTED");
+        auditEvent.setEntityType("Quotation");
+        auditEvent.setEntityId(saved.getId());
+        auditEvent.setAction("SUBMIT");
+        auditEvent.setPreviousState(previousState);
+        auditEvent.setNewState(newState);
+        eventPublisher.publishEvent(auditEvent);
+
+        return newState;
     }
 
     @Transactional
@@ -176,10 +215,21 @@ public class QuotationService {
                 throw new RuntimeException("Invalid action.");
         }
         
+        QuotationDto previousState = mapToDto(quotation);
         Quotation saved = quotationRepository.save(quotation);
         recordApprovalHistory(saved, action, request.getComments());
         
-        return mapToDto(saved);
+        QuotationDto newState = mapToDto(saved);
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("QUOTATION_MANAGEMENT_APPROVAL");
+        auditEvent.setEntityType("Quotation");
+        auditEvent.setEntityId(saved.getId());
+        auditEvent.setAction("UPDATE");
+        auditEvent.setPreviousState(previousState);
+        auditEvent.setNewState(newState);
+        eventPublisher.publishEvent(auditEvent);
+
+        return newState;
     }
 
     @Transactional
@@ -192,7 +242,21 @@ public class QuotationService {
         }
         
         quotation.setStatus(com.knoweb.salesmanagement.quotation.enums.QuotationStatus.PENDING_CLIENT_APPROVAL);
-        return mapToDto(quotationRepository.save(quotation));
+        
+        QuotationDto previousState = mapToDto(quotation);
+        Quotation saved = quotationRepository.save(quotation);
+        
+        QuotationDto newState = mapToDto(saved);
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("QUOTATION_SENT_TO_CLIENT");
+        auditEvent.setEntityType("Quotation");
+        auditEvent.setEntityId(saved.getId());
+        auditEvent.setAction("UPDATE");
+        auditEvent.setPreviousState(previousState);
+        auditEvent.setNewState(newState);
+        eventPublisher.publishEvent(auditEvent);
+
+        return newState;
     }
 
     @Transactional
@@ -226,12 +290,23 @@ public class QuotationService {
                 throw new RuntimeException("Invalid client decision action.");
         }
         
+        QuotationDto previousState = mapToDto(quotation);
         Quotation saved = quotationRepository.save(quotation);
         
         // Record the decision in the history
         recordApprovalHistory(saved, "CLIENT_" + action, request.getComments());
         
-        return mapToDto(saved);
+        QuotationDto newState = mapToDto(saved);
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("QUOTATION_CLIENT_DECISION");
+        auditEvent.setEntityType("Quotation");
+        auditEvent.setEntityId(saved.getId());
+        auditEvent.setAction("UPDATE");
+        auditEvent.setPreviousState(previousState);
+        auditEvent.setNewState(newState);
+        eventPublisher.publishEvent(auditEvent);
+
+        return newState;
     }
 
     @Transactional(readOnly = true)

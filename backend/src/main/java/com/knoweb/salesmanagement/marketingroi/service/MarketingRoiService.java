@@ -7,6 +7,8 @@ import com.knoweb.salesmanagement.marketingroi.dto.*;
 import com.knoweb.salesmanagement.marketingroi.entity.MarketingCampaign;
 import com.knoweb.salesmanagement.marketingroi.enums.MarketingPlatform;
 import com.knoweb.salesmanagement.marketingroi.repository.MarketingCampaignRepository;
+import com.knoweb.salesmanagement.audit.dto.InternalAuditLogEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,14 +27,16 @@ public class MarketingRoiService {
 
     private final MarketingCampaignRepository campaignRepository;
     private final LeadRepository leadRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @PersistenceContext
     private EntityManager entityManager;
 
     @Autowired
-    public MarketingRoiService(MarketingCampaignRepository campaignRepository, LeadRepository leadRepository) {
+    public MarketingRoiService(MarketingCampaignRepository campaignRepository, LeadRepository leadRepository, ApplicationEventPublisher eventPublisher) {
         this.campaignRepository = campaignRepository;
         this.leadRepository = leadRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -58,7 +62,18 @@ public class MarketingRoiService {
         campaign.setStatus(request.getStatus());
         campaign.setNotes(request.getNotes());
 
-        return mapToDto(campaignRepository.save(campaign));
+        MarketingCampaign saved = campaignRepository.save(campaign);
+        MarketingCampaignDto dto = mapToDto(saved);
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("MARKETING_CAMPAIGN_CREATED");
+        auditEvent.setEntityType("MarketingCampaign");
+        auditEvent.setEntityId(saved.getId());
+        auditEvent.setAction("CREATE");
+        auditEvent.setNewState(dto);
+        eventPublisher.publishEvent(auditEvent);
+
+        return dto;
     }
 
     @Transactional
@@ -75,12 +90,37 @@ public class MarketingRoiService {
         campaign.setStatus(request.getStatus());
         campaign.setNotes(request.getNotes());
 
-        return mapToDto(campaignRepository.save(campaign));
+        MarketingCampaignDto previousState = mapToDto(campaign);
+        MarketingCampaign saved = campaignRepository.save(campaign);
+        MarketingCampaignDto newState = mapToDto(saved);
+
+        InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+        auditEvent.setEventType("MARKETING_CAMPAIGN_UPDATED");
+        auditEvent.setEntityType("MarketingCampaign");
+        auditEvent.setEntityId(saved.getId());
+        auditEvent.setAction("UPDATE");
+        auditEvent.setPreviousState(previousState);
+        auditEvent.setNewState(newState);
+        eventPublisher.publishEvent(auditEvent);
+
+        return newState;
     }
 
     @Transactional
     public void deleteCampaign(UUID id) {
-        campaignRepository.deleteById(id);
+        MarketingCampaign campaign = campaignRepository.findById(id).orElse(null);
+        if (campaign != null) {
+            MarketingCampaignDto previousState = mapToDto(campaign);
+            campaignRepository.deleteById(id);
+
+            InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+            auditEvent.setEventType("MARKETING_CAMPAIGN_DELETED");
+            auditEvent.setEntityType("MarketingCampaign");
+            auditEvent.setEntityId(id);
+            auditEvent.setAction("DELETE");
+            auditEvent.setPreviousState(previousState);
+            eventPublisher.publishEvent(auditEvent);
+        }
     }
 
     @Transactional(readOnly = true)
