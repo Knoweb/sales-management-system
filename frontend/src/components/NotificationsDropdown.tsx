@@ -159,10 +159,10 @@ const NotificationsDropdown: React.FC = () => {
             right: '0',
             width: '400px',
             maxWidth: 'calc(100vw - 24px)',
-            backgroundColor: '#FFFFFF',
-            border: '1px solid #E2E8F0',
+            backgroundColor: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
             borderRadius: '12px',
-            boxShadow: '0 10px 30px rgba(15, 23, 42, 0.14)',
+            boxShadow: 'var(--shadow-lg)',
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
@@ -171,17 +171,17 @@ const NotificationsDropdown: React.FC = () => {
           }}
         >
           {/* Dropdown Header */}
-          <div style={{ padding: '12px 16px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--color-surface)' }}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>Notifications</h3>
-              <span style={{ fontSize: '12px', color: '#64748B' }}>{unreadCount} unread</span>
+              <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>Notifications</h3>
+              <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>{unreadCount} unread</span>
             </div>
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllAsRead}
                 style={{
                   background: 'none', border: 'none', padding: 0, 
-                  color: '#3B82F6', fontSize: '12px', fontWeight: 500,
+                  color: 'var(--color-primary)', fontSize: '12px', fontWeight: 500,
                   cursor: 'pointer', display: 'flex', alignItems: 'center'
                 }}
               >
@@ -194,11 +194,11 @@ const NotificationsDropdown: React.FC = () => {
           <div style={{ overflowY: 'auto', flex: 1 }}>
             {safeNotifications.length === 0 ? (
               <div style={{ height: '190px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
-                  <Bell size={16} color="#94A3B8" />
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--color-surface-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
+                  <Bell size={16} color="var(--color-text-muted)" />
                 </div>
-                <p style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: 600, color: '#334155' }}>You're all caught up</p>
-                <p style={{ margin: 0, fontSize: '13px', color: '#64748B' }}>No new notifications right now.</p>
+                <p style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>You're all caught up</p>
+                <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-secondary)' }}>No new notifications right now.</p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -213,12 +213,12 @@ const NotificationsDropdown: React.FC = () => {
                         display: 'flex',
                         gap: '12px',
                         cursor: 'pointer',
-                        borderBottom: '1px solid #F1F5F9',
-                        backgroundColor: notification.read ? '#FFFFFF' : '#EFF6FF',
+                        borderBottom: '1px solid var(--color-border)',
+                        backgroundColor: notification.read ? 'var(--color-surface)' : 'var(--color-primary-soft)',
                         transition: 'background-color 0.2s',
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = notification.read ? '#F8FAFC' : '#E0E7FF'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = notification.read ? '#FFFFFF' : '#EFF6FF'}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = notification.read ? 'var(--color-surface-secondary)' : 'var(--color-primary-soft)'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = notification.read ? 'var(--color-surface)' : 'var(--color-primary-soft)'}
                     >
                       <div style={{ display: 'flex', alignItems: 'flex-start' }}>
                         <div className={bg} style={{ width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -228,17 +228,17 @@ const NotificationsDropdown: React.FC = () => {
                       
                       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
-                          <span style={{ fontSize: '13px', fontWeight: notification.read ? 500 : 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: '8px' }}>
+                          <span style={{ fontSize: '13px', fontWeight: notification.read ? 500 : 600, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: '8px' }}>
                             {notification.title}
                           </span>
                           {!notification.read && (
-                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#3B82F6', flexShrink: 0, marginTop: '4px' }}></div>
+                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-primary)', flexShrink: 0, marginTop: '4px' }}></div>
                           )}
                         </div>
-                        <p style={{ margin: '0 0 6px', fontSize: '13px', color: notification.read ? '#64748B' : '#475569', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        <p style={{ margin: '0 0 6px', fontSize: '13px', color: notification.read ? 'var(--color-text-secondary)' : 'var(--color-text-primary)', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                           {notification.message}
                         </p>
-                        <span style={{ fontSize: '11px', color: '#94A3B8' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>
                           {new Date(notification.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
@@ -250,7 +250,7 @@ const NotificationsDropdown: React.FC = () => {
           </div>
 
           {/* Dropdown Footer */}
-          <div style={{ borderTop: '1px solid #E2E8F0', padding: '0', backgroundColor: '#FFFFFF' }}>
+          <div style={{ borderTop: '1px solid var(--color-border)', padding: '0', backgroundColor: 'var(--color-surface)' }}>
             <button
               onClick={() => {
                 setIsOpen(false);
@@ -258,10 +258,10 @@ const NotificationsDropdown: React.FC = () => {
               }}
               style={{
                 width: '100%', background: 'none', border: 'none', padding: '12px',
-                fontSize: '13px', fontWeight: 500, color: '#3B82F6', cursor: 'pointer',
+                fontSize: '13px', fontWeight: 500, color: 'var(--color-primary)', cursor: 'pointer',
                 textAlign: 'center', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-surface-secondary)'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             >
               View all notifications <ArrowRight size={14} />
