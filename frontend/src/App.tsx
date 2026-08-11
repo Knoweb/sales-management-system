@@ -40,7 +40,7 @@ import { QuotationDetailsPage } from './pages/QuotationDetailsPage';
 import { QuotationsPage } from './pages/QuotationsPage';
 import { ExecutionProjectQueue } from './pages/ExecutionProjectQueue';
 import { ExecutionWorkspaceDetails } from './pages/ExecutionWorkspaceDetails';
-import { UpcomingVirtualToursPage } from './pages/UpcomingVirtualToursPage';
+
 
 import MarketingRoiOverview from './pages/marketing/MarketingRoiOverview';
 import CampaignList from './pages/marketing/CampaignList';
@@ -152,14 +152,14 @@ function App() {
               } />
 
               <Route path="/follow-ups" element={
-                <ProtectedRoute requiredPermission="LEAD_READ">
+                <ProtectedRoute requiredPermission={["LEAD_READ", "VIRTUAL_TOUR_READ"]}>
                   <FollowUpDashboard />
                 </ProtectedRoute>
               } />
 
               <Route path="/virtual-tours/upcoming" element={
                 <ProtectedRoute requiredPermission="VIRTUAL_TOUR_READ">
-                  <UpcomingVirtualToursPage />
+                  <Navigate to="/follow-ups?tab=virtual-tours" replace />
                 </ProtectedRoute>
               } />
 
