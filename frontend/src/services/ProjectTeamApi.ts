@@ -20,6 +20,12 @@ export interface ProjectTeamMemberDTO {
   id: string;
   employeeId: string;
   employeeNumber?: string;
+  employeeName?: string;
+  jobTitle?: string;
+  projectRole?: string;
+  allocationStartDate?: string;
+  allocationEndDate?: string;
+  assignedHours?: number;
   status: string;
   allocationId: string;
   overrideFlag: boolean;
@@ -43,6 +49,7 @@ export interface ProjectTeamDetailDTO {
   createdAt?: string;
   updatedAt?: string;
   version?: number;
+  projectClosed?: boolean;
 }
 
 export interface AddTeamMemberRequest {
@@ -60,8 +67,7 @@ export interface UpdateTeamMemberRequest {
   allocationStartDate?: string;
   allocationEndDate?: string;
   assignedHours?: number;
-  overrideRequested?: boolean;
-  overrideReason?: string;
+
 }
 
 export interface EmployeeAvailabilityDTO {
@@ -136,7 +142,7 @@ export const searchEmployeeAvailability = async (
   if (departmentId) params.departmentId = departmentId;
   if (skillIds && skillIds.length > 0) params.skillIds = skillIds.join(',');
   if (proposedHours) params.proposedHours = proposedHours;
-  
+
   const response = await api.get<EmployeeAvailabilityDTO[]>('/employees/availability', { params });
   return response.data;
 };

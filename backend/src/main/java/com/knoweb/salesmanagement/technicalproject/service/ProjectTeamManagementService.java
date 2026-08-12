@@ -58,6 +58,7 @@ public class ProjectTeamManagementService {
     private final DepartmentRepository departmentRepository;
     private final UserRepository userRepository;
     private final TechnicalProjectHistoryHelper historyHelper;
+    private final com.knoweb.salesmanagement.projectexecution.repository.ProjectExecutionWorkspaceRepository workspaceRepository;
 
     public ProjectTeamManagementService(
             TechnicalProjectDepartmentRepository departmentAssignmentRepository,
@@ -71,7 +72,8 @@ public class ProjectTeamManagementService {
             DepartmentHeadRepository departmentHeadRepository,
             DepartmentRepository departmentRepository,
             UserRepository userRepository,
-            TechnicalProjectHistoryHelper historyHelper) {
+            TechnicalProjectHistoryHelper historyHelper,
+            com.knoweb.salesmanagement.projectexecution.repository.ProjectExecutionWorkspaceRepository workspaceRepository) {
         this.departmentAssignmentRepository = departmentAssignmentRepository;
         this.projectTeamRepository = projectTeamRepository;
         this.teamMemberRepository = teamMemberRepository;
@@ -84,6 +86,7 @@ public class ProjectTeamManagementService {
         this.departmentRepository = departmentRepository;
         this.userRepository = userRepository;
         this.historyHelper = historyHelper;
+        this.workspaceRepository = workspaceRepository;
     }
 
     // ========================================================================================
@@ -128,6 +131,18 @@ public class ProjectTeamManagementService {
         Optional<DepartmentHead> head = getActiveHeadshipForCurrentUser();
         if (head.isEmpty() || !head.get().getDepartment().getId().equals(departmentId)) {
             throw new AccessDeniedException("You are not authorised to manage teams for department " + departmentId);
+        }
+    }
+
+    private boolean isProjectClosed(TechnicalProject tp) {
+        return workspaceRepository.findByTechnicalProjectId(tp.getId())
+                .map(workspace -> workspace.getStatus() == com.knoweb.salesmanagement.projectexecution.enums.ExecutionWorkspaceStatus.CLOSED)
+                .orElse(false);
+    }
+
+    private void validateProjectNotClosed(TechnicalProject tp) {
+        if (isProjectClosed(tp)) {
+            throw new ResourceConflictException("Cannot modify team for a CLOSED project workspace");
         }
     }
 
@@ -373,10 +388,6 @@ public class ProjectTeamManagementService {
         TechnicalProjectDepartment tpd = team.getTechnicalProjectDepartment();
         validateDepartmentAccess(tpd.getDepartment().getId());
 
-        if (team.getStatus() == ProjectTeamStatus.READY) {
-            throw new ResourceConflictException("Cannot add members to a team that is already READY");
-        }
-
         validateDates(request.getAllocationStartDate(), request.getAllocationEndDate());
         validatePositiveHours(request.getAssignedHours());
 
@@ -401,6 +412,8 @@ public class ProjectTeamManagementService {
 
         User actor = getAuthenticatedUser();
         TechnicalProject tp = tpd.getTechnicalProject();
+
+        validateProjectNotClosed(tp);
 
         // Conflict checks (leave, overlap, capacity)
         boolean override = performConflictChecks(employee, request.getAllocationStartDate(),
@@ -469,8 +482,8 @@ public class ProjectTeamManagementService {
         TechnicalProjectDepartment tpd = team.getTechnicalProjectDepartment();
         validateDepartmentAccess(tpd.getDepartment().getId());
 
-        if (team.getStatus() == ProjectTeamStatus.READY) {
-            throw new ResourceConflictException("Cannot update members in a team that is already READY");
+        if (team.getStatus() != ProjectTeamStatus.READY) {
+            throw new ResourceConflictException("Cannot update members before the team is marked READY");
         }
 
         ProjectTeamMember member = teamMemberRepository.findByIdAndProjectTeamId(memberId, teamId)
@@ -486,19 +499,29 @@ public class ProjectTeamManagementService {
         User actor = getAuthenticatedUser();
         TechnicalProject tp = tpd.getTechnicalProject();
 
-        // Conflict checks excluding current member's own allocation in this team
-        boolean override = performConflictChecks(member.getEmployee(),
-                request.getAllocationStartDate(), request.getAllocationEndDate(), request.getAssignedHours(),
-                teamId, request.isOverrideRequested(), request.getOverrideReason());
+        validateProjectNotClosed(tp);
 
-        // Cancel existing active allocation for this member
+        // Find existing active allocation for this exact assignment
         List<EmployeeAllocation> existingAllocs = allocationRepository.findByProjectTeamIdAndStatus(
                 teamId, EmployeeAllocationStatus.ACTIVE).stream()
-                .filter(a -> a.getEmployee().getId().equals(member.getEmployee().getId()))
+                .filter(a -> a.getEmployee().getId().equals(member.getEmployee().getId())
+                          && a.getAllocationStartDate().equals(member.getAllocationStartDate())
+                          && a.getAllocationEndDate().equals(member.getAllocationEndDate()))
                 .collect(Collectors.toList());
-        for (EmployeeAllocation old : existingAllocs) {
-            old.setStatus(EmployeeAllocationStatus.CANCELLED);
-            allocationRepository.save(old);
+                
+        if (existingAllocs.isEmpty()) {
+            throw new ResourceNotFoundException("Active allocation not found for this member");
+        }
+        EmployeeAllocation currentAlloc = existingAllocs.get(0);
+
+        boolean onlyRoleChanged = member.getAllocationStartDate().equals(request.getAllocationStartDate()) &&
+                                  member.getAllocationEndDate().equals(request.getAllocationEndDate()) &&
+                                  member.getAssignedHours().compareTo(request.getAssignedHours()) == 0;
+
+        if (!onlyRoleChanged) {
+            performConflictChecks(member.getEmployee(),
+                    request.getAllocationStartDate(), request.getAllocationEndDate(), request.getAssignedHours(),
+                    currentAlloc.getId(), false, null);
         }
 
         // Update member
@@ -509,35 +532,20 @@ public class ProjectTeamManagementService {
         member.setPrimaryMember(request.isPrimaryMember());
         teamMemberRepository.save(member);
 
-        // Create new allocation
-        EmployeeAllocation newAlloc = new EmployeeAllocation();
-        newAlloc.setEmployee(member.getEmployee());
-        newAlloc.setTechnicalProject(tp);
-        newAlloc.setProjectTeam(team);
-        newAlloc.setDepartment(tpd.getDepartment());
-        newAlloc.setAllocationStartDate(request.getAllocationStartDate());
-        newAlloc.setAllocationEndDate(request.getAllocationEndDate());
-        newAlloc.setAssignedHours(request.getAssignedHours());
-        newAlloc.setStatus(EmployeeAllocationStatus.ACTIVE);
-        newAlloc.setCreatedBy(actor != null ? actor.getId() : null);
+        // Update existing allocation row directly
+        currentAlloc.setAllocationStartDate(request.getAllocationStartDate());
+        currentAlloc.setAllocationEndDate(request.getAllocationEndDate());
+        currentAlloc.setAssignedHours(request.getAssignedHours());
+        currentAlloc.setCreatedBy(actor != null ? actor.getId() : null);
 
-        if (override) {
-            newAlloc.setOverrideFlag(true);
-            newAlloc.setOverrideReason(request.getOverrideReason());
-            newAlloc.setOverriddenBy(actor);
-            newAlloc.setOverriddenAt(OffsetDateTime.now());
-        }
-        allocationRepository.save(newAlloc);
+
+        allocationRepository.save(currentAlloc);
 
         String memberDesc = member.getEmployee().getFirstName() + " " + member.getEmployee().getLastName();
         historyHelper.recordAction(tp, TechnicalProjectHistoryAction.ALLOCATION_UPDATED,
                 null, "Allocation updated for: " + memberDesc, null, actor != null ? actor.getId() : null);
 
-        if (override) {
-            historyHelper.recordAction(tp, TechnicalProjectHistoryAction.ALLOCATION_OVERRIDE_USED,
-                    null, "Override used for update: " + memberDesc + " Reason: " + request.getOverrideReason(),
-                    request.getOverrideReason(), actor != null ? actor.getId() : null);
-        }
+
 
         return buildTeamDetailDTO(projectTeamRepository.findByIdWithDetails(teamId).orElseThrow());
     }
@@ -565,6 +573,8 @@ public class ProjectTeamManagementService {
 
         User actor = getAuthenticatedUser();
         TechnicalProject tp = tpd.getTechnicalProject();
+
+        validateProjectNotClosed(tp);
 
         // Cancel active allocations for this member in this team
         allocationRepository.findByProjectTeamIdAndStatus(teamId, EmployeeAllocationStatus.ACTIVE).stream()
@@ -613,6 +623,8 @@ public class ProjectTeamManagementService {
         User actor = getAuthenticatedUser();
         TechnicalProject tp = tpd.getTechnicalProject();
 
+        validateProjectNotClosed(tp);
+
         team.setStatus(ProjectTeamStatus.READY);
         projectTeamRepository.save(team);
 
@@ -649,13 +661,13 @@ public class ProjectTeamManagementService {
      * Returns true if an override was granted, false if no override was needed.
      * Throws ResourceConflictException if a conflict exists and override is not permitted.
      *
-     * @param excludeTeamId if updating, the team id of the allocation to exclude from overlap count
+     * @param excludeAllocationId if updating, the allocation ID to exclude from overlap count
      */
     private boolean performConflictChecks(Employee employee,
                                           LocalDate startDate,
                                           LocalDate endDate,
                                           BigDecimal requestedHours,
-                                          UUID excludeTeamId,
+                                          UUID excludeAllocationId,
                                           boolean overrideRequested,
                                           String overrideReason) {
         // 1. Leave conflict
@@ -671,12 +683,10 @@ public class ProjectTeamManagementService {
         List<EmployeeAllocation> overlapping = allocationRepository.findActiveOverlappingAllocations(
                 employee.getId(), startDate, endDate, EmployeeAllocationStatus.ACTIVE);
 
-        // If updating, exclude the member's existing allocation for this same team
-        if (excludeTeamId != null) {
-            UUID empId = employee.getId();
+        // If updating, exclude the member's existing allocation
+        if (excludeAllocationId != null) {
             overlapping = overlapping.stream()
-                    .filter(a -> !(a.getEmployee().getId().equals(empId) &&
-                                   a.getProjectTeam().getId().equals(excludeTeamId)))
+                    .filter(a -> !a.getId().equals(excludeAllocationId))
                     .collect(Collectors.toList());
         }
 
@@ -716,9 +726,6 @@ public class ProjectTeamManagementService {
         return false;
     }
 
-    private boolean isOwnCurrentAllocation(EmployeeAllocation alloc, UUID memberId) {
-        return false; // Deprecated, logic moved to performConflictChecks
-    }
 
     // ========================================================================================
     // DTO builder
@@ -743,6 +750,7 @@ public class ProjectTeamManagementService {
         dto.setRequiredScope(tpd.getRequiredScope());
         dto.setExpectedStartDate(null);
         dto.setExpectedDeliveryDate(tp.getProjectBrief() != null ? tp.getProjectBrief().getExpectedDeadline() : null);
+        dto.setProjectClosed(isProjectClosed(tp));
 
         dto.setExpectedEstimateSubmissionDate(tpd.getExpectedEstimateSubmissionDate());
         dto.setCreatedAt(team.getCreatedAt());

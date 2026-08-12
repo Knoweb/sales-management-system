@@ -5,7 +5,7 @@ export type TechnicalProjectStatus = 'AWAITING_TECHNICAL_ROUTING' | 'ROUTED' | '
 export type TechnicalProjectDepartmentStatus = 'PENDING_TEAM' | 'TEAM_DRAFTING' | 'TEAM_READY';
 export type ProjectTeamStatus = 'DRAFT' | 'READY';
 export type ProjectTeamMemberStatus = 'ACTIVE' | 'INACTIVE';
-export type ProjectRole = 'PROJECT_MANAGER' | 'TECH_LEAD' | 'PROJECT_ENGINEER' | 'QA_ENGINEER' | 'UI_UX_DESIGNER' | 'SYSTEM_ANALYST' | 'ASSISTANT';
+export type ProjectRole = 'OTHER' | 'ELECTRONIC_ENGINEER' | 'WELDER' | 'TECHNICIAN' | 'PROJECT_ENGINEER' | 'ELECTRICAL_ENGINEER' | 'PROJECT_MANAGER' | 'QUALITY_CONTROLLER' | 'ASSISTANT' | 'MECHANICAL_ENGINEER' | 'SITE_SUPERVISOR' | 'SOFTWARE_ENGINEER';
 
 export interface TechnicalProjectSummaryDTO {
   id: string;

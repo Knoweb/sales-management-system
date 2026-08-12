@@ -1,30 +1,31 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { 
-  getProjectTeam, 
-  addTeamMember, 
-  removeTeamMember, 
+import {
+  getProjectTeam,
+  addTeamMember,
+  updateTeamMember,
+  removeTeamMember,
   markTeamReady,
   searchEmployeeAvailability,
   type ProjectTeamDetailDTO,
   type EmployeeAvailabilityDTO
 } from '../../services/ProjectTeamApi';
-import { PageHeader } from '../../components/PageHeader';
-import { Card } from '../../components/Card';
+import type { ProjectRole } from '../../services/TechnicalProjectApi';
 import { StatusBadge } from '../../components/StatusBadge';
-import { ErrorState, LoadingState, EmptyState } from '../../components/FeedbackStates';
+import { ErrorState, LoadingState } from '../../components/FeedbackStates';
 import { Button } from '../../components/Button';
 import { Input, Select, Checkbox, Textarea } from '../../components/Forms';
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../components/Table';
 import { ArrowLeft, Users, Search, Plus, Trash2, CheckCircle } from 'lucide-react';
+
+import './ProjectTeamBuilderPage.css';
 
 export const ProjectTeamBuilderPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   const [team, setTeam] = useState<ProjectTeamDetailDTO | null>(null);
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -43,6 +44,13 @@ export const ProjectTeamBuilderPage: React.FC = () => {
   const [overrideRequested, setOverrideRequested] = useState(false);
   const [overrideReason, setOverrideReason] = useState('');
 
+  // Edit Member State
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const [editProjectRole, setEditProjectRole] = useState('PROJECT_ENGINEER');
+  const [editAssignedHours, setEditAssignedHours] = useState<number | ''>('');
+  const [editStartDate, setEditStartDate] = useState('');
+  const [editEndDate, setEditEndDate] = useState('');
+
   const fetchData = useCallback(async () => {
     if (!id) return;
     try {
@@ -50,7 +58,7 @@ export const ProjectTeamBuilderPage: React.FC = () => {
       setError(null);
       const teamData = await getProjectTeam(id);
       setTeam(teamData);
-      
+
       // Default search dates to project expected dates or defaults
       if (teamData.expectedStartDate) {
         setStartDate(format(new Date(teamData.expectedStartDate), 'yyyy-MM-dd'));
@@ -96,34 +104,76 @@ export const ProjectTeamBuilderPage: React.FC = () => {
   };
 
   const handleAddMember = async () => {
+    if (!id || !selectedEmployee || !startDate || !endDate || !assignedHours) {
+      setError("Please fill out all required fields to add the member.");
+      return;
+    }
 
-    if (!id || !selectedEmployee || !startDate || !endDate || !assignedHours) return;
     try {
       setActionLoading(true);
       setError(null);
-      
+
       await addTeamMember(id, {
         employeeId: selectedEmployee.employeeId,
-        projectRole: projectRole as "PROJECT_MANAGER" | "TECH_LEAD" | "PROJECT_ENGINEER" | "QA_ENGINEER" | "UI_UX_DESIGNER" | "SYSTEM_ANALYST" | "ASSISTANT",
+        projectRole: projectRole as ProjectRole,
         allocationStartDate: startDate,
         allocationEndDate: endDate,
         assignedHours: Number(assignedHours),
         overrideRequested: overrideRequested,
         overrideReason: overrideRequested ? overrideReason : undefined
       });
-      
+
       // Reset form and reload
       setSelectedEmployee(null);
       setAssignedHours('');
       setOverrideRequested(false);
       setOverrideReason('');
-      
+
       await fetchData();
       await handleSearch(); // Refresh search results to show updated availability
     } catch (err: unknown) {
       console.error(err);
       const e = err as { response?: { data?: { message?: string } } };
       setError(e.response?.data?.message || 'Failed to add team member.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const startEditMember = (member: any) => {
+    setEditingMemberId(member.id);
+    setEditProjectRole(member.projectRole || 'PROJECT_ENGINEER');
+    setEditAssignedHours(member.assignedHours || '');
+    setEditStartDate(member.allocationStartDate ? format(new Date(member.allocationStartDate), 'yyyy-MM-dd') : '');
+    setEditEndDate(member.allocationEndDate ? format(new Date(member.allocationEndDate), 'yyyy-MM-dd') : '');
+    setError(null);
+  };
+
+  const cancelEditMember = () => {
+    setEditingMemberId(null);
+    setError(null);
+  };
+
+  const handleEditMember = async () => {
+    if (!id || !editingMemberId || !editStartDate || !editEndDate || !editAssignedHours) {
+      setError("Please fill out all required fields to update the member.");
+      return;
+    }
+    try {
+      setActionLoading(true);
+      setError(null);
+      await updateTeamMember(id, editingMemberId, {
+        projectRole: editProjectRole as ProjectRole,
+        allocationStartDate: editStartDate,
+        allocationEndDate: editEndDate,
+        assignedHours: Number(editAssignedHours),
+      });
+      setEditingMemberId(null);
+      await fetchData();
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: any } };
+      console.error(e.response?.data || err);
+      setError(e.response?.data?.message || 'Failed to update team member.');
     } finally {
       setActionLoading(false);
     }
@@ -168,7 +218,7 @@ export const ProjectTeamBuilderPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div style={{ padding: '32px' }}>
         <LoadingState message="Loading team details..." />
       </div>
     );
@@ -176,14 +226,14 @@ export const ProjectTeamBuilderPage: React.FC = () => {
 
   if (error && !team) {
     return (
-      <div className="p-8">
+      <div style={{ padding: '32px' }}>
         <ErrorState
           title="Failed to load"
           message={error}
           onRetry={fetchData}
         />
-        <div className="mt-4 flex justify-center">
-          <Button variant="secondary" onClick={() => navigate('/hod/projects')} icon={<ArrowLeft className="w-4 h-4" />}>
+        <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'center' }}>
+          <Button variant="secondary" onClick={() => navigate('/hod/projects')} icon={<ArrowLeft size={16} />}>
             Back to Queue
           </Button>
         </div>
@@ -191,307 +241,411 @@ export const ProjectTeamBuilderPage: React.FC = () => {
     );
   }
 
-  const isDraft = team?.status === 'DRAFT';
+  const isTeamReady = team?.status === 'READY';
+  const isProjectClosed = team?.projectClosed === true;
+
+  const canAdd = !isProjectClosed;
+  const canEdit = isTeamReady && !isProjectClosed;
+  const canRemove = !isTeamReady && !isProjectClosed;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button variant="secondary" onClick={() => navigate('/hod/projects')} icon={<ArrowLeft className="w-4 h-4" />}>
-            Back
-          </Button>
-          <PageHeader
-            title={`Build Team: ${team?.projectTitle || team?.projectCode || 'Unknown'}`}
-            description="Search available employees and assign them to the project team."
-          />
-        </div>
-        <div className="flex items-center space-x-4">
-           {isDraft && (
-             <Button
-               variant="primary"
-               onClick={handleMarkReady}
-               disabled={actionLoading || !team?.members || team.members.length === 0}
-               isLoading={actionLoading}
-               icon={<CheckCircle className="w-4 h-4" />}
-             >
-               Mark Team Ready
-             </Button>
-           )}
+    <div className="team-builder-container">
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <Button variant="secondary" onClick={() => navigate('/hod/projects')} icon={<ArrowLeft size={16} />}>
+          Back
+        </Button>
+      </div>
+
+      {/* 1. Header Card */}
+      <div className="team-builder-card">
+        <div className="team-builder-header-top">
+          <div>
+            <h1 className="team-builder-title">Project Team Builder</h1>
+            <div className="team-builder-meta">
+              <span className="team-builder-meta-strong">{team?.projectCode || 'Unknown'}</span>
+              <span className="team-builder-meta-strong">{team?.projectTitle || 'Unknown'}</span>
+              {team?.status && (
+                <StatusBadge status={team.status} />
+              )}
+            </div>
+          </div>
+          {canAdd && !isTeamReady && (
+            <Button
+              variant="primary"
+              onClick={handleMarkReady}
+              disabled={actionLoading || !team?.members || team.members.length === 0}
+              isLoading={actionLoading}
+              icon={<CheckCircle size={16} />}
+            >
+              Mark Team Ready
+            </Button>
+          )}
         </div>
       </div>
-      
+
       {error && (
-        <div className="p-4 bg-red-50 text-red-600 rounded-md border border-red-200">
+        <div style={{ padding: '16px', background: '#fef2f2', color: '#991b1b', borderRadius: '6px', border: '1px solid #fecaca' }}>
           {error}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Column: Team Members */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="p-6"><div className="mb-4"><h3 className="text-lg font-medium text-gray-900">Current Team Members</h3></div>
-             {team?.members && team.members.length > 0 ? (
-               <div className="overflow-x-auto">
-                 <Table>
-                   <TableHead><TableRow>
-                       <TableHeader>Employee</TableHeader>
-                       <TableHeader>Status</TableHeader>
-                       <TableHeader>Override</TableHeader>
-                       <TableHeader className="text-right">Actions</TableHeader>
-                     </TableRow></TableHead>
-                   <TableBody>
-                     {team.members.map(member => (
-                       <TableRow key={member.id}>
-                         <TableCell className="font-medium">
-                           Employee #{member.employeeNumber || member.employeeId.substring(0, 8)}
-                         </TableCell>
-                         <TableCell>
-                           <StatusBadge status={member.status} />
-                         </TableCell>
-                         <TableCell>
-                           {member.overrideFlag ? (
-                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                               Yes
-                             </span>
-                           ) : (
-                             <span className="text-gray-500 text-sm">No</span>
-                           )}
-                         </TableCell>
-                         <TableCell className="text-right">
-                           {isDraft && (
-                             <Button
-                               variant="danger"
-                               
-                               onClick={() => handleRemoveMember(member.id)}
-                               disabled={actionLoading}
-                               icon={<Trash2 className="w-4 h-4" />}
-                             >
-                               Remove
-                             </Button>
-                           )}
-                         </TableCell>
-                       </TableRow>
-                     ))}
-                   </TableBody>
-                 </Table>
-               </div>
-             ) : (
-               <EmptyState
-                 title="No team members"
-                 message="Search for available employees and add them to the team."
-                 icon={<Users className="w-10 h-10 text-gray-400" />}
-               />
-             )}
-          </Card>
-          
-          <Card className="p-6"><div className="mb-4"><h3 className="text-lg font-medium text-gray-900">Project Details</h3></div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="block text-gray-500 mb-1">Expected Start</span>
-                <span className="font-medium">
-                  {team?.expectedStartDate ? format(new Date(team.expectedStartDate), 'MMM d, yyyy') : '-'}
-                </span>
-              </div>
-              <div>
-                <span className="block text-gray-500 mb-1">Expected Delivery</span>
-                <span className="font-medium">
-                  {team?.expectedDeliveryDate ? format(new Date(team.expectedDeliveryDate), 'MMM d, yyyy') : '-'}
-                </span>
-              </div>
-            </div>
-            <div className="mt-4">
-              <span className="block text-gray-500 mb-1 text-sm">Scope</span>
-              <p className="text-gray-900 whitespace-pre-wrap text-sm">{team?.requiredScope || '-'}</p>
-            </div>
-          </Card>
+      {/* 2. Project Details */}
+      <div className="team-builder-card">
+        <h3 className="team-builder-section-title">Project Details</h3>
 
+        <div className="team-project-meta-grid">
+          <div className="team-project-meta-item">
+            <span className="team-meta-label">Expected Start</span>
+            <span className="team-meta-value">
+              {team?.expectedStartDate ? format(new Date(team.expectedStartDate), 'MMM d, yyyy') : '-'}
+            </span>
+          </div>
+          <div className="team-project-meta-item">
+            <span className="team-meta-label">Expected Delivery</span>
+            <span className="team-meta-value">
+              {team?.expectedDeliveryDate ? format(new Date(team.expectedDeliveryDate), 'MMM d, yyyy') : '-'}
+            </span>
+          </div>
         </div>
 
-        {/* Right Column: Search & Add */}
-        <div className="space-y-6">
-          {isDraft && (
-            <Card className="p-6">
-              <div className="mb-4"><h3 className="text-lg font-medium text-gray-900">Search Availability</h3></div>
-              <div className="space-y-4">
-                <Input
-                  label="Start Date *"
-                  type="date"
-                  value={startDate}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement>) => setStartDate(e.target.value)}
-                  required
-                />
-                <Input
-                  label="End Date *"
-                  type="date"
-                  value={endDate}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement>) => setEndDate(e.target.value)}
-                  required
-                />
-                <Button
-                  className="w-full"
-                  onClick={handleSearch}
-                  disabled={searchLoading || !startDate || !endDate}
-                  isLoading={searchLoading}
-                  icon={<Search className="w-4 h-4" />}
-                >
-                  Search Available Staff
-                </Button>
-                
-                {searchError && (
-                  <p className="text-sm text-red-600 mt-2">{searchError}</p>
-                )}
-                
-                {searchResults.length > 0 && (
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Results</label>
-                    <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
-                      {searchResults.map(emp => {
-                        const isAlreadyInTeam = team?.members?.some(m => m.employeeId === emp.employeeId);
-                        const isFullyUnavailable = emp.availableHours !== undefined && emp.availableHours <= 0;
-                        const isDisabled = isAlreadyInTeam || isFullyUnavailable;
-                        const isSelected = selectedEmployee?.employeeId === emp.employeeId;
-                        return (
-                        <div 
-                          key={emp.employeeId} 
-                          className={`p-3 border rounded-md transition-colors ${
-                            isDisabled ? 'bg-gray-50 opacity-75 cursor-not-allowed' :
-                            isSelected ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-primary-300 cursor-pointer'
-                          }`}
-                          onClick={() => {
-                            if (!isDisabled) {
-                              setSelectedEmployee(emp);
-                              setOverrideRequested(!emp.available);
-                            }
-                          }}
-                        >
-                          <div className="flex justify-between items-start">
-                            <div className="flex items-start space-x-3">
-                              {!isDisabled && (
-                                <input
-                                  type="radio"
-                                  checked={isSelected}
-                                  readOnly
-                                  className="mt-1"
-                                />
-                              )}
-                              <div>
-                                <p className="font-medium text-sm text-gray-900">
-                                  {emp.employeeName || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || 'Unknown'}
-                                </p>
-                                <p className="text-xs text-gray-500">{emp.jobTitle} {emp.departmentName ? `• ${emp.departmentName}` : ''}</p>
-                                {emp.availableHours !== undefined && (
-                                  <p className="text-xs text-gray-600 mt-1">
-                                    Available Hours: <span className="font-medium">{emp.availableHours}</span>
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${emp.available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                              {emp.available ? 'Available' : 'Conflict'}
-                            </span>
-                          </div>
-                          {!emp.available && emp.conflicts && emp.conflicts.length > 0 && (
-                            <p className="mt-2 text-xs text-red-600">
-                              Conflicts: {emp.conflicts.join(', ')}
-                            </p>
-                          )}
-                          {isAlreadyInTeam && (
-                            <p className="mt-2 text-xs text-gray-500 font-medium">Already assigned to this team.</p>
-                          )}
-                          {!isAlreadyInTeam && isFullyUnavailable && (
-                            <p className="mt-2 text-xs text-gray-500 font-medium">Fully unavailable (0 hours remaining).</p>
-                          )}
-                        </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Card>
-          )}
-
-          {isDraft && selectedEmployee && (
-            <Card className="p-6 border-primary-500 border-2">
-              <div className="mb-4"><h3 className="text-lg font-medium text-gray-900">{`Add ${selectedEmployee.employeeName || selectedEmployee.firstName || 'Employee'} to Team`}</h3></div>
-
-              <div className="space-y-4">
-                <Select
-                  label="Project Role *"
-                  value={projectRole}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement>) => setProjectRole(e.target.value)}
-                  required
-                >
-                  <option value="PROJECT_MANAGER">Project Manager</option>
-                  <option value="TECH_LEAD">Tech Lead</option>
-                  <option value="PROJECT_ENGINEER">Project Engineer</option>
-                  <option value="QA_ENGINEER">QA Engineer</option>
-                  <option value="UI_UX_DESIGNER">UI/UX Designer</option>
-                  <option value="SYSTEM_ANALYST">System Analyst</option>
-                  <option value="ASSISTANT">Assistant</option>
-                </Select>
-                <div className="grid grid-cols-2 gap-4">
-                  <Input
-                    label="Allocation Start Date *"
-                    type="date"
-                    value={startDate}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement>) => setStartDate(e.target.value)}
-                    required
-                  />
-                  <Input
-                    label="Allocation End Date *"
-                    type="date"
-                    value={endDate}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement>) => setEndDate(e.target.value)}
-                    required
-                  />
-                </div>
-                <Input
-                  label="Assigned Hours *"
-                  type="number" 
-                  min={1}
-                  value={assignedHours}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement>) => setAssignedHours(e.target.value === '' ? '' : Number(e.target.value))}
-                  required
-                />
-
-                {!selectedEmployee.available && (
-                  <div className="p-4 bg-yellow-50 rounded-md border border-yellow-200 space-y-3">
-                    <p className="text-sm text-yellow-800 font-medium">Override required due to conflict.</p>
-                    <Checkbox
-                      label="Request Override"
-                      id="overrideRequested"
-                      checked={overrideRequested}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOverrideRequested(e.target.checked)}
-                    />
-                    {overrideRequested && (
-                      <Textarea
-                        label="Override Reason *"
-                        value={overrideReason}
-                        onChange={(e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement>) => setOverrideReason(e.target.value)}
-                        placeholder="Provide justification for overriding conflicts..."
-                        required
-                        rows={2}
-                      />
-                    )}
-                  </div>
-                )}
-                
-                <Button
-                  className="w-full"
-                  onClick={handleAddMember}
-                  disabled={actionLoading || !assignedHours || (!selectedEmployee.available && (!overrideRequested || !overrideReason))}
-                  isLoading={actionLoading}
-                  icon={<Plus className="w-4 h-4" />}
-                >
-                  Add to Team
-                </Button>
-              </div>
-            </Card>
-          )}
+        <div>
+          <span className="team-meta-label">Scope</span>
+          <div className="team-scope-box">{team?.requiredScope || '-'}</div>
         </div>
       </div>
+
+      {/* 3. Current Team Members */}
+      <div className="team-builder-card">
+        <h3 className="team-builder-section-title">Current Team Members</h3>
+
+        {team?.members && team.members.length > 0 ? (
+          <div className="team-members-grid">
+            {team.members.map(member => (
+              <div key={member.id} className="team-member-card">
+                <div className="team-member-header">
+                  <div>
+                    <h4 className="team-member-name">
+                      {member.employeeName || `Employee #${member.employeeNumber || member.employeeId.substring(0, 8)}`}
+                    </h4>
+                    <p className="team-member-title">{member.jobTitle || 'Team Member'}</p>
+                  </div>
+                  <StatusBadge status={member.status} />
+                </div>
+
+                {editingMemberId === member.id ? (
+                  <div style={{ marginTop: '16px', borderTop: '1px solid var(--color-border)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <Select
+                      label="Project Role"
+                      value={editProjectRole}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEditProjectRole(e.target.value)}
+                      required
+                    >
+                      <option value="PROJECT_MANAGER">Project Manager</option>
+                      <option value="PROJECT_ENGINEER">Project Engineer</option>
+                      <option value="QUALITY_CONTROLLER">QA / Quality Controller</option>
+                      <option value="SOFTWARE_ENGINEER">Software Engineer</option>
+                      <option value="MECHANICAL_ENGINEER">Mechanical Engineer</option>
+                      <option value="ELECTRICAL_ENGINEER">Electrical Engineer</option>
+                      <option value="ELECTRONIC_ENGINEER">Electronic Engineer</option>
+                      <option value="SITE_SUPERVISOR">Site Supervisor</option>
+                      <option value="TECHNICIAN">Technician</option>
+                      <option value="WELDER">Welder</option>
+                      <option value="ASSISTANT">Assistant</option>
+                      <option value="OTHER">Other</option>
+                    </Select>
+                    <Input
+                      label="Assigned Hours"
+                      type="number"
+                      min={1}
+                      value={editAssignedHours}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditAssignedHours(e.target.value === '' ? '' : Number(e.target.value))}
+                      required
+                    />
+                    <Input
+                      label="Start Date"
+                      type="date"
+                      value={editStartDate}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditStartDate(e.target.value)}
+                      required
+                    />
+                    <Input
+                      label="End Date"
+                      type="date"
+                      value={editEndDate}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditEndDate(e.target.value)}
+                      required
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
+                      <Button variant="ghost" onClick={cancelEditMember} disabled={actionLoading}>Cancel</Button>
+                      <Button variant="primary" onClick={handleEditMember} disabled={actionLoading || !editAssignedHours || !editStartDate || !editEndDate}>Save Changes</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="team-member-details">
+                      <div className="team-member-role-full">
+                        <span className="team-meta-label">Project Role</span>
+                        <span className="team-meta-value">{member.projectRole?.replace(/_/g, ' ') || '-'}</span>
+                      </div>
+                      <div>
+                        <span className="team-meta-label">Allocation</span>
+                        <span className="team-meta-value">
+                          {member.allocationStartDate && member.allocationEndDate ? (
+                            `${format(new Date(member.allocationStartDate), 'MMM d')} – ${format(new Date(member.allocationEndDate), 'MMM d, yyyy')}`
+                          ) : '-'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="team-meta-label">Assigned Hours</span>
+                        <span className="team-meta-value">{member.assignedHours ? `${member.assignedHours} hrs` : '-'}</span>
+                      </div>
+                    </div>
+                    {canRemove && (
+                      <div className="team-member-actions">
+                        <Button
+                          variant="danger"
+                          onClick={() => handleRemoveMember(member.id)}
+                          disabled={actionLoading}
+                          icon={<Trash2 size={16} />}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    )}
+                    
+                    {canEdit && (
+                      <div className="team-member-actions">
+                        <Button
+                          variant="secondary"
+                          onClick={() => startEditMember(member)}
+                          disabled={actionLoading}
+                        >
+                          Edit
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="team-empty-state">
+            <div className="team-empty-icon">
+              <Users size={24} />
+            </div>
+            <h4 className="team-empty-title">No team members yet</h4>
+            <p className="team-empty-text">Search available employees below and add them to the team.</p>
+          </div>
+        )}
+      </div>
+
+      {/* 5. Search Availability */}
+      {canAdd && (
+        <div className="team-builder-card">
+          <h3 className="team-builder-section-title">Search Availability</h3>
+
+          <div className="team-search-grid">
+            <Input
+              label="Start Date"
+              type="date"
+              value={startDate}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStartDate(e.target.value)}
+              required
+            />
+            <Input
+              label="End Date"
+              type="date"
+              value={endDate}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEndDate(e.target.value)}
+              required
+            />
+            <Button
+              onClick={handleSearch}
+              disabled={searchLoading || !startDate || !endDate}
+              isLoading={searchLoading}
+              icon={<Search size={16} />}
+            >
+              Search Available Staff
+            </Button>
+          </div>
+
+          {searchError && (
+            <p className="team-search-error">{searchError}</p>
+          )}
+        </div>
+      )}
+
+      {/* 6. Search Results */}
+      {canAdd && searchResults.length > 0 && (
+        <div className="team-builder-card">
+          <h3 className="team-builder-section-title">Search Results</h3>
+
+          <div className="team-results-grid">
+            {searchResults.map(emp => {
+              const isAlreadyInTeam = team?.members?.some(m => m.employeeId === emp.employeeId);
+              const isFullyUnavailable = emp.availableHours !== undefined && emp.availableHours <= 0;
+              const isDisabled = isAlreadyInTeam || isFullyUnavailable;
+              const isSelected = selectedEmployee?.employeeId === emp.employeeId;
+
+              let badgeClass = 'badge-available';
+              if (!emp.available) badgeClass = 'badge-conflict';
+
+              return (
+                <div
+                  key={emp.employeeId}
+                  className={`team-result-card ${isDisabled ? 'disabled' : ''} ${isSelected ? 'selected' : ''}`}
+                  onClick={() => {
+                    if (!isDisabled) {
+                      setSelectedEmployee(emp);
+                      setOverrideRequested(!emp.available);
+                    }
+                  }}
+                >
+                  {!isDisabled && (
+                    <div className="team-result-radio">
+                      <input
+                        type="radio"
+                        checked={isSelected}
+                        readOnly
+                        style={{ cursor: 'pointer', accentColor: 'var(--color-primary)' }}
+                      />
+                    </div>
+                  )}
+                  <div className="team-result-content">
+                    <div className="team-result-header">
+                      <div>
+                        <h4 className="team-result-name">
+                          {emp.employeeName || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || 'Unknown'}
+                        </h4>
+                        <p className="team-result-desc">
+                          {emp.jobTitle} {emp.departmentName ? `• ${emp.departmentName}` : ''}
+                        </p>
+                      </div>
+                      <span className={`team-result-badge ${badgeClass}`}>
+                        {emp.available ? 'Available' : 'Conflict'}
+                      </span>
+                    </div>
+
+                    {emp.availableHours !== undefined && (
+                      <p className="team-result-desc" style={{ marginTop: '8px' }}>
+                        Available Hours: <strong style={{ color: 'var(--color-text-primary)' }}>{emp.availableHours} hrs</strong>
+                      </p>
+                    )}
+
+                    {!emp.available && emp.conflicts && emp.conflicts.length > 0 && (
+                      <div className="team-result-conflict-box">
+                        <strong className="team-result-conflict-title">Overlapping active allocation:</strong>
+                        <ul className="team-result-conflict-list">
+                          {emp.conflicts.map((c, i) => <li key={i}>{c}</li>)}
+                        </ul>
+                      </div>
+                    )}
+
+                    {isAlreadyInTeam && (
+                      <p className="team-result-msg">Already assigned to this team.</p>
+                    )}
+                    {!isAlreadyInTeam && isFullyUnavailable && (
+                      <p className="team-result-msg">Fully unavailable (0 hours remaining).</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 7. Add Selected Employee to Team */}
+      {canAdd && selectedEmployee && (
+        <div className="team-builder-card team-add-card">
+          <div className="team-add-header">
+            <h3 className="team-builder-section-title" style={{ margin: 0 }}>
+              {`Add ${selectedEmployee.employeeName || selectedEmployee.firstName || 'Employee'} to Team`}
+            </h3>
+          </div>
+
+          <div className="team-add-grid">
+            <Select
+              label="Project Role"
+              value={projectRole}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setProjectRole(e.target.value)}
+              required
+            >
+              <option value="PROJECT_MANAGER">Project Manager</option>
+              <option value="PROJECT_ENGINEER">Project Engineer</option>
+              <option value="QUALITY_CONTROLLER">QA / Quality Controller</option>
+              <option value="SOFTWARE_ENGINEER">Software Engineer</option>
+              <option value="MECHANICAL_ENGINEER">Mechanical Engineer</option>
+              <option value="ELECTRICAL_ENGINEER">Electrical Engineer</option>
+              <option value="ELECTRONIC_ENGINEER">Electronic Engineer</option>
+              <option value="SITE_SUPERVISOR">Site Supervisor</option>
+              <option value="TECHNICIAN">Technician</option>
+              <option value="WELDER">Welder</option>
+              <option value="ASSISTANT">Assistant</option>
+              <option value="OTHER">Other</option>
+            </Select>
+            <Input
+              label="Assigned Hours"
+              type="number"
+              min={1}
+              value={assignedHours}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAssignedHours(e.target.value === '' ? '' : Number(e.target.value))}
+              required
+            />
+          </div>
+
+          <div className="team-add-grid">
+            <Input
+              label="Allocation Start Date"
+              type="date"
+              value={startDate}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStartDate(e.target.value)}
+              required
+            />
+            <Input
+              label="Allocation End Date"
+              type="date"
+              value={endDate}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEndDate(e.target.value)}
+              required
+            />
+          </div>
+
+          {!selectedEmployee.available && (
+            <div className="team-conflict-override">
+              <p className="team-conflict-override-msg">Override required due to conflict.</p>
+              <Checkbox
+                label="Request Override"
+                id="overrideRequested"
+                checked={overrideRequested}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOverrideRequested(e.target.checked)}
+              />
+              {overrideRequested && (
+                <Textarea
+                  label="Override Reason"
+                  value={overrideReason}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setOverrideReason(e.target.value)}
+                  placeholder="Provide justification for overriding conflicts..."
+                  required
+                  rows={2}
+                />
+              )}
+            </div>
+          )}
+
+          <div className="team-add-actions">
+            <Button
+              onClick={handleAddMember}
+              disabled={actionLoading || !assignedHours || (!selectedEmployee.available && (!overrideRequested || !overrideReason))}
+              isLoading={actionLoading}
+              icon={<Plus size={16} />}
+            >
+              Add to Team
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

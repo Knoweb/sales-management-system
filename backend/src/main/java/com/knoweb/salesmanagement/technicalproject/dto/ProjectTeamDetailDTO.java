@@ -30,6 +30,7 @@ public class ProjectTeamDetailDTO {
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
     private Integer version;
+    private boolean projectClosed;
 
     public ProjectTeamDetailDTO() {}
 
@@ -91,5 +92,8 @@ public class ProjectTeamDetailDTO {
 
     public Integer getVersion() { return version; }
     public void setVersion(Integer version) { this.version = version; }
+
+    public boolean isProjectClosed() { return projectClosed; }
+    public void setProjectClosed(boolean projectClosed) { this.projectClosed = projectClosed; }
 }
 

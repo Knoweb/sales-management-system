@@ -27,9 +27,7 @@ public class UpdateMemberAllocationRequest {
 
     private boolean primaryMember;
 
-    // Override fields
-    private boolean overrideRequested = false;
-    private String overrideReason;
+
 
     public ProjectRole getProjectRole() { return projectRole; }
     public void setProjectRole(ProjectRole projectRole) { this.projectRole = projectRole; }
@@ -46,9 +44,5 @@ public class UpdateMemberAllocationRequest {
     public boolean isPrimaryMember() { return primaryMember; }
     public void setPrimaryMember(boolean primaryMember) { this.primaryMember = primaryMember; }
 
-    public boolean isOverrideRequested() { return overrideRequested; }
-    public void setOverrideRequested(boolean overrideRequested) { this.overrideRequested = overrideRequested; }
 
-    public String getOverrideReason() { return overrideReason; }
-    public void setOverrideReason(String overrideReason) { this.overrideReason = overrideReason; }
 }

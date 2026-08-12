@@ -139,7 +139,7 @@ export const QuotationBuilderPage: React.FC = () => {
         <div className="card-body" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', fontSize: '0.875rem' }}>
           <div><span style={{ fontWeight: 500, color: 'var(--color-text-secondary)' }}>Project Code:</span> {estimate.projectCode}</div>
           <div><span style={{ fontWeight: 500, color: 'var(--color-text-secondary)' }}>Total Duration:</span> {estimate.totalDurationDays} Days</div>
-          <div><span style={{ fontWeight: 500, color: 'var(--color-text-secondary)' }}>Total Estimated Cost:</span> ${estimate.finalTotal?.toFixed(2)}</div>
+          <div><span style={{ fontWeight: 500, color: 'var(--color-text-secondary)' }}>Total Estimated Cost:</span> LKR {estimate.finalTotal?.toFixed(2)}</div>
         </div>
       </div>
       
@@ -188,8 +188,8 @@ export const QuotationBuilderPage: React.FC = () => {
                    <tr key={idx}>
                      <td>{item.description}</td>
                      <td>{item.quantity}</td>
-                     <td>${item.unitPrice.toFixed(2)}</td>
-                     <td>${item.lineTotal.toFixed(2)}</td>
+                     <td>LKR {item.unitPrice.toFixed(2)}</td>
+                     <td>LKR {item.lineTotal.toFixed(2)}</td>
                    </tr>
                  ))}
                  {!quotation.items?.length && (
@@ -218,7 +218,7 @@ export const QuotationBuilderPage: React.FC = () => {
                   value={quotation.validityPeriod} onChange={e => setQuotation({...quotation, validityPeriod: e.target.value})} />
               </div>
               <div className="form-group">
-                <label className="form-label">Discount Amount ($)</label>
+                <label className="form-label">Discount Amount (LKR)</label>
                 <input type="number" className="form-input" min="0" step="0.01"
                   value={quotation.discountAmount || ''} 
                   onChange={e => {
@@ -231,20 +231,20 @@ export const QuotationBuilderPage: React.FC = () => {
            </div>
 
            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', fontSize: '1rem', marginTop: '1rem', gap: '0.5rem' }}>
-              <div><span style={{ fontWeight: 500, marginRight: '1rem' }}>Subtotal:</span> ${quotation.subtotal?.toFixed(2)}</div>
+              <div><span style={{ fontWeight: 500, marginRight: '1rem' }}>Subtotal:</span> LKR {quotation.subtotal?.toFixed(2)}</div>
               {estimate.contingencyAmount > 0 && (
-                <div><span style={{ fontWeight: 500, marginRight: '1rem' }}>Contingency:</span> ${estimate.contingencyAmount.toFixed(2)}</div>
+                <div><span style={{ fontWeight: 500, marginRight: '1rem' }}>Contingency:</span> LKR {estimate.contingencyAmount.toFixed(2)}</div>
               )}
               {estimate.marginAmount > 0 && (
-                <div><span style={{ fontWeight: 500, marginRight: '1rem' }}>Margin:</span> ${estimate.marginAmount.toFixed(2)}</div>
+                <div><span style={{ fontWeight: 500, marginRight: '1rem' }}>Margin:</span> LKR {estimate.marginAmount.toFixed(2)}</div>
               )}
-              <div><span style={{ fontWeight: 500, marginRight: '1rem' }}>Tax:</span> ${quotation.taxAmount?.toFixed(2)}</div>
+              <div><span style={{ fontWeight: 500, marginRight: '1rem' }}>Tax:</span> LKR {quotation.taxAmount?.toFixed(2)}</div>
               {quotation.discountAmount ? (
-                <div style={{ color: '#ef4444' }}><span style={{ fontWeight: 500, marginRight: '1rem' }}>Discount:</span> -${quotation.discountAmount?.toFixed(2)}</div>
+                <div style={{ color: '#ef4444' }}><span style={{ fontWeight: 500, marginRight: '1rem' }}>Discount:</span> -LKR {quotation.discountAmount?.toFixed(2)}</div>
               ) : null}
               <div style={{ fontSize: '1.125rem', marginTop: '0.5rem' }}>
                 <span style={{ fontWeight: 600, marginRight: '1rem' }}>Final Total:</span>
-                <span style={{ fontWeight: 600 }}>${quotation.finalTotal?.toFixed(2)}</span>
+                <span style={{ fontWeight: 600 }}>LKR {quotation.finalTotal?.toFixed(2)}</span>
               </div>
            </div>
         </div>

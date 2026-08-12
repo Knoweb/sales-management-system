@@ -368,6 +368,8 @@ public class ProjectTeamManagementServiceIntegrationTest {
         updReq.setAssignedHours(new BigDecimal("40"));
         updReq.setPrimaryMember(false);
 
+        teamService.markTeamReady(team.getId());
+
         ProjectTeamDetailDTO updated = teamService.updateMemberAllocation(team.getId(), memberId, updReq);
         assertThat(updated.getMembers().get(0).getAssignedHours()).isEqualByComparingTo(new BigDecimal("40"));
 
@@ -380,12 +382,17 @@ public class ProjectTeamManagementServiceIntegrationTest {
     void updateMember_notFound_throws404() {
         authenticateAsHod();
         ProjectTeamDetailDTO team = teamService.createOrGetTeam(deptAssignment.getId(), "T_notfound");
+        
+        AddTeamMemberRequest addReq = buildAddRequest(deptEmployee, LocalDate.now(), LocalDate.now().plusDays(5), new BigDecimal("10"));
+        teamService.addMember(team.getId(), addReq);
 
         UpdateMemberAllocationRequest req = new UpdateMemberAllocationRequest();
         req.setProjectRole(ProjectRole.ASSISTANT);
         req.setAllocationStartDate(LocalDate.now());
         req.setAllocationEndDate(LocalDate.now().plusDays(5));
         req.setAssignedHours(new BigDecimal("8"));
+
+        teamService.markTeamReady(team.getId());
 
         assertThatThrownBy(() -> teamService.updateMemberAllocation(team.getId(), UUID.randomUUID(), req))
                 .isInstanceOf(com.knoweb.salesmanagement.common.exception.ResourceNotFoundException.class);
