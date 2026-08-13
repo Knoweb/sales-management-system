@@ -64,6 +64,16 @@ export const EmployeeDetailsPage: React.FC = () => {
 
   const [showLeaveForm, setShowLeaveForm] = useState(false);
 
+  const [showSystemLoginForm, setShowSystemLoginForm] = useState(false);
+  const [systemLoginData, setSystemLoginData] = useState({
+    loginEmail: "",
+    temporaryPassword: "",
+    roleCodes: [] as string[],
+    active: true,
+  });
+  const [roles, setRoles] = useState<{code: string, name: string}[]>([]);
+  const [submittingLogin, setSubmittingLogin] = useState(false);
+
   // Availability states
   const [availStart, setAvailStart] = useState("");
   const [availEnd, setAvailEnd] = useState("");
@@ -109,6 +119,19 @@ export const EmployeeDetailsPage: React.FC = () => {
       controller.abort();
     };
   }, [id, retryCount]);
+
+  useEffect(() => {
+    const loadRoles = async () => {
+      try {
+        const { apiClient } = await import('../../services/Api');
+        const rolesResponse = await apiClient.get<{code: string, name: string}[]>("/roles");
+        setRoles(rolesResponse.data || []);
+      } catch (err) {
+        console.error("Failed to fetch roles", err);
+      }
+    };
+    loadRoles();
+  }, []);
 
   const loadSkills = async () => {
     if (!id) return;
@@ -253,6 +276,29 @@ export const EmployeeDetailsPage: React.FC = () => {
       alert(error?.response?.data?.message || "Failed to save qualification");
     }
   };
+
+  const handleSystemLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmittingLogin(true);
+    try {
+      await EmployeeApi.createSystemLogin(id!, {
+        loginEmail: systemLoginData.loginEmail,
+        temporaryPassword: systemLoginData.temporaryPassword,
+        roleCodes: systemLoginData.roleCodes,
+        active: systemLoginData.active,
+      });
+      // reload employee
+      const updated = await EmployeeApi.getById(id!);
+      setEmployee(updated);
+      setShowSystemLoginForm(false);
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      alert(error?.response?.data?.message || "Failed to create system login");
+    } finally {
+      setSubmittingLogin(false);
+    }
+  };
+
 
   const handleRemoveQual = async (qualId: string) => {
     if (confirm("Are you sure you want to remove this qualification?")) {
@@ -802,6 +848,53 @@ export const EmployeeDetailsPage: React.FC = () => {
                 </div>
               </Card>
             </div>
+
+            <div style={{ flex: '2 1 100%', minWidth: 0, marginTop: '24px' }}>
+              <Card>
+                <div style={{ padding: '24px' }}>
+                  <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0' }}>
+                    <h2 style={{ margin: 0, color: '#0f172a', fontSize: '20px', fontWeight: 700, lineHeight: 1.3 }}>System Access</h2>
+                    <p style={{ margin: '6px 0 0', color: '#64748b', fontSize: '14px', lineHeight: 1.5 }}>
+                      System login and roles
+                    </p>
+                  </div>
+
+                  {employee.user ? (
+                    <div style={{ display: 'grid', gap: '14px' }}>
+                      <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                        <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Login Email</p>
+                        <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600 }}>{employee.user.email}</p>
+                      </div>
+                      <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
+                        <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>System Roles</p>
+                        <p style={{ margin: '7px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 600 }}>
+                          {employee.user.roles && employee.user.roles.length > 0 ? employee.user.roles.join(', ') : 'No Roles Assigned'}
+                        </p>
+                      </div>
+                      <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <p style={{ margin: 0, color: '#64748b', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Account Status</p>
+                        </div>
+                        <StatusBadge status={employee.user.active ? 'ACTIVE' : 'INACTIVE'} variant={employee.user.active ? 'success' : 'neutral'} />
+                      </div>
+                      <div style={{ marginTop: '16px', display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                        <Button variant="secondary" onClick={() => navigate('/users')}>Manage User Account</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <EmptyState
+                      title="No system login"
+                      message="This employee does not have a system login."
+                      action={
+                        <Button onClick={() => setShowSystemLoginForm(true)}>
+                          Create System Login
+                        </Button>
+                      }
+                    />
+                  )}
+                </div>
+              </Card>
+            </div>
           </div>
         )}
 
@@ -1184,6 +1277,64 @@ export const EmployeeDetailsPage: React.FC = () => {
           onClose={() => setShowLeaveForm(false)}
           onSubmit={handleLeaveSubmit}
         />
+      )}
+
+      {showSystemLoginForm && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div style={{ backgroundColor: "var(--color-surface)", padding: "2rem", borderRadius: "10px", width: "100%", maxWidth: "500px" }}>
+            <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "1rem" }}>Create System Login</h2>
+            <form onSubmit={handleSystemLoginSubmit}>
+              <div style={{ display: "grid", gap: "1rem", marginBottom: "1.5rem" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, marginBottom: "0.5rem" }}>Login Email *</label>
+                  <Input 
+                    type="email" 
+                    required 
+                    value={systemLoginData.loginEmail} 
+                    onChange={e => setSystemLoginData(p => ({...p, loginEmail: e.target.value}))} 
+                    placeholder={employee?.workEmail || "employee@knoweb.lk"}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, marginBottom: "0.5rem" }}>Password *</label>
+                  <Input 
+                    type="password" 
+                    required 
+                    value={systemLoginData.temporaryPassword} 
+                    onChange={e => setSystemLoginData(p => ({...p, temporaryPassword: e.target.value}))} 
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, marginBottom: "0.5rem" }}>System Role *</label>
+                  <select 
+                    required
+                    style={{ width: "100%", padding: "0.5rem", borderRadius: "0.375rem", border: "1px solid var(--color-border)", backgroundColor: "var(--color-surface)", color: "var(--color-text)" }}
+                    value={systemLoginData.roleCodes[0] || ""}
+                    onChange={e => setSystemLoginData(p => ({...p, roleCodes: [e.target.value]}))}
+                  >
+                    <option value="">Select a Role</option>
+                    {roles.map(r => <option key={r.code} value={r.code}>{r.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, marginBottom: "0.5rem" }}>Account Status</label>
+                  <select 
+                    style={{ width: "100%", padding: "0.5rem", borderRadius: "0.375rem", border: "1px solid var(--color-border)", backgroundColor: "var(--color-surface)", color: "var(--color-text)" }}
+                    value={systemLoginData.active ? "true" : "false"}
+                    onChange={e => setSystemLoginData(p => ({...p, active: e.target.value === "true"}))}
+                  >
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem" }}>
+                <Button type="button" variant="ghost" onClick={() => setShowSystemLoginForm(false)} disabled={submittingLogin}>Cancel</Button>
+                <Button type="submit" isLoading={submittingLogin}>Create Login</Button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

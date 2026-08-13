@@ -44,13 +44,12 @@ interface SimpleUser {
 
 interface EmployeeFormFieldsProps {
   formData: any;
-  updateFormField: (field: string, value: string | number) => void;
+  updateFormField: (field: string, value: any) => void;
   formLoading: boolean;
   departments: Department[];
-  usersToDisplay: SimpleUser[];
+  roles: {code: string, name: string}[];
   employeeNumberDisabled: boolean;
   employeeNumberValue: string;
-  hasGlobalAccess: boolean;
 }
 
 const EmployeeFormFields: React.FC<EmployeeFormFieldsProps> = ({
@@ -58,10 +57,9 @@ const EmployeeFormFields: React.FC<EmployeeFormFieldsProps> = ({
   updateFormField,
   formLoading,
   departments,
-  usersToDisplay,
+  roles,
   employeeNumberDisabled,
-  employeeNumberValue,
-  hasGlobalAccess
+  employeeNumberValue
 }) => {
   return (
     <>
@@ -154,24 +152,6 @@ const EmployeeFormFields: React.FC<EmployeeFormFieldsProps> = ({
               disabled={formLoading}
             />
           </FormField>
-          
-          {hasGlobalAccess && (
-            <FormField label="User Account" id="userId">
-              <Select
-                id="userId"
-                value={formData.userId}
-                onChange={(e) => updateFormField('userId', e.target.value)}
-                disabled={formLoading}
-              >
-                <option value="">-- No User Account --</option>
-                {usersToDisplay.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.firstName} {u.lastName} ({u.email})
-                  </option>
-                ))}
-              </Select>
-            </FormField>
-          )}
         </div>
 
         <div style={{ marginTop: '0.5rem', marginBottom: '0.75rem' }}>
@@ -183,7 +163,13 @@ const EmployeeFormFields: React.FC<EmployeeFormFieldsProps> = ({
               id="workEmail"
               type="email"
               value={formData.workEmail}
-              onChange={(e) => updateFormField('workEmail', e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                updateFormField('workEmail', val);
+                if (formData.createSystemLogin && !formData.loginEmail) {
+                  updateFormField('loginEmail', val);
+                }
+              }}
               disabled={formLoading}
             />
           </FormField>
@@ -234,6 +220,85 @@ const EmployeeFormFields: React.FC<EmployeeFormFieldsProps> = ({
             />
           </FormField>
         </div>
+
+        <div style={{ marginTop: '0.5rem', marginBottom: '0.75rem' }}>
+          <SectionHeader title="System Access" />
+        </div>
+        <div style={{ marginBottom: '1.25rem', paddingBottom: '2rem' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={formData.createSystemLogin || false}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                updateFormField('createSystemLogin', checked);
+                if (checked && !formData.loginEmail) {
+                  updateFormField('loginEmail', formData.workEmail || '');
+                }
+              }}
+              disabled={formLoading}
+              style={{ width: '1.2rem', height: '1.2rem' }}
+            />
+            <span style={{ fontWeight: 500 }}>Create System Login</span>
+          </label>
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', marginTop: '0.25rem', marginBottom: '1rem' }}>
+            Create a login account so this employee can access the system.
+          </p>
+
+          {formData.createSystemLogin && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', columnGap: '1rem', rowGap: '0.5rem' }}>
+              <FormField label="Login Email" required id="loginEmail">
+                <Input
+                  id="loginEmail"
+                  type="email"
+                  value={formData.loginEmail || ''}
+                  onChange={(e) => updateFormField('loginEmail', e.target.value)}
+                  disabled={formLoading}
+                  required
+                />
+              </FormField>
+
+              <FormField label="System Role" required id="roleCodes">
+                <Select
+                  id="roleCodes"
+                  value={(formData.roleCodes && formData.roleCodes[0]) || ''}
+                  onChange={(e) => updateFormField('roleCodes', [e.target.value])}
+                  disabled={formLoading}
+                  required
+                >
+                  <option value="">Select a Role</option>
+                  {roles.map(r => (
+                    <option key={r.code} value={r.code}>{r.name}</option>
+                  ))}
+                </Select>
+              </FormField>
+
+              <FormField label="Password" required id="temporaryPassword">
+                <Input
+                  id="temporaryPassword"
+                  type="password"
+                  value={formData.temporaryPassword || ''}
+                  onChange={(e) => updateFormField('temporaryPassword', e.target.value)}
+                  disabled={formLoading}
+                  required
+                />
+              </FormField>
+
+              <FormField label="Account Status" required id="active">
+                <Select
+                  id="active"
+                  value={formData.active !== false ? 'true' : 'false'}
+                  onChange={(e) => updateFormField('active', e.target.value === 'true')}
+                  disabled={formLoading}
+                  required
+                >
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
+                </Select>
+              </FormField>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );
@@ -251,14 +316,19 @@ const emptyFormData = {
   employmentType: 'FULL_TIME',
   hireDate: '',
   weeklyCapacityHours: 40,
-  userId: '',
-  notes: ''
+  notes: '',
+  createSystemLogin: false,
+  loginEmail: '',
+  temporaryPassword: '',
+  roleCodes: [] as string[],
+  active: true
 };
 
 export const EmployeesPage: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [availableUsers, setAvailableUsers] = useState<SimpleUser[]>([]);
+  const [roles, setRoles] = useState<{code: string, name: string}[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState('');
@@ -294,9 +364,10 @@ export const EmployeesPage: React.FC = () => {
 
       // 2. Global Administrator Data (Optional)
       if (hasGlobalAccess) {
-        const [deptResult, usersResult] = await Promise.allSettled([
+        const [deptResult, usersResult, rolesResult] = await Promise.allSettled([
           DepartmentApi.search(),
-          apiClient.get('/users', { params: { active: true, unlinked: true, size: 100 } })
+          apiClient.get('/users', { params: { active: true, unlinked: true, size: 100 } }),
+          apiClient.get('/roles')
         ]);
 
         if (deptResult.status === 'fulfilled') {
@@ -309,6 +380,12 @@ export const EmployeesPage: React.FC = () => {
           setAvailableUsers(usersResult.value.data?.content || []);
         } else {
           console.warn('Failed to load available users', usersResult.reason);
+        }
+        
+        if (rolesResult.status === 'fulfilled') {
+          setRoles(rolesResult.value.data || []);
+        } else {
+          console.warn('Failed to load roles', rolesResult.reason);
         }
       }
     } catch (error) {
@@ -335,7 +412,7 @@ export const EmployeesPage: React.FC = () => {
     }
   };
 
-  const updateAddFormField = (field: string, value: string | number) => {
+  const updateAddFormField = (field: string, value: any) => {
     setAddFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -357,7 +434,11 @@ export const EmployeesPage: React.FC = () => {
         employmentType: addFormData.employmentType as any,
         hireDate: addFormData.hireDate || undefined,
         weeklyCapacityHours: addFormData.weeklyCapacityHours,
-        userId: addFormData.userId || undefined,
+        createSystemLogin: addFormData.createSystemLogin,
+        loginEmail: addFormData.createSystemLogin ? (addFormData.loginEmail || addFormData.workEmail || undefined) : undefined,
+        temporaryPassword: addFormData.createSystemLogin ? addFormData.temporaryPassword : undefined,
+        roleCodes: addFormData.createSystemLogin ? addFormData.roleCodes : undefined,
+        active: addFormData.createSystemLogin ? addFormData.active : undefined,
       };
 
       await EmployeeApi.create(payload);
@@ -371,7 +452,7 @@ export const EmployeesPage: React.FC = () => {
     }
   };
 
-  const updateFormField = (field: string, value: string | number) => {
+  const updateFormField = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -390,8 +471,12 @@ export const EmployeesPage: React.FC = () => {
       contactNumber: employee.contactNumber || '',
       personalEmail: employee.personalEmail || '',
       weeklyCapacityHours: employee.weeklyCapacityHours || 40,
-      userId: employee.user?.id || '',
-      notes: employee.notes || ''
+      notes: employee.notes || '',
+      createSystemLogin: false,
+      loginEmail: '',
+      temporaryPassword: '',
+      roleCodes: [],
+      active: true
     });
     setIsModalOpen(true);
   };
@@ -422,7 +507,6 @@ export const EmployeesPage: React.FC = () => {
         employmentType: formData.employmentType as any,
         hireDate: formData.hireDate || undefined,
         weeklyCapacityHours: formData.weeklyCapacityHours,
-        userId: formData.userId || undefined,
         notes: formData.notes || undefined,
       };
 
@@ -650,10 +734,9 @@ export const EmployeesPage: React.FC = () => {
             updateFormField={updateFormField} 
             formLoading={formLoading} 
             departments={departments} 
-            usersToDisplay={usersToDisplay} 
+            roles={roles}
             employeeNumberDisabled={true} 
-            employeeNumberValue={selectedEmployee?.employeeNumber || ''} 
-            hasGlobalAccess={hasGlobalAccess}
+            employeeNumberValue={selectedEmployee?.employeeNumber || ''}
           />
 
           <div
@@ -727,10 +810,9 @@ export const EmployeesPage: React.FC = () => {
             updateFormField={updateAddFormField} 
             formLoading={addFormLoading} 
             departments={departments} 
-            usersToDisplay={usersToDisplay} 
+            roles={roles}
             employeeNumberDisabled={false} 
-            employeeNumberValue={addFormData.employeeNumber} 
-            hasGlobalAccess={hasGlobalAccess}
+            employeeNumberValue={addFormData.employeeNumber}
           />
 
           <div

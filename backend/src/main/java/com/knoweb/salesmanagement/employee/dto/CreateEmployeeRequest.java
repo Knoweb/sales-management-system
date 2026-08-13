@@ -5,6 +5,7 @@ import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 public class CreateEmployeeRequest {
@@ -50,6 +51,17 @@ public class CreateEmployeeRequest {
     private BigDecimal weeklyCapacityHours = new BigDecimal("40.00");
 
     private UUID userId;
+
+    private Boolean createSystemLogin;
+
+    @Email(message = "Invalid login email format")
+    private String loginEmail;
+
+    private String temporaryPassword;
+
+    private List<String> roleCodes;
+
+    private Boolean active = true;
 
     public String getEmployeeNumber() {
         return employeeNumber;
@@ -145,5 +157,45 @@ public class CreateEmployeeRequest {
 
     public void setUserId(UUID userId) {
         this.userId = userId;
+    }
+
+    public Boolean getCreateSystemLogin() {
+        return createSystemLogin;
+    }
+
+    public void setCreateSystemLogin(Boolean createSystemLogin) {
+        this.createSystemLogin = createSystemLogin;
+    }
+
+    public String getLoginEmail() {
+        return loginEmail;
+    }
+
+    public void setLoginEmail(String loginEmail) {
+        this.loginEmail = loginEmail;
+    }
+
+    public String getTemporaryPassword() {
+        return temporaryPassword;
+    }
+
+    public void setTemporaryPassword(String temporaryPassword) {
+        this.temporaryPassword = temporaryPassword;
+    }
+
+    public List<String> getRoleCodes() {
+        return roleCodes;
+    }
+
+    public void setRoleCodes(List<String> roleCodes) {
+        this.roleCodes = roleCodes;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
     }
 }

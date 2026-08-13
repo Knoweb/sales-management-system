@@ -12,9 +12,12 @@ import com.knoweb.salesmanagement.employee.dto.UpdateEmployeeRequest;
 import com.knoweb.salesmanagement.employee.entity.Employee;
 import com.knoweb.salesmanagement.employee.enums.EmploymentStatus;
 import com.knoweb.salesmanagement.employee.repository.EmployeeRepository;
+import com.knoweb.salesmanagement.user.dto.CreateUserRequest;
 import com.knoweb.salesmanagement.user.dto.SafeUserDto;
 import com.knoweb.salesmanagement.user.entity.User;
 import com.knoweb.salesmanagement.user.repository.UserRepository;
+import com.knoweb.salesmanagement.user.service.UserService;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -30,15 +33,18 @@ public class EmployeeService {
     private final DepartmentRepository departmentRepository;
     private final UserRepository userRepository;
     private final DepartmentAccessService accessService;
+    private final UserService userService;
 
     public EmployeeService(EmployeeRepository employeeRepository,
                            DepartmentRepository departmentRepository,
                            UserRepository userRepository,
-                           DepartmentAccessService accessService) {
+                           DepartmentAccessService accessService,
+                           UserService userService) {
         this.employeeRepository = employeeRepository;
         this.departmentRepository = departmentRepository;
         this.userRepository = userRepository;
         this.accessService = accessService;
+        this.userService = userService;
     }
 
     public EmployeeDTO createEmployee(CreateEmployeeRequest request) {
@@ -69,7 +75,20 @@ public class EmployeeService {
         employee.setHireDate(request.getHireDate());
         employee.setWeeklyCapacityHours(request.getWeeklyCapacityHours());
 
-        if (request.getUserId() != null) {
+        if (Boolean.TRUE.equals(request.getCreateSystemLogin())) {
+            CreateUserRequest createUserRequest = new CreateUserRequest();
+            createUserRequest.setFirstName(request.getFirstName());
+            createUserRequest.setLastName(request.getLastName());
+            createUserRequest.setEmail(request.getLoginEmail());
+            createUserRequest.setTemporaryPassword(request.getTemporaryPassword());
+            createUserRequest.setRoleCodes(request.getRoleCodes());
+            createUserRequest.setActive(request.getActive() != null ? request.getActive() : true);
+            
+            SafeUserDto createdUserDto = userService.createUser(createUserRequest);
+            User createdUser = userRepository.findById(createdUserDto.getId())
+                .orElseThrow(() -> new IllegalStateException("User creation failed"));
+            employee.setUser(createdUser);
+        } else if (request.getUserId() != null) {
             User user = userRepository.findById(request.getUserId())
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
             if (employeeRepository.findByUserId(request.getUserId()).isPresent()) {
@@ -260,6 +279,32 @@ public class EmployeeService {
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
         employee.setUser(null);
         employeeRepository.save(employee);
+    }
+
+    public EmployeeDTO createSystemLoginForEmployee(UUID id, com.knoweb.salesmanagement.employee.dto.CreateSystemLoginRequest request) {
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
+        
+        if (employee.getUser() != null) {
+            throw new IllegalStateException("Employee already has a system login");
+        }
+
+        CreateUserRequest createUserRequest = new CreateUserRequest();
+        createUserRequest.setFirstName(employee.getFirstName());
+        createUserRequest.setLastName(employee.getLastName());
+        createUserRequest.setEmail(request.getLoginEmail());
+        createUserRequest.setTemporaryPassword(request.getTemporaryPassword());
+        createUserRequest.setRoleCodes(request.getRoleCodes());
+        createUserRequest.setActive(request.getActive() != null ? request.getActive() : true);
+        
+        SafeUserDto createdUserDto = userService.createUser(createUserRequest);
+        User createdUser = userRepository.findById(createdUserDto.getId())
+            .orElseThrow(() -> new IllegalStateException("User creation failed"));
+            
+        employee.setUser(createdUser);
+        employeeRepository.save(employee);
+        
+        return mapToDTO(employee);
     }
 
     public EmployeeDTO mapToDTO(Employee employee) {

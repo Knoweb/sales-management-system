@@ -12,11 +12,10 @@ import { Alert } from "../../components/Alert";
 import type { Department } from "../../types/department";
 import { apiClient } from "../../services/Api";
 
-interface SimpleUser {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
+
+interface Role {
+  code: string;
+  name: string;
 }
 import type {
   CreateEmployeeRequest,
@@ -43,10 +42,15 @@ export const EmployeeFormPage: React.FC = () => {
     weeklyCapacityHours: 40,
     userId: "",
     notes: "",
+    createSystemLogin: false,
+    loginEmail: "",
+    temporaryPassword: "",
+    roleCodes: [] as string[],
+    active: true,
   });
 
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [availableUsers, setAvailableUsers] = useState<SimpleUser[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,14 +61,10 @@ export const EmployeeFormPage: React.FC = () => {
         const deptData = await DepartmentApi.search(undefined, true, 0, 100);
         setDepartments(deptData.content || []);
 
-        // Fetch active, unlinked users
-        const usersResponse = await apiClient.get<{ content: SimpleUser[] }>(
-          "/users",
-          {
-            params: { active: true, unlinked: true, size: 100 },
-          },
-        );
-        setAvailableUsers(usersResponse.data.content || []);
+
+        // Fetch roles
+        const rolesResponse = await apiClient.get<Role[]>("/roles");
+        setRoles(rolesResponse.data || []);
       } catch (err) {
         console.error("Failed to load initial data", err);
         setError("Failed to load form data.");
@@ -89,9 +89,14 @@ export const EmployeeFormPage: React.FC = () => {
         employmentType: formData.employmentType as EmploymentType,
         hireDate: formData.hireDate || undefined,
         weeklyCapacityHours: formData.weeklyCapacityHours,
-        userId: formData.userId || undefined,
+        userId: !formData.createSystemLogin ? (formData.userId || undefined) : undefined,
         notes: formData.notes || undefined,
         employeeNumber: formData.employeeNumber,
+        createSystemLogin: formData.createSystemLogin,
+        loginEmail: formData.createSystemLogin ? (formData.loginEmail || formData.workEmail) : undefined,
+        temporaryPassword: formData.createSystemLogin ? formData.temporaryPassword : undefined,
+        roleCodes: formData.createSystemLogin ? formData.roleCodes : undefined,
+        active: formData.createSystemLogin ? formData.active : undefined,
       };
 
       await EmployeeApi.create(payload);
@@ -114,10 +119,29 @@ export const EmployeeFormPage: React.FC = () => {
     >,
   ) => {
     const { name, value, type } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "number" ? Number(value) : value,
-    }));
+    if (type === "checkbox") {
+      const target = e.target as HTMLInputElement;
+      setFormData((prev) => {
+        const nextState = { ...prev, [name]: target.checked };
+        if (name === "createSystemLogin" && target.checked && !prev.loginEmail) {
+          nextState.loginEmail = prev.workEmail;
+        }
+        return nextState;
+      });
+    } else if (type === "number") {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: Number(value),
+      }));
+    } else {
+      setFormData((prev) => {
+        const nextState = { ...prev, [name]: value };
+        if (name === "workEmail" && prev.createSystemLogin && !prev.loginEmail) {
+          nextState.loginEmail = value;
+        }
+        return nextState;
+      });
+    }
   };
 
   return (
@@ -249,22 +273,7 @@ export const EmployeeFormPage: React.FC = () => {
                 />
               </FormField>
 
-              <FormField label="User Account" id="userId">
-                <Select
-                  id="userId"
-                  name="userId"
-                  value={formData.userId}
-                  onChange={handleChange}
-                  disabled={loading}
-                >
-                  <option value="">-- No User Account --</option>
-                  {availableUsers.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.firstName} {u.lastName} ({u.email})
-                    </option>
-                  ))}
-                </Select>
-              </FormField>
+
             </div>
 
             <SectionHeader title="Contact Information" />
@@ -332,6 +341,101 @@ export const EmployeeFormPage: React.FC = () => {
                   disabled={loading}
                 />
               </FormField>
+            </div>
+
+            <SectionHeader title="System Access" />
+            <div style={{ marginBottom: "2rem" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  name="createSystemLogin"
+                  checked={formData.createSystemLogin}
+                  onChange={handleChange}
+                  disabled={loading}
+                  style={{ width: "1.2rem", height: "1.2rem" }}
+                />
+                <span style={{ fontWeight: 500 }}>Create System Login</span>
+              </label>
+              <p style={{ color: "var(--color-text-secondary)", fontSize: "0.875rem", marginTop: "0.25rem" }}>
+                Create a login account so this employee can access the system.
+              </p>
+
+              {formData.createSystemLogin && (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                    gap: "1.5rem",
+                    marginTop: "1.5rem",
+                  }}
+                >
+                  <FormField label="Login Email" required id="loginEmail">
+                    <Input
+                      type="email"
+                      id="loginEmail"
+                      name="loginEmail"
+                      value={formData.loginEmail}
+                      onChange={handleChange}
+                      placeholder={formData.workEmail || "employee@knoweb.lk"}
+                      required={formData.createSystemLogin}
+                      disabled={loading}
+                    />
+                  </FormField>
+
+                  <FormField label="System Role" required id="roleCodes">
+                    <Select
+                      id="roleCodes"
+                      name="roleCodes"
+                      value={formData.roleCodes[0] || ""}
+                      onChange={(e) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          roleCodes: [e.target.value],
+                        }));
+                      }}
+                      required={formData.createSystemLogin}
+                      disabled={loading}
+                    >
+                      <option value="">Select a Role</option>
+                      {roles.map((r) => (
+                        <option key={r.code} value={r.code}>
+                          {r.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </FormField>
+
+                  <FormField label="Password" required id="temporaryPassword">
+                    <Input
+                      type="password"
+                      id="temporaryPassword"
+                      name="temporaryPassword"
+                      value={formData.temporaryPassword}
+                      onChange={handleChange}
+                      required={formData.createSystemLogin}
+                      disabled={loading}
+                    />
+                  </FormField>
+
+                  <FormField label="Account Status" id="active">
+                    <Select
+                      id="active"
+                      name="active"
+                      value={formData.active ? "true" : "false"}
+                      onChange={(e) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          active: e.target.value === "true",
+                        }));
+                      }}
+                      disabled={loading}
+                    >
+                      <option value="true">Active</option>
+                      <option value="false">Inactive</option>
+                    </Select>
+                  </FormField>
+                </div>
+              )}
             </div>
 
             <div

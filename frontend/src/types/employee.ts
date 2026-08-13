@@ -38,6 +38,18 @@ export interface CreateEmployeeRequest {
     hireDate?: string;
     weeklyCapacityHours?: number;
     userId?: string;
+    createSystemLogin?: boolean;
+    loginEmail?: string;
+    temporaryPassword?: string;
+    roleCodes?: string[];
+    active?: boolean;
+}
+
+export interface CreateSystemLoginRequest {
+    loginEmail: string;
+    temporaryPassword?: string;
+    roleCodes: string[];
+    active?: boolean;
 }
 
 export interface UpdateEmployeeRequest {

@@ -1,6 +1,7 @@
 package com.knoweb.salesmanagement.employee.controller;
 
 import com.knoweb.salesmanagement.employee.dto.CreateEmployeeRequest;
+import com.knoweb.salesmanagement.employee.dto.CreateSystemLoginRequest;
 import com.knoweb.salesmanagement.employee.dto.EmployeeDTO;
 import com.knoweb.salesmanagement.employee.dto.LinkUserRequest;
 import com.knoweb.salesmanagement.employee.dto.UpdateEmployeeRequest;
@@ -81,5 +82,12 @@ public class EmployeeController {
     @PreAuthorize("hasAuthority('EMPLOYEE_USER_LINK')")
     public void unlinkUser(@PathVariable UUID id) {
         employeeService.unlinkUser(id);
+    }
+
+    @PostMapping("/{id}/system-login")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('EMPLOYEE_CREATE')")
+    public EmployeeDTO createSystemLoginForEmployee(@PathVariable UUID id, @Valid @RequestBody CreateSystemLoginRequest request) {
+        return employeeService.createSystemLoginForEmployee(id, request);
     }
 }

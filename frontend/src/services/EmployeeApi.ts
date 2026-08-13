@@ -1,5 +1,5 @@
 import { apiClient } from './Api';
-import type { Employee, CreateEmployeeRequest, UpdateEmployeeRequest, LinkUserRequest, EmployeeProfileResponse } from '../types/employee';
+import type { Employee, CreateEmployeeRequest, UpdateEmployeeRequest, LinkUserRequest, EmployeeProfileResponse, CreateSystemLoginRequest } from '../types/employee';
 import type { AssignEmployeeSkillRequest, EmployeeSkill, UpdateEmployeeSkillRequest } from '../types/skill';
 import type { EmployeeQualification, EmployeeQualificationRequest } from '../types/qualification';
 import type { EmployeeLeave, EmployeeLeaveRequest, LeaveStatus } from '../types/leave';
@@ -43,6 +43,11 @@ export const EmployeeApi = {
 
     unlinkUser: async (id: string) => {
         await apiClient.delete(`/employees/${id}/user-link`);
+    },
+
+    createSystemLogin: async (id: string, data: CreateSystemLoginRequest) => {
+        const response = await apiClient.post<Employee>(`/employees/${id}/system-login`, data);
+        return response.data;
     },
 
     // Skills
