@@ -35,6 +35,11 @@ public class LeadMapper {
             dto.setAssignedTo(lead.getAssignedTo().getId());
             dto.setAssignedToName(lead.getAssignedTo().getFirstName() + " " + lead.getAssignedTo().getLastName());
         }
+        
+        if (lead.getMarketingCampaign() != null) {
+            dto.setMarketingCampaignId(lead.getMarketingCampaign().getId());
+            dto.setMarketingCampaignName(lead.getMarketingCampaign().getName());
+        }
         return dto;
     }
 

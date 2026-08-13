@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Loader2, Lock } from 'lucide-react';
 import { LeadApi } from '../../services/LeadApi';
 import { ClientApi } from '../../services/ClientApi';
+import { marketingApi, type MarketingCampaign } from '../../services/marketingApi';
 import type { LeadRequest, LeadStatus, InquirySource } from '../../types/lead';
 import type { Client, ClientContact } from '../../types/client';
 import { Button } from '../Button';
@@ -56,6 +57,7 @@ function mapApiError(message: string): string {
 
 interface FormData extends LeadRequest {
   initialMeetingAt: string; // local datetime string for input
+  marketingCampaignId?: string;
 }
 
 const initialFormData: FormData = {
@@ -68,6 +70,7 @@ const initialFormData: FormData = {
   initialRequest: '',
   notes: '',
   initialMeetingAt: '',
+  marketingCampaignId: '',
 };
 
 interface FieldErrors {
@@ -100,23 +103,28 @@ export const LeadForm: React.FC<LeadFormProps> = ({ isOpen, onClose, onSuccess, 
   const [clients, setClients] = useState<Client[]>([]);
   const [contacts, setContacts] = useState<ClientContact[]>([]);
   const [loadingContacts, setLoadingContacts] = useState(false);
+  const [campaigns, setCampaigns] = useState<MarketingCampaign[]>([]);
 
   // Form state
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const isDirtyRef = useRef(false);
 
-  // ── Load clients once ────────────────────────────────────────────────────
+  // ── Load clients and campaigns once ────────────────────────────────────────────────────
   useEffect(() => {
-    const fetchClients = async () => {
+    const fetchOptions = async () => {
       try {
-        const data = await ClientApi.searchClients('', true, 0, 200);
-        setClients(data.content || []);
+        const [clientsData, campaignsData] = await Promise.all([
+          ClientApi.searchClients('', true, 0, 200),
+          marketingApi.getCampaigns()
+        ]);
+        setClients(clientsData.content || []);
+        setCampaigns(campaignsData || []);
       } catch {
-        // Non-blocking; list will be empty but field still shown
+        // Non-blocking; lists might be empty but fields still shown
       }
     };
-    void fetchClients();
+    void fetchOptions();
   }, []);
 
   // ── Load existing lead (edit mode) ───────────────────────────────────────
@@ -136,6 +144,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({ isOpen, onClose, onSuccess, 
         initialRequest: lead.initialRequest ?? '',
         notes: lead.notes ?? '',
         initialMeetingAt: toLocalDatetimeValue((lead as { initialMeetingAt?: string }).initialMeetingAt ?? ''),
+        marketingCampaignId: lead.marketingCampaignId ?? '',
       });
     } catch {
       setPageError('Failed to load lead details. Please try again.');
@@ -249,6 +258,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({ isOpen, onClose, onSuccess, 
       interestedProduct: formData.interestedProduct || undefined,
       initialRequest: formData.initialRequest || undefined,
       notes: formData.notes || undefined,
+      marketingCampaignId: formData.marketingCampaignId || undefined,
       initialMeetingAt: formData.initialMeetingAt
         ? toISOString(formData.initialMeetingAt)
         : undefined,
@@ -457,6 +467,28 @@ export const LeadForm: React.FC<LeadFormProps> = ({ isOpen, onClose, onSuccess, 
                 <SectionHeader title="Inquiry Details" />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', columnGap: '1rem', rowGap: '0.5rem', marginBottom: '1.25rem' }}>
+            
+            {/* Marketing Campaign */}
+            <FormField 
+              label="Marketing Campaign"
+              helpText="Optional — Select the marketing campaign that generated this lead."
+            >
+              <Select
+                name="marketingCampaignId"
+                value={formData.marketingCampaignId ?? ''}
+                onChange={handleChange}
+                disabled={saving}
+              >
+                <option value="">— Select marketing campaign —</option>
+                {campaigns.map(c => (
+                  <option key={c.id} value={c.id}>{c.name} — {c.platform}</option>
+                ))}
+                {isEditing && formData.marketingCampaignId && !campaigns.find(c => c.id === formData.marketingCampaignId) && (
+                  <option value={formData.marketingCampaignId}>Current campaign</option>
+                )}
+              </Select>
+            </FormField>
+
             {/* Interested Product */}
             <FormField 
               label="Interested Product / Service"

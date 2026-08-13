@@ -18,6 +18,8 @@ import com.knoweb.salesmanagement.lead.repository.LeadRepository;
 import com.knoweb.salesmanagement.user.entity.User;
 import com.knoweb.salesmanagement.user.repository.UserRepository;
 import com.knoweb.salesmanagement.opportunity.repository.SalesOpportunityRepository;
+import com.knoweb.salesmanagement.marketingroi.repository.MarketingCampaignRepository;
+import com.knoweb.salesmanagement.marketingroi.entity.MarketingCampaign;
 import com.knoweb.salesmanagement.audit.dto.InternalAuditLogEvent;
 import com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent;
 import org.springframework.context.ApplicationEventPublisher;
@@ -50,6 +52,7 @@ public class LeadService {
     private final UserRepository userRepository;
     private final LeadMapper leadMapper;
     private final SalesOpportunityRepository salesOpportunityRepository;
+    private final MarketingCampaignRepository marketingCampaignRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public LeadService(LeadRepository leadRepository,
@@ -61,6 +64,7 @@ public class LeadService {
                        UserRepository userRepository,
                        LeadMapper leadMapper,
                        SalesOpportunityRepository salesOpportunityRepository,
+                       MarketingCampaignRepository marketingCampaignRepository,
                        ApplicationEventPublisher eventPublisher) {
         this.leadRepository = leadRepository;
         this.leadActivityRepository = leadActivityRepository;
@@ -71,6 +75,7 @@ public class LeadService {
         this.userRepository = userRepository;
         this.leadMapper = leadMapper;
         this.salesOpportunityRepository = salesOpportunityRepository;
+        this.marketingCampaignRepository = marketingCampaignRepository;
         this.eventPublisher = eventPublisher;
     }
 
@@ -217,6 +222,12 @@ public class LeadService {
         lead.setNotes(request.getNotes());
         lead.setInitialMeetingAt(request.getInitialMeetingAt());
         
+        if (request.getMarketingCampaignId() != null) {
+            MarketingCampaign campaign = marketingCampaignRepository.findById(request.getMarketingCampaignId())
+                .orElseThrow(() -> new ResourceNotFoundException("Marketing campaign not found"));
+            lead.setMarketingCampaign(campaign);
+        }
+        
         // Auto-assign to current employee if not specified or no assign authority
         Employee currentEmployee = getCurrentEmployee();
         lead.setAssignedTo(currentEmployee);
@@ -260,6 +271,14 @@ public class LeadService {
         lead.setStatus(request.getStatus());
         lead.setNotes(request.getNotes());
         lead.setInitialMeetingAt(request.getInitialMeetingAt());
+
+        if (request.getMarketingCampaignId() != null) {
+            MarketingCampaign campaign = marketingCampaignRepository.findById(request.getMarketingCampaignId())
+                .orElseThrow(() -> new ResourceNotFoundException("Marketing campaign not found"));
+            lead.setMarketingCampaign(campaign);
+        } else {
+            lead.setMarketingCampaign(null);
+        }
 
         LeadDTO previousState = leadMapper.toDto(lead);
         lead = leadRepository.save(lead);

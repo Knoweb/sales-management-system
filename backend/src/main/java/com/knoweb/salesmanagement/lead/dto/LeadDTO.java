@@ -23,6 +23,8 @@ public class LeadDTO {
     private boolean hasOpportunity;
     private UUID opportunityId;
     private String opportunityTitle;
+    private UUID marketingCampaignId;
+    private String marketingCampaignName;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
     private OffsetDateTime initialMeetingAt;
@@ -62,6 +64,10 @@ public class LeadDTO {
     public void setOpportunityId(UUID opportunityId) { this.opportunityId = opportunityId; }
     public String getOpportunityTitle() { return opportunityTitle; }
     public void setOpportunityTitle(String opportunityTitle) { this.opportunityTitle = opportunityTitle; }
+    public UUID getMarketingCampaignId() { return marketingCampaignId; }
+    public void setMarketingCampaignId(UUID marketingCampaignId) { this.marketingCampaignId = marketingCampaignId; }
+    public String getMarketingCampaignName() { return marketingCampaignName; }
+    public void setMarketingCampaignName(String marketingCampaignName) { this.marketingCampaignName = marketingCampaignName; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }

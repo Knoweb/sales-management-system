@@ -24,6 +24,8 @@ export interface Lead {
   hasOpportunity?: boolean;
   opportunityId?: string;
   opportunityTitle?: string;
+  marketingCampaignId?: string;
+  marketingCampaignName?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -37,6 +39,7 @@ export interface LeadRequest {
   initialRequest?: string;
   status: LeadStatus;
   notes?: string;
+  marketingCampaignId?: string;
   initialMeetingAt?: string; // ISO timestamp for Phase 5 brief deadline
 }
 
