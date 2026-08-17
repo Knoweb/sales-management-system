@@ -19,6 +19,8 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { QuotationApprovalModal } from '../components/QuotationApprovalModal';
 import { ClientDecisionModal } from '../components/clients/ClientDecisionModal';
+import { LeadApi } from '../services/LeadApi';
+import type { FollowUp } from '../types/lead';
 
 export const QuotationDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +29,7 @@ export const QuotationDetailsPage: React.FC = () => {
   
   const [quotation, setQuotation] = useState<QuotationDto | null>(null);
   const [history, setHistory] = useState<QuotationApprovalHistoryDto[]>([]);
+  const [clientFollowUps, setClientFollowUps] = useState<FollowUp[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -64,6 +67,15 @@ export const QuotationDetailsPage: React.FC = () => {
       
       const historyData = await getQuotationApprovalHistory(quotationId);
       setHistory(historyData);
+      
+      if (data.status === 'PENDING_CLIENT_APPROVAL' || data.status === 'CLIENT_ACCEPTED' || data.status === 'CLIENT_REJECTED') {
+        try {
+          const followUpsData = await LeadApi.getQuotationFollowUps(quotationId);
+          setClientFollowUps(followUpsData);
+        } catch (e) {
+          console.error('Failed to fetch quotation follow-ups', e);
+        }
+      }
     } catch (error) {
       console.error('Failed to fetch quotation details:', error);
     } finally {
@@ -617,6 +629,46 @@ export const QuotationDetailsPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Client Follow-up Section */}
+      {(quotation.status === 'PENDING_CLIENT_APPROVAL' || quotation.status === 'CLIENT_ACCEPTED' || quotation.status === 'CLIENT_REJECTED') && (
+        <div className="card no-print" style={{ maxWidth: '900px', margin: '2rem auto 0 auto' }}>
+          <div className="card-header">
+            <h2 className="card-title">Client Follow-up</h2>
+          </div>
+          <div className="card-body">
+            {clientFollowUps.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {clientFollowUps.map(fu => (
+                  <div key={fu.id} style={{
+                    padding: '1rem',
+                    borderLeft: `4px solid ${fu.status === 'COMPLETED' ? 'var(--color-success)' : 'var(--color-warning)'}`,
+                    backgroundColor: 'var(--color-surface-secondary)',
+                    borderRadius: '0 8px 8px 0'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                      <strong>Status: {fu.status === 'COMPLETED' ? 'Completed' : 'Waiting for Client Response'}</strong>
+                    </div>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>
+                      Next Follow-up: {new Date(fu.followUpDate).toLocaleString()}
+                    </div>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>
+                      Assigned To: {fu.assignedToName || 'Unassigned'}
+                    </div>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+                      Last Result: {fu.result ? fu.result.replace(/_/g, ' ') : '—'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500" style={{ textAlign: 'center', padding: '1rem 0' }}>
+                Status: {quotation.status === 'PENDING_CLIENT_APPROVAL' ? 'Waiting for Client Response' : 'Completed'}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Approval History Section */}
       <div className="card no-print" style={{ maxWidth: '900px', margin: '2rem auto 0 auto' }}>

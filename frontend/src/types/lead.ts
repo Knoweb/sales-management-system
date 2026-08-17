@@ -62,6 +62,9 @@ export interface LeadActivityRequest {
 export interface FollowUp {
   id: string;
   leadId: string;
+  quotationId?: string;
+  type?: 'MANUAL' | 'QUOTATION_CLIENT_RESPONSE';
+  result?: 'CLIENT_RESPONDED' | 'NO_RESPONSE';
   followUpDate: string;
   status: FollowUpStatus;
   notes: string | null;
@@ -78,4 +81,9 @@ export interface FollowUpRequest {
   status: FollowUpStatus;
   notes?: string;
   assignedTo?: string;
+}
+
+export interface CompleteFollowUpRequest {
+  notes?: string;
+  result?: 'CLIENT_RESPONDED' | 'NO_RESPONSE';
 }

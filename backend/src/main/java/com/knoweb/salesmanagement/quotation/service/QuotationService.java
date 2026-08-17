@@ -10,8 +10,18 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.knoweb.salesmanagement.lead.repository.FollowUpRepository;
+import com.knoweb.salesmanagement.lead.entity.FollowUp;
+import com.knoweb.salesmanagement.lead.enums.FollowUpStatus;
+import com.knoweb.salesmanagement.lead.enums.FollowUpType;
+import com.knoweb.salesmanagement.lead.enums.FollowUpResult;
+import com.knoweb.salesmanagement.notification.dto.InternalNotificationEvent;
+import com.knoweb.salesmanagement.costing.repository.ConsolidatedTechnicalEstimateRepository;
+import com.knoweb.salesmanagement.opportunity.entity.SalesOpportunity;
+import com.knoweb.salesmanagement.lead.entity.Lead;
+
 import java.math.BigDecimal;
-import java.util.Collections;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -23,15 +33,21 @@ public class QuotationService {
     private final QuotationApprovalHistoryRepository approvalHistoryRepository;
     private final com.knoweb.salesmanagement.user.repository.UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final FollowUpRepository followUpRepository;
+    private final ConsolidatedTechnicalEstimateRepository estimateRepository;
 
     public QuotationService(QuotationRepository quotationRepository, 
                             QuotationApprovalHistoryRepository approvalHistoryRepository,
                             com.knoweb.salesmanagement.user.repository.UserRepository userRepository,
-                            ApplicationEventPublisher eventPublisher) {
+                            ApplicationEventPublisher eventPublisher,
+                            FollowUpRepository followUpRepository,
+                            ConsolidatedTechnicalEstimateRepository estimateRepository) {
         this.quotationRepository = quotationRepository;
         this.approvalHistoryRepository = approvalHistoryRepository;
         this.userRepository = userRepository;
         this.eventPublisher = eventPublisher;
+        this.followUpRepository = followUpRepository;
+        this.estimateRepository = estimateRepository;
     }
 
     @Transactional(readOnly = true)
@@ -43,6 +59,32 @@ public class QuotationService {
         return quotationRepository.findAll().stream()
                 .filter(q -> canReadDrafts || q.getStatus() != com.knoweb.salesmanagement.quotation.enums.QuotationStatus.DRAFT)
                 .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<com.knoweb.salesmanagement.lead.dto.FollowUpDTO> getFollowUpsForQuotation(UUID quotationId) {
+        return followUpRepository.findByQuotationIdAndStatus(quotationId, FollowUpStatus.PENDING)
+                .stream()
+                .filter(f -> f.getType() == FollowUpType.QUOTATION_CLIENT_RESPONSE)
+                .map(f -> {
+                    com.knoweb.salesmanagement.lead.dto.FollowUpDTO dto = new com.knoweb.salesmanagement.lead.dto.FollowUpDTO();
+                    dto.setId(f.getId());
+                    dto.setLeadId(f.getLead().getId());
+                    dto.setQuotationId(f.getQuotation().getId());
+                    if (f.getType() != null) dto.setType(f.getType().name());
+                    if (f.getResult() != null) dto.setResult(f.getResult().name());
+                    dto.setFollowUpDate(f.getFollowUpDate());
+                    dto.setStatus(f.getStatus());
+                    dto.setNotes(f.getNotes());
+                    if (f.getAssignedTo() != null) {
+                        dto.setAssignedTo(f.getAssignedTo().getId());
+                        dto.setAssignedToName(f.getAssignedTo().getFirstName() + " " + f.getAssignedTo().getLastName());
+                    }
+                    dto.setCreatedAt(f.getCreatedAt());
+                    dto.setUpdatedAt(f.getUpdatedAt());
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -256,6 +298,45 @@ public class QuotationService {
         auditEvent.setNewState(newState);
         eventPublisher.publishEvent(auditEvent);
 
+        if (quotation.getApprovedEstimateId() != null) {
+            estimateRepository.findById(quotation.getApprovedEstimateId()).ifPresent(estimate -> {
+                if (estimate.getTechnicalProject() != null && estimate.getTechnicalProject().getSalesOpportunity() != null) {
+                    SalesOpportunity opp = estimate.getTechnicalProject().getSalesOpportunity();
+                    Lead lead = opp.getLead();
+                    if (lead != null) {
+                        FollowUp followUp = new FollowUp();
+                        followUp.setLead(lead);
+                        followUp.setQuotation(saved);
+                        followUp.setFollowUpDate(OffsetDateTime.now().plusDays(2));
+                        followUp.setStatus(FollowUpStatus.PENDING);
+                        followUp.setType(FollowUpType.QUOTATION_CLIENT_RESPONSE);
+                        followUp.setNotes("Quotation client response follow-up for " + saved.getQuotationNumber());
+                        followUp.setAssignedTo(opp.getAssignedSalesOfficer() != null ? opp.getAssignedSalesOfficer() : lead.getAssignedTo());
+                        followUp = followUpRepository.save(followUp);
+                        
+                        InternalAuditLogEvent fuAuditEvent = new InternalAuditLogEvent();
+                        fuAuditEvent.setEventType("QUOTATION_FOLLOW_UP_CREATED");
+                        fuAuditEvent.setEntityType("FollowUp");
+                        fuAuditEvent.setEntityId(followUp.getId());
+                        fuAuditEvent.setAction("CREATE");
+                        eventPublisher.publishEvent(fuAuditEvent);
+                        
+                        if (followUp.getAssignedTo() != null && followUp.getAssignedTo().getUser() != null) {
+                            InternalNotificationEvent notification = new InternalNotificationEvent();
+                            notification.setEventType("FOLLOW_UP_ASSIGNED");
+                            notification.setTitle("Client Response Follow-up Assigned");
+                            notification.setMessage("A new quotation client response follow-up has been assigned to you for " + saved.getQuotationNumber());
+                            notification.setEntityType("Lead");
+                            notification.setEntityId(lead.getId());
+                            notification.setContextUrl("/dashboard/leads/follow-ups?tab=upcoming");
+                            notification.setRecipientUserIds(java.util.Set.of(followUp.getAssignedTo().getUser().getId()));
+                            eventPublisher.publishEvent(notification);
+                        }
+                    }
+                }
+            });
+        }
+
         return newState;
     }
 
@@ -305,6 +386,38 @@ public class QuotationService {
         auditEvent.setPreviousState(previousState);
         auditEvent.setNewState(newState);
         eventPublisher.publishEvent(auditEvent);
+
+        if ("ACCEPT".equals(action) || "REJECT".equals(action)) {
+            // Cancel active follow-ups for this quotation
+            List<FollowUp> pendingFollowUps = followUpRepository.findByQuotationIdAndStatus(id, FollowUpStatus.PENDING);
+            for (FollowUp fu : pendingFollowUps) {
+                if (fu.getType() == FollowUpType.QUOTATION_CLIENT_RESPONSE) {
+                    fu.setStatus(FollowUpStatus.COMPLETED);
+                    fu.setResult(FollowUpResult.CLIENT_RESPONDED);
+                    fu.setNotes(fu.getNotes() != null ? fu.getNotes() + "\nClient " + action + "ED" : "Client " + action + "ED");
+                    fu = followUpRepository.save(fu);
+                    
+                    InternalAuditLogEvent fuAuditEvent = new InternalAuditLogEvent();
+                    fuAuditEvent.setEventType("QUOTATION_FOLLOW_UP_STOPPED");
+                    fuAuditEvent.setEntityType("FollowUp");
+                    fuAuditEvent.setEntityId(fu.getId());
+                    fuAuditEvent.setAction("UPDATE");
+                    eventPublisher.publishEvent(fuAuditEvent);
+                    
+                    if (fu.getAssignedTo() != null && fu.getAssignedTo().getUser() != null) {
+                        InternalNotificationEvent notification = new InternalNotificationEvent();
+                        notification.setEventType("FOLLOW_UP_CANCELLED");
+                        notification.setTitle("Follow-up Cycle Stopped");
+                        notification.setMessage("The quotation follow-up cycle has been stopped because the client " + action + "ED the quotation.");
+                        notification.setEntityType("Lead");
+                        notification.setEntityId(fu.getLead().getId());
+                        notification.setContextUrl("/dashboard/leads/follow-ups?tab=upcoming");
+                        notification.setRecipientUserIds(java.util.Set.of(fu.getAssignedTo().getUser().getId()));
+                        eventPublisher.publishEvent(notification);
+                    }
+                }
+            }
+        }
 
         return newState;
     }

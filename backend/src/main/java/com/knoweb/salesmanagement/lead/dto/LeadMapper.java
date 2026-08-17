@@ -63,6 +63,16 @@ public class LeadMapper {
         FollowUpDTO dto = new FollowUpDTO();
         dto.setId(followUp.getId());
         dto.setLeadId(followUp.getLead().getId());
+        if (followUp.getQuotation() != null) {
+            dto.setQuotationId(followUp.getQuotation().getId());
+        }
+        if (followUp.getType() != null) {
+            dto.setType(followUp.getType().name());
+        }
+        if (followUp.getResult() != null) {
+            dto.setResult(followUp.getResult().name());
+        }
+        
         dto.setFollowUpDate(followUp.getFollowUpDate());
         dto.setStatus(followUp.getStatus());
         dto.setNotes(followUp.getNotes());

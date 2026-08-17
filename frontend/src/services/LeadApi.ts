@@ -1,5 +1,5 @@
 import { apiClient as api } from './Api';
-import type { Lead, LeadRequest, LeadActivity, LeadActivityRequest, FollowUp, FollowUpRequest, LeadStatus } from '../types/lead';
+import type { Lead, LeadRequest, LeadActivity, LeadActivityRequest, FollowUp, FollowUpRequest, CompleteFollowUpRequest, LeadStatus } from '../types/lead';
 import type { PaginatedResponse } from './ClientApi';
 
 export const LeadApi = {
@@ -75,8 +75,13 @@ export const LeadApi = {
     return response.data;
   },
 
-  completeFollowUp: async (leadId: string, followUpId: string, notes?: string) => {
-    const response = await api.patch<FollowUp>(`/leads/${leadId}/follow-ups/${followUpId}/complete`, { notes });
+  completeFollowUp: async (leadId: string, followUpId: string, data: CompleteFollowUpRequest) => {
+    const response = await api.patch<FollowUp>(`/leads/${leadId}/follow-ups/${followUpId}/complete`, data);
+    return response.data;
+  },
+
+  getQuotationFollowUps: async (quotationId: string) => {
+    const response = await api.get<FollowUp[]>(`/quotations/${quotationId}/follow-ups`);
     return response.data;
   },
 

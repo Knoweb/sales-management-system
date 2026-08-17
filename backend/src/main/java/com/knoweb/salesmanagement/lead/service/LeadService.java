@@ -503,6 +503,59 @@ public class LeadService {
         followUp = followUpRepository.save(followUp);
         logSystemActivity(lead, "Follow-up marked as completed");
 
+        if (request != null && request.getResult() != null) {
+            try {
+                followUp.setResult(com.knoweb.salesmanagement.lead.enums.FollowUpResult.valueOf(request.getResult()));
+                followUp = followUpRepository.save(followUp);
+            } catch (Exception e) {}
+        }
+
+        if (followUp.getType() == com.knoweb.salesmanagement.lead.enums.FollowUpType.QUOTATION_CLIENT_RESPONSE && followUp.getResult() == com.knoweb.salesmanagement.lead.enums.FollowUpResult.NO_RESPONSE) {
+            // Ensure we don't have another pending follow-up already
+            java.util.List<FollowUp> existing = followUpRepository.findByQuotationIdAndStatus(followUp.getQuotation().getId(), com.knoweb.salesmanagement.lead.enums.FollowUpStatus.PENDING);
+            boolean hasPending = existing.stream().anyMatch(f -> f.getType() == com.knoweb.salesmanagement.lead.enums.FollowUpType.QUOTATION_CLIENT_RESPONSE);
+            if (!hasPending) {
+                FollowUp nextFollowUp = new FollowUp();
+                nextFollowUp.setLead(lead);
+                nextFollowUp.setQuotation(followUp.getQuotation());
+                nextFollowUp.setFollowUpDate(followUp.getFollowUpDate().plusDays(2));
+                nextFollowUp.setStatus(com.knoweb.salesmanagement.lead.enums.FollowUpStatus.PENDING);
+                nextFollowUp.setType(com.knoweb.salesmanagement.lead.enums.FollowUpType.QUOTATION_CLIENT_RESPONSE);
+                nextFollowUp.setNotes(followUp.getNotes() != null && followUp.getNotes().contains("Quotation client response") 
+                        ? followUp.getNotes() : "Quotation client response follow-up");
+                nextFollowUp.setAssignedTo(followUp.getAssignedTo());
+                nextFollowUp = followUpRepository.save(nextFollowUp);
+                
+                InternalAuditLogEvent fuAuditEvent = new InternalAuditLogEvent();
+                fuAuditEvent.setEventType("QUOTATION_FOLLOW_UP_NEXT_GENERATED");
+                fuAuditEvent.setEntityType("FollowUp");
+                fuAuditEvent.setEntityId(nextFollowUp.getId());
+                fuAuditEvent.setAction("CREATE");
+                eventPublisher.publishEvent(fuAuditEvent);
+                
+                if (nextFollowUp.getAssignedTo() != null && nextFollowUp.getAssignedTo().getUser() != null) {
+                    InternalNotificationEvent notification = new InternalNotificationEvent();
+                    notification.setEventType("FOLLOW_UP_ASSIGNED");
+                    notification.setTitle("Next Client Response Follow-up Assigned");
+                    notification.setMessage("A new quotation client response follow-up has been assigned to you (Previous: NO RESPONSE).");
+                    notification.setEntityType("Lead");
+                    notification.setEntityId(lead.getId());
+                    notification.setContextUrl("/dashboard/leads/follow-ups?tab=upcoming");
+                    notification.setRecipientUserIds(java.util.Set.of(nextFollowUp.getAssignedTo().getUser().getId()));
+                    eventPublisher.publishEvent(notification);
+                }
+            }
+        }
+        
+        if (followUp.getType() == com.knoweb.salesmanagement.lead.enums.FollowUpType.QUOTATION_CLIENT_RESPONSE) {
+            InternalAuditLogEvent auditEvent = new InternalAuditLogEvent();
+            auditEvent.setEventType("QUOTATION_FOLLOW_UP_COMPLETED");
+            auditEvent.setEntityType("FollowUp");
+            auditEvent.setEntityId(followUp.getId());
+            auditEvent.setAction("UPDATE");
+            eventPublisher.publishEvent(auditEvent);
+        }
+
         return leadMapper.toFollowUpDto(followUp);
     }
 }

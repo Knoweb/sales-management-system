@@ -67,7 +67,7 @@ export const LeadFollowUps: React.FC<LeadFollowUpsProps> = ({ leadId }) => {
 
   const handleComplete = async (followUpId: string) => {
     try {
-      await LeadApi.completeFollowUp(leadId, followUpId);
+      await LeadApi.completeFollowUp(leadId, followUpId, {});
       void loadFollowUps();
     } catch {
       alert('Failed to complete follow-up');

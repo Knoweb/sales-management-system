@@ -7,6 +7,9 @@ import java.util.UUID;
 public class FollowUpDTO {
     private UUID id;
     private UUID leadId;
+    private UUID quotationId;
+    private String type;
+    private String result;
     private OffsetDateTime followUpDate;
     private FollowUpStatus status;
     private String notes;
@@ -24,6 +27,15 @@ public class FollowUpDTO {
     public void setLeadId(UUID leadId) { this.leadId = leadId; }
     public OffsetDateTime getFollowUpDate() { return followUpDate; }
     public void setFollowUpDate(OffsetDateTime followUpDate) { this.followUpDate = followUpDate; }
+
+    public UUID getQuotationId() { return quotationId; }
+    public void setQuotationId(UUID quotationId) { this.quotationId = quotationId; }
+
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+
+    public String getResult() { return result; }
+    public void setResult(String result) { this.result = result; }
     public FollowUpStatus getStatus() { return status; }
     public void setStatus(FollowUpStatus status) { this.status = status; }
     public String getNotes() { return notes; }

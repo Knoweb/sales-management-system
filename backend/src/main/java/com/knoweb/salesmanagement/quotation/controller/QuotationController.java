@@ -30,6 +30,12 @@ public class QuotationController {
         return ResponseEntity.ok(quotationService.getQuotationById(id));
     }
 
+    @GetMapping("/{id}/follow-ups")
+    @PreAuthorize("hasAuthority('QUOTATION_READ') or hasAuthority('QUOTATION_APPROVE')")
+    public ResponseEntity<java.util.List<com.knoweb.salesmanagement.lead.dto.FollowUpDTO>> getQuotationFollowUps(@PathVariable UUID id) {
+        return ResponseEntity.ok(quotationService.getFollowUpsForQuotation(id));
+    }
+
     /**
      * Create a new quotation.
      */

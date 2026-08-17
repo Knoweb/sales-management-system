@@ -35,6 +35,10 @@ export const FollowUpDashboard: React.FC = () => {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
+  const [selectedFollowUp, setSelectedFollowUp] = useState<FollowUp | null>(null);
+  const [completeResult, setCompleteResult] = useState<'CLIENT_RESPONDED' | 'NO_RESPONSE'>('CLIENT_RESPONDED');
+  const [completeNotes, setCompleteNotes] = useState('');
+
   useEffect(() => {
     let mounted = true;
     const fetchFollowUps = async () => {
@@ -61,15 +65,34 @@ export const FollowUpDashboard: React.FC = () => {
     return () => { mounted = false; };
   }, [filterType, page]);
 
-  const handleComplete = async (fu: FollowUp) => {
+  const openCompleteModal = (fu: FollowUp) => {
+    if (fu.type === 'QUOTATION_CLIENT_RESPONSE') {
+      setSelectedFollowUp(fu);
+      setCompleteResult('CLIENT_RESPONDED');
+      setCompleteNotes('');
+    } else {
+      // standard complete
+      handleComplete(fu, {});
+    }
+  };
+
+  const submitCompleteModal = () => {
+    if (selectedFollowUp) {
+      handleComplete(selectedFollowUp, { result: completeResult, notes: completeNotes });
+    }
+    setSelectedFollowUp(null);
+  };
+
+  const handleComplete = async (fu: FollowUp, data: any) => {
     try {
-      await LeadApi.completeFollowUp(fu.leadId, fu.id);
+      await LeadApi.completeFollowUp(fu.leadId, fu.id, data);
       window.location.reload(); // simple reload to refresh
-      alert('Follow-up marked as completed!');
     } catch {
       alert('Failed to complete follow-up');
     }
   };
+
+
 
   const getStatusDisplay = (fu: FollowUp) => {
     // eslint-disable-next-line react-hooks/purity
@@ -156,6 +179,11 @@ export const FollowUpDashboard: React.FC = () => {
                           <p style={{ margin: '4px 0 0 0', fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
                             Lead: <span style={{ color: 'var(--color-primary)', fontWeight: 500 }}>{fu.leadTitle || 'Untitled Lead'}</span>
                           </p>
+                          {fu.type === 'QUOTATION_CLIENT_RESPONSE' && (
+                            <p style={{ margin: '4px 0 0 0', fontSize: '0.875rem', color: 'var(--color-warning)' }}>
+                              <strong>Quotation Follow-up</strong>
+                            </p>
+                          )}
                         </div>
                         <span style={{ 
                           padding: '4px 10px', 
@@ -206,21 +234,20 @@ export const FollowUpDashboard: React.FC = () => {
                         View Details
                       </Button>
                       <Button 
-                        variant="outline"
-                        icon={<Check size={16} />}
-                        onClick={() => handleComplete(fu)} 
-                        title="Mark as Completed"
-                        style={{ 
-                          fontSize: '0.8125rem', 
-                          padding: '0 12px', 
-                          height: '32px', 
-                          color: 'var(--color-success)',
-                          borderColor: 'var(--color-success)',
-                          backgroundColor: 'var(--color-success-bg)'
-                        }}
-                      >
-                        Mark Complete
-                      </Button>
+                          variant="outline" 
+                          onClick={() => openCompleteModal(fu)} 
+                          icon={<Check size={16} />}
+                          style={{
+                            color: 'var(--color-success)',
+                            borderColor: 'var(--color-success)',
+                            backgroundColor: 'var(--color-success-bg)',
+                            fontSize: '0.8125rem', 
+                            padding: '0 12px', 
+                            height: '32px'
+                          }}
+                        >
+                          Complete
+                        </Button>
                     </div>
                   </div>
                 )})}
@@ -247,6 +274,50 @@ export const FollowUpDashboard: React.FC = () => {
               )}
             </>
           )}
+        </div>
+      )}
+
+      {selectedFollowUp && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div className="card" style={{ width: '100%', maxWidth: '400px', padding: '1.5rem', backgroundColor: 'var(--color-surface)' }}>
+            <h3 style={{ marginTop: 0, marginBottom: '1rem', color: 'var(--color-text-primary)' }}>Complete Quotation Follow-up</h3>
+            
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label className="form-label" style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--color-text-primary)' }}>Result *</label>
+              <select 
+                className="form-input" 
+                value={completeResult} 
+                onChange={e => setCompleteResult(e.target.value as any)}
+                style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)' }}
+              >
+                <option value="CLIENT_RESPONDED">Client Responded</option>
+                <option value="NO_RESPONSE">No Response</option>
+              </select>
+            </div>
+            
+            {completeResult === 'NO_RESPONSE' && (
+              <div style={{ padding: '0.75rem', backgroundColor: 'var(--color-warning-bg)', borderRadius: '4px', border: '1px solid var(--color-warning)', color: 'var(--color-warning-dark)', marginBottom: '1rem', fontSize: '0.875rem' }}>
+                <strong>Next Follow-up: </strong>
+                {new Date(new Date(selectedFollowUp.followUpDate).getTime() + 2 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </div>
+            )}
+            
+            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+              <label className="form-label" style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--color-text-primary)' }}>Notes</label>
+              <textarea 
+                className="form-input" 
+                value={completeNotes} 
+                onChange={e => setCompleteNotes(e.target.value)}
+                style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', minHeight: '80px' }}
+                placeholder="Optional notes..."
+              />
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+              <Button variant="outline" onClick={() => setSelectedFollowUp(null)}>Cancel</Button>
+              <Button variant="primary" onClick={submitCompleteModal}>Save</Button>
+            </div>
+          </div>
         </div>
       )}
     </div>

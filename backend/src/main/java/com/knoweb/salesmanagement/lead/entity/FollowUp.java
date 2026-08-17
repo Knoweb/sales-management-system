@@ -2,6 +2,9 @@ package com.knoweb.salesmanagement.lead.entity;
 
 import com.knoweb.salesmanagement.employee.entity.Employee;
 import com.knoweb.salesmanagement.lead.enums.FollowUpStatus;
+import com.knoweb.salesmanagement.lead.enums.FollowUpType;
+import com.knoweb.salesmanagement.lead.enums.FollowUpResult;
+import com.knoweb.salesmanagement.quotation.entity.Quotation;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -20,6 +23,18 @@ public class FollowUp {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "lead_id", nullable = false)
     private Lead lead;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "quotation_id")
+    private Quotation quotation;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "follow_up_type", length = 50)
+    private FollowUpType type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 50)
+    private FollowUpResult result;
 
     @Column(name = "follow_up_date", nullable = false)
     private OffsetDateTime followUpDate;
@@ -57,6 +72,15 @@ public class FollowUp {
     
     public Lead getLead() { return lead; }
     public void setLead(Lead lead) { this.lead = lead; }
+    
+    public Quotation getQuotation() { return quotation; }
+    public void setQuotation(Quotation quotation) { this.quotation = quotation; }
+    
+    public FollowUpType getType() { return type; }
+    public void setType(FollowUpType type) { this.type = type; }
+    
+    public FollowUpResult getResult() { return result; }
+    public void setResult(FollowUpResult result) { this.result = result; }
     
     public OffsetDateTime getFollowUpDate() { return followUpDate; }
     public void setFollowUpDate(OffsetDateTime followUpDate) { this.followUpDate = followUpDate; }
