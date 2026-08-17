@@ -65,6 +65,14 @@ public class AuditLogController {
         return auditLogRepository.findAll(spec, pageable).map(this::mapToDTO);
     }
 
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('AUDIT_LOG_READ')")
+    public AuditLogDTO getAuditLogById(@PathVariable UUID id) {
+        return auditLogRepository.findById(id)
+                .map(this::mapToDTO)
+                .orElseThrow(() -> new RuntimeException("Audit log not found"));
+    }
+
     private AuditLogDTO mapToDTO(AuditLog entity) {
         AuditLogDTO dto = new AuditLogDTO();
         dto.setId(entity.getId());

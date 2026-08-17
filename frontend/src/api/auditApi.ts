@@ -3,16 +3,18 @@ import { apiClient as api } from '../services/Api';
 export interface AuditLogEventDTO {
   id: string;
   eventType: string;
+  actorUserId?: string;
+  actorNameSnapshot?: string;
   entityType: string;
   entityId: string;
   action: string;
   previousState?: any;
   newState?: any;
-  createdAt: string;
-  createdBy: string;
-  createdByName?: string;
-  ipAddress?: string;
-  userAgent?: string;
+  comments?: string;
+  occurredAt: string;
+  correlationId?: string;
+  requestPath?: string;
+  metadata?: string;
 }
 
 export const getAuditLogs = async (

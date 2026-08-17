@@ -102,8 +102,8 @@ export const AuditLogPage: React.FC = () => {
               <tbody>
                 {logs.map(log => (
                   <tr key={log.id}>
-                    <td className="whitespace-nowrap">{new Date(log.createdAt).toLocaleString()}</td>
-                    <td>{log.createdByName || log.createdBy}</td>
+                    <td className="whitespace-nowrap">{log.occurredAt ? new Date(log.occurredAt).toLocaleString('en-US', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—'}</td>
+                    <td>{log.actorNameSnapshot || 'SYSTEM'}</td>
                     <td>{log.entityType}</td>
                     <td className="font-mono text-xs text-text-muted">{log.entityId}</td>
                     <td><span className={`badge ${log.action === 'CREATE' ? 'badge-success' : log.action === 'DELETE' ? 'badge-danger' : 'badge-info'}`}>{log.action}</span></td>
