@@ -1,0 +1,151 @@
+name: Deploy to DigitalOcean Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE_NAME: ${{ github.repository }}-backend
+  FRONTEND_IMAGE_NAME: ${{ github.repository }}-frontend
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      short_sha: ${{ steps.vars.outputs.short_sha }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set short git commit SHA
+        id: vars
+        run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Backend Build and Push
+      - name: Extract metadata for Backend
+        id: meta-backend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ steps.vars.outputs.short_sha }}
+
+      - name: Build and push Backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+      # Frontend Build and Push
+      - name: Extract metadata for Frontend
+        id: meta-frontend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ steps.vars.outputs.short_sha }}
+
+      - name: Build and push Frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to DigitalOcean via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USER }}
+          key: ${{ secrets.DO_SSH_PRIVATE_KEY }}
+          script: |
+            # Set up target directory
+            mkdir -p /opt/knoweb-sales
+            
+            # Copy docker-compose file (using a simple heredoc since it's small, or we could copy via SCP)
+            # For simplicity we will assume the file is copied below or we fetch it from repo
+            
+      - name: Copy docker-compose via SCP
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USER }}
+          key: ${{ secrets.DO_SSH_PRIVATE_KEY }}
+          source: "docker-compose.prod.yml"
+          target: "/opt/knoweb-sales"
+          
+      - name: Execute remote deployment commands
+        uses: appleboy/ssh-action@master
+        env:
+          SHORT_SHA: ${{ needs.build-and-push.outputs.short_sha }}
+          REGISTRY: ${{ env.REGISTRY }}
+          BACKEND_IMAGE_NAME: ${{ env.BACKEND_IMAGE_NAME }}
+          FRONTEND_IMAGE_NAME: ${{ env.FRONTEND_IMAGE_NAME }}
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USER }}
+          key: ${{ secrets.DO_SSH_PRIVATE_KEY }}
+          envs: SHORT_SHA,REGISTRY,BACKEND_IMAGE_NAME,FRONTEND_IMAGE_NAME
+          script: |
+            cd /opt/knoweb-sales
+            
+            # Ensure .env exists
+            if [ ! -f .env ]; then
+              echo "Error: .env file missing on production server at /opt/knoweb-sales/.env"
+              exit 1
+            fi
+            
+            # Export image variables with the specific SHA to trigger update
+            export BACKEND_IMAGE=$(echo "${REGISTRY}/${BACKEND_IMAGE_NAME}:${SHORT_SHA}" | tr '[:upper:]' '[:lower:]')
+            export FRONTEND_IMAGE=$(echo "${REGISTRY}/${FRONTEND_IMAGE_NAME}:${SHORT_SHA}" | tr '[:upper:]' '[:lower:]')
+            
+            # Ensure we are logged into GHCR using a deploy token (or anonymous if public)
+            # We assume images are either public or DO server is authenticated already.
+            
+            # Pull new images
+            docker compose -f docker-compose.prod.yml pull
+            
+            # Start/Update the containers
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            
+            # Optional: Minimal health check
+            echo "Waiting for containers to initialize..."
+            sleep 10
+            
+            # Check if frontend is responsive
+            curl -s --fail http://localhost > /dev/null || (echo "Frontend health check failed!" && exit 1)
+            echo "Deployment successful."
