@@ -136,6 +136,9 @@ jobs:
             # Ensure we are logged into GHCR using a deploy token (or anonymous if public)
             # We assume images are either public or DO server is authenticated already.
             
+            # Login to GitHub Container Registry
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
             # Pull new images
             docker compose -f docker-compose.prod.yml pull
             
