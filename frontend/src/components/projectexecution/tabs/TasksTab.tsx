@@ -1,3 +1,4 @@
+import { Button } from '../../Button';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react-hooks/set-state-in-effect */
@@ -149,8 +150,8 @@ const TasksTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = tr
                             <ProjectTeamSelector workspaceId={workspaceId} value={form.assigneeId} defaultLabel={editingTask?.assigneeName} onChange={(val: any) => setForm({...form, assigneeId: val})} isOptional={true} />
                             
                             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '16px' }}>
-                                <button type="button" onClick={() => setIsModalVisible(false)}>Cancel</button>
-                                <button type="submit">Save</button>
+                                <Button type="button" variant="outline" onClick={() => setIsModalVisible(false)}>Cancel</Button>
+                                <Button type="submit" variant="primary">Save</Button>
                             </div>
                         </form>
                     </div>

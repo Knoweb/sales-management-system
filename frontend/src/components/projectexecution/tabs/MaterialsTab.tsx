@@ -1,3 +1,4 @@
+import { Button } from '../../Button';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react-hooks/set-state-in-effect */
@@ -120,8 +121,8 @@ const MaterialsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit 
                             <input type="date" required style={inputStyle} onChange={(e: any) => setForm({...form, usageDate: e.target.value})} />
                             
                             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                                <button type="button" onClick={() => setIsModalVisible(false)}>Cancel</button>
-                                <button type="submit">Save</button>
+                                <Button type="button" variant="outline" onClick={() => setIsModalVisible(false)}>Cancel</Button>
+                                <Button type="submit" variant="primary">Save</Button>
                             </div>
                         </form>
                     </div>

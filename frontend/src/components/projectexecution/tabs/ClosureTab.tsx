@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { Button } from '../../Button';
+﻿import React, { useState, useEffect } from 'react';
 import { projectExecutionApi } from '../../../api/projectExecutionApi';
 import type { ExecutionWorkspaceDTO, ProjectClosureDTO, ProjectExecutionAttachmentDTO } from '../../../api/projectExecutionApi';
 import { Save, AlertCircle, CheckCircle, Truck, ClipboardCheck, Info, ShieldCheck, FileText, Plus, Trash } from 'lucide-react';
@@ -253,14 +254,14 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
                 </div>
                 {canEdit && !isClosed && (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-                        <button 
-                            className="execution-primary-button" 
+                        <Button 
+                            variant="primary" 
                             onClick={handleSave} 
                             disabled={saving || hasActiveTasks || checkingTasks}
                         >
                             <Save size={16} />
                             {saving ? 'Saving...' : 'Save Details'}
-                        </button>
+                        </Button>
                         {hasActiveTasks && (
                             <div style={{ color: 'var(--color-danger)', fontSize: '12px', fontWeight: 500, maxWidth: '200px', textAlign: 'right' }}>
                                 Complete or cancel all active tasks to enable saving.
@@ -550,13 +551,13 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
                                     style={{ display: 'none' }} 
                                     onChange={handleUploadDoc} 
                                 />
-                                <button 
-                                    className="execution-secondary-button" 
+                                <Button 
+                                    variant="outline" 
                                     onClick={() => document.getElementById('finalDocUpload')?.click()}
                                     disabled={uploadingDoc}
                                 >
                                     <Plus size={14} /> {uploadingDoc ? 'Uploading...' : 'Upload Document'}
-                                </button>
+                                </Button>
                             </div>
                         )}
                     </div>
@@ -651,16 +652,16 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
                         </ul>
 
                         <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '12px' }}>
-                            <button
+                            <Button
                                 type="button"
-                                className="execution-primary-button"
+                                variant="primary"
                                 style={{ backgroundColor: canClose ? 'var(--color-success)' : 'var(--color-text-muted)', borderColor: canClose ? 'var(--color-success)' : 'var(--color-text-muted)' }}
                                 onClick={handleCloseProject}
                                 disabled={!canClose || closing}
                             >
                                 <ShieldCheck size={16} />
                                 {closing ? 'Closing Project...' : 'Close Project'}
-                            </button>
+                            </Button>
                             {!canClose && (
                                 <div style={{ fontSize: '13px', color: 'var(--color-danger)' }}>
                                     All closure requirements must be completed before the project can be closed.
@@ -675,5 +676,7 @@ const ClosureTab: React.FC<ClosureTabProps> = ({ workspace, onRefresh, canEdit =
 };
 
 export default ClosureTab;
+
+
 
 
