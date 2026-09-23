@@ -398,6 +398,7 @@ public class ProjectTaskService {
         if (dto.getAssigneeId() != null) {
             Employee assignee = employeeRepository.findById(dto.getAssigneeId())
                     .orElseThrow(() -> new RuntimeException("Assignee not found"));
+            securityHelper.validateEmployeeInProjectTeam(task.getWorkspace(), dto.getAssigneeId());
             task.setAssignee(assignee);
         } else {
             task.setAssignee(null);

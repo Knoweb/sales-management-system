@@ -13,11 +13,14 @@ import com.knoweb.salesmanagement.projectexecution.repository.ProjectExecutionWo
 import com.knoweb.salesmanagement.projectexecution.repository.ProjectLabourEntryRepository;
 import com.knoweb.salesmanagement.projectexecution.repository.ProjectMaterialUsageRepository;
 import com.knoweb.salesmanagement.projectexecution.repository.ProjectTaskRepository;
+import com.knoweb.salesmanagement.technicalproject.repository.ProjectTeamMemberRepository;
+import com.knoweb.salesmanagement.technicalproject.enums.ProjectTeamMemberStatus;
 import com.knoweb.salesmanagement.employee.repository.EmployeeRepository;
 import com.knoweb.salesmanagement.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.core.GrantedAuthority;
+import java.math.BigDecimal;
 import java.util.Collection;
 
 import java.util.List;
@@ -35,9 +38,10 @@ public class ProjectResourceService {
     private final UserRepository userRepository;
     private final EmployeeRepository employeeRepository;
     private final DepartmentRepository departmentRepository;
+    private final ProjectTeamMemberRepository projectTeamMemberRepository;
     private final ProjectExecutionSecurityHelper securityHelper;
 
-    public ProjectResourceService(ProjectEmployeeAllocationRepository allocationRepository, ProjectLabourEntryRepository labourEntryRepository, ProjectMaterialUsageRepository materialUsageRepository, ProjectExecutionWorkspaceRepository workspaceRepository, ProjectTaskRepository taskRepository, UserRepository userRepository, DepartmentRepository departmentRepository, ProjectExecutionSecurityHelper securityHelper, EmployeeRepository employeeRepository) {
+    public ProjectResourceService(ProjectEmployeeAllocationRepository allocationRepository, ProjectLabourEntryRepository labourEntryRepository, ProjectMaterialUsageRepository materialUsageRepository, ProjectExecutionWorkspaceRepository workspaceRepository, ProjectTaskRepository taskRepository, UserRepository userRepository, DepartmentRepository departmentRepository, ProjectExecutionSecurityHelper securityHelper, EmployeeRepository employeeRepository, ProjectTeamMemberRepository projectTeamMemberRepository) {
         this.allocationRepository = allocationRepository;
         this.labourEntryRepository = labourEntryRepository;
         this.materialUsageRepository = materialUsageRepository;
@@ -46,30 +50,40 @@ public class ProjectResourceService {
         this.userRepository = userRepository;
         this.employeeRepository = employeeRepository;
         this.departmentRepository = departmentRepository;
+        this.projectTeamMemberRepository = projectTeamMemberRepository;
         this.securityHelper = securityHelper;
     }
 
 
     @Transactional(readOnly = true)
     public List<ProjectEmployeeAllocationDTO> getAllocationsByWorkspaceId(UUID workspaceId) {
-        return allocationRepository.findByWorkspaceId(workspaceId).stream().map(a -> {
+        ProjectExecutionWorkspace workspace = workspaceRepository.findById(workspaceId).orElseThrow();
+        return projectTeamMemberRepository.findByTechnicalProjectIdAndStatus(
+                    workspace.getTechnicalProject().getId(),
+                    ProjectTeamMemberStatus.ACTIVE
+                )
+                .stream()
+                .filter(ptm -> ptm.getProjectTeam().getStatus() == com.knoweb.salesmanagement.technicalproject.enums.ProjectTeamStatus.READY)
+                .map(ptm -> {
             ProjectEmployeeAllocationDTO dto = new ProjectEmployeeAllocationDTO();
-            dto.setId(a.getId());
-            dto.setWorkspaceId(a.getWorkspace().getId());
-            if (a.getEmployee() != null) {
-                dto.setEmployeeId(a.getEmployee().getId());
-                dto.setEmployeeName(a.getEmployee().getFirstName() + " " + a.getEmployee().getLastName());
+            dto.setId(ptm.getId());
+            dto.setWorkspaceId(workspaceId);
+            if (ptm.getEmployee() != null) {
+                dto.setEmployeeId(ptm.getEmployee().getId());
+                dto.setEmployeeName(ptm.getEmployee().getFirstName() + " " + ptm.getEmployee().getLastName());
             }
-            if (a.getDepartment() != null) {
-                dto.setDepartmentId(a.getDepartment().getId());
-                dto.setDepartmentName(a.getDepartment().getName());
+            if (ptm.getProjectTeam().getTechnicalProjectDepartment() != null && ptm.getProjectTeam().getTechnicalProjectDepartment().getDepartment() != null) {
+                dto.setDepartmentId(ptm.getProjectTeam().getTechnicalProjectDepartment().getDepartment().getId());
+                dto.setDepartmentName(ptm.getProjectTeam().getTechnicalProjectDepartment().getDepartment().getName());
             }
-            dto.setRoleDescription(a.getRoleDescription());
-            dto.setAllocationPercentage(a.getAllocationPercentage());
-            dto.setAllocatedHours(a.getAllocatedHours());
-            dto.setAllocationStartDate(a.getAllocationStartDate());
-            dto.setAllocationEndDate(a.getAllocationEndDate());
-            dto.setIsActive(a.getIsActive());
+            dto.setRoleDescription(ptm.getProjectRole() != null ? ptm.getProjectRole().name() : "");
+            
+            // Assume full allocation percentage by default or calculate based on assigned hours
+            dto.setAllocationPercentage(BigDecimal.valueOf(100));
+            dto.setAllocatedHours(ptm.getAssignedHours());
+            dto.setAllocationStartDate(ptm.getAllocationStartDate());
+            dto.setAllocationEndDate(ptm.getAllocationEndDate());
+            dto.setIsActive(ptm.getStatus() == ProjectTeamMemberStatus.ACTIVE);
             return dto;
         }).collect(Collectors.toList());
     }

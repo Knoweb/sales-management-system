@@ -3,6 +3,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useEffect } from 'react';
 import { TaskSelector } from '../selectors/TaskSelector';
+import { ProjectTeamSelector } from '../selectors/ProjectTeamSelector';
 
 
 import { projectExecutionApi } from '../../../api/projectExecutionApi';
@@ -118,8 +119,8 @@ const ApprovalsTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit 
                                     <input required style={inputStyle} onChange={(e: any) => setForm({...form, title: e.target.value})} />
                                     <label>Description</label>
                                     <input style={inputStyle} onChange={(e: any) => setForm({...form, description: e.target.value})} />
-                                    <label>Assignee ID (UUID)</label>
-                                    <input style={inputStyle} onChange={(e: any) => setForm({...form, assignedApproverId: e.target.value})} />
+                                    <label>Assignee</label>
+                                    <ProjectTeamSelector workspaceId={workspaceId} value={form.assignedApproverId} onChange={(val: any) => setForm({...form, assignedApproverId: val})} isOptional={true} />
                                 </>
                             )}
                             

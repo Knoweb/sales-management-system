@@ -4,6 +4,8 @@ import com.knoweb.salesmanagement.employee.entity.Employee;
 import com.knoweb.salesmanagement.employee.repository.EmployeeRepository;
 import com.knoweb.salesmanagement.projectexecution.entity.ProjectExecutionWorkspace;
 import com.knoweb.salesmanagement.projectexecution.repository.ProjectExecutionWorkspaceRepository;
+import com.knoweb.salesmanagement.technicalproject.repository.ProjectTeamMemberRepository;
+import com.knoweb.salesmanagement.technicalproject.enums.ProjectTeamMemberStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
@@ -16,10 +18,12 @@ public class ProjectExecutionSecurityHelper {
     
     private final ProjectExecutionWorkspaceRepository workspaceRepository;
     private final EmployeeRepository employeeRepository;
+    private final ProjectTeamMemberRepository teamMemberRepository;
     
-    public ProjectExecutionSecurityHelper(ProjectExecutionWorkspaceRepository workspaceRepository, EmployeeRepository employeeRepository) {
+    public ProjectExecutionSecurityHelper(ProjectExecutionWorkspaceRepository workspaceRepository, EmployeeRepository employeeRepository, ProjectTeamMemberRepository teamMemberRepository) {
         this.workspaceRepository = workspaceRepository;
         this.employeeRepository = employeeRepository;
+        this.teamMemberRepository = teamMemberRepository;
     }
     
     public ProjectExecutionWorkspace getWorkspaceAndVerifyWriteAccess(UUID workspaceId, UUID userId, Collection<? extends GrantedAuthority> authorities) {
@@ -62,6 +66,17 @@ public class ProjectExecutionSecurityHelper {
             throw new org.springframework.web.server.ResponseStatusException(
                     org.springframework.http.HttpStatus.CONFLICT,
                     "Project execution is closed and cannot be modified.");
+        }
+    }
+
+    public void validateEmployeeInProjectTeam(ProjectExecutionWorkspace workspace, UUID employeeId) {
+        boolean isMember = teamMemberRepository.existsByTechnicalProjectIdAndEmployeeIdAndStatus(
+                workspace.getTechnicalProject().getId(),
+                employeeId,
+                ProjectTeamMemberStatus.ACTIVE
+        );
+        if (!isMember) {
+            throw new com.knoweb.salesmanagement.common.exception.ResourceConflictException("Employee does not belong to the current project team");
         }
     }
 }

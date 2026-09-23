@@ -59,6 +59,8 @@ public class ProjectLabourService {
         Employee employee = employeeRepository.findById(dto.getEmployeeId())
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
 
+        securityHelper.validateEmployeeInProjectTeam(workspace, dto.getEmployeeId());
+
         ProjectLabourEntry entry = new ProjectLabourEntry();
         entry.setWorkspace(workspace);
         entry.setTask(task);

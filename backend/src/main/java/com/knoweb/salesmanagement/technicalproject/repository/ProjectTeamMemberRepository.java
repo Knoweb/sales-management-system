@@ -24,5 +24,25 @@ public interface ProjectTeamMemberRepository extends JpaRepository<ProjectTeamMe
     long countByProjectTeamIdAndStatus(UUID projectTeamId, ProjectTeamMemberStatus status);
 
     List<ProjectTeamMember> findByEmployeeIdAndStatus(UUID employeeId, ProjectTeamMemberStatus status);
+
+    @org.springframework.data.jpa.repository.Query("SELECT ptm FROM ProjectTeamMember ptm " +
+           "JOIN ptm.projectTeam pt " +
+           "JOIN pt.technicalProjectDepartment tpd " +
+           "WHERE tpd.technicalProject.id = :technicalProjectId " +
+           "AND ptm.status = :status")
+    List<ProjectTeamMember> findByTechnicalProjectIdAndStatus(
+           @org.springframework.data.repository.query.Param("technicalProjectId") UUID technicalProjectId,
+           @org.springframework.data.repository.query.Param("status") ProjectTeamMemberStatus status);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(ptm) > 0 FROM ProjectTeamMember ptm " +
+           "JOIN ptm.projectTeam pt " +
+           "JOIN pt.technicalProjectDepartment tpd " +
+           "WHERE tpd.technicalProject.id = :technicalProjectId " +
+           "AND ptm.employee.id = :employeeId " +
+           "AND ptm.status = :status")
+    boolean existsByTechnicalProjectIdAndEmployeeIdAndStatus(
+           @org.springframework.data.repository.query.Param("technicalProjectId") UUID technicalProjectId,
+           @org.springframework.data.repository.query.Param("employeeId") UUID employeeId,
+           @org.springframework.data.repository.query.Param("status") ProjectTeamMemberStatus status);
 }
 

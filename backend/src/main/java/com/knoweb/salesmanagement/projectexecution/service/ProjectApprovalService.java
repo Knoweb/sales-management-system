@@ -8,6 +8,8 @@ import com.knoweb.salesmanagement.projectexecution.repository.ProjectApprovalReq
 import com.knoweb.salesmanagement.projectexecution.repository.ProjectTaskRepository;
 import com.knoweb.salesmanagement.user.entity.User;
 import com.knoweb.salesmanagement.user.repository.UserRepository;
+import com.knoweb.salesmanagement.employee.entity.Employee;
+import com.knoweb.salesmanagement.employee.repository.EmployeeRepository;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,13 +28,15 @@ public class ProjectApprovalService {
     private final ProjectApprovalRequestRepository approvalRepository;
     private final ProjectTaskRepository taskRepository;
     private final UserRepository userRepository;
+    private final EmployeeRepository employeeRepository;
     private final ProjectExecutionSecurityHelper securityHelper;
     private final ApplicationEventPublisher eventPublisher;
 
-    public ProjectApprovalService(ProjectApprovalRequestRepository approvalRepository, ProjectTaskRepository taskRepository, UserRepository userRepository, ProjectExecutionSecurityHelper securityHelper, ApplicationEventPublisher eventPublisher) {
+    public ProjectApprovalService(ProjectApprovalRequestRepository approvalRepository, ProjectTaskRepository taskRepository, UserRepository userRepository, EmployeeRepository employeeRepository, ProjectExecutionSecurityHelper securityHelper, ApplicationEventPublisher eventPublisher) {
         this.approvalRepository = approvalRepository;
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
+        this.employeeRepository = employeeRepository;
         this.securityHelper = securityHelper;
         this.eventPublisher = eventPublisher;
     }
@@ -65,9 +69,13 @@ public class ProjectApprovalService {
         approval.setCreatedAt(OffsetDateTime.now());
         
         if (dto.getAssignedApproverId() != null) {
-            User approver = userRepository.findById(dto.getAssignedApproverId())
-                    .orElseThrow(() -> new RuntimeException("Approver not found"));
-            approval.setAssignedApprover(approver);
+            Employee approverEmp = employeeRepository.findById(dto.getAssignedApproverId())
+                    .orElseThrow(() -> new RuntimeException("Approver employee not found"));
+            securityHelper.validateEmployeeInProjectTeam(workspace, dto.getAssignedApproverId());
+            if (approverEmp.getUser() == null) {
+                throw new RuntimeException("Approver employee has no system user account");
+            }
+            approval.setAssignedApprover(approverEmp.getUser());
         }
         
         // Hardcode a status field on DTO since we didn't add it explicitly to entity, 
@@ -163,8 +171,14 @@ public class ProjectApprovalService {
         dto.setDescription(approval.getDescription());
         dto.setRequestedBy(approval.getRequestedBy());
         if (approval.getAssignedApprover() != null) {
-            dto.setAssignedApproverId(approval.getAssignedApprover().getId());
-            dto.setAssignedApproverName(approval.getAssignedApprover().getFirstName() + " " + approval.getAssignedApprover().getLastName());
+            Employee approverEmp = employeeRepository.findByUserId(approval.getAssignedApprover().getId()).orElse(null);
+            if (approverEmp != null) {
+                dto.setAssignedApproverId(approverEmp.getId());
+                dto.setAssignedApproverName(approverEmp.getFirstName() + " " + approverEmp.getLastName());
+            } else {
+                dto.setAssignedApproverId(approval.getAssignedApprover().getId());
+                dto.setAssignedApproverName(approval.getAssignedApprover().getFirstName() + " " + approval.getAssignedApprover().getLastName());
+            }
         }
         dto.setSubmittedDate(approval.getSubmittedDate());
         dto.setDecisionDate(approval.getDecisionDate());

@@ -322,7 +322,7 @@ export const ExecutionWorkspaceDetails: React.FC = () => {
 
                     {activeTab === 'tasks' && <TasksTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
                     {activeTab === 'kanban' && <KanbanTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
-                    {activeTab === 'allocations' && <AllocationsTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
+                    {activeTab === 'allocations' && <AllocationsTab workspaceId={workspace.id} />}
                     {activeTab === 'progress' && <ProgressTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
                     {activeTab === 'labour' && <LabourTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}
                     {activeTab === 'materials' && <MaterialsTab workspaceId={workspace.id} onRefreshSummary={loadWorkspace} canEdit={canEdit} />}

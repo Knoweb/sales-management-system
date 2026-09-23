@@ -3,7 +3,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useEffect } from 'react';
 import { TaskSelector } from '../selectors/TaskSelector';
-import { EmployeeSelector } from '../selectors/EmployeeSelector';
+import { ProjectTeamSelector } from '../selectors/ProjectTeamSelector';
 
 
 import { projectExecutionApi } from '../../../api/projectExecutionApi';
@@ -111,7 +111,7 @@ const LabourTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = t
                             <label>Task</label>
                             <TaskSelector workspaceId={workspaceId} value={form.taskId} onChange={(val: any) => setForm({...form, taskId: val})} />
                             <label>Employee ID</label>
-                            <EmployeeSelector value={form.employeeId} onChange={(val: any) => setForm({...form, employeeId: val})} />
+                            <ProjectTeamSelector workspaceId={workspaceId} value={form.employeeId} onChange={(val: any) => setForm({...form, employeeId: val})} />
                             <label>Date</label>
                             <input type="date" required style={inputStyle} onChange={(e: any) => setForm({...form, workDate: e.target.value})} />
                             <label>Hours</label>

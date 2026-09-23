@@ -26,8 +26,8 @@ export const TaskSelector: React.FC<TaskSelectorProps> = ({ workspaceId, ...prop
         
         return filtered.map(t => ({
             id: t.id!,
-            label: `${t.id || t.id?.substring(0,8)} — ${t.title}`,
-            subtitle: `Assignee: ${t.assigneeName || 'Unassigned'} · Status: ${t.status}`,
+            label: t.title || 'Untitled Task',
+            subtitle: `Assignee: ${t.assigneeName || 'Unassigned'} • Status: ${t.status}`,
             originalData: t
         }));
     };

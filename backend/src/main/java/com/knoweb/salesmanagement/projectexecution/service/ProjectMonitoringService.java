@@ -165,6 +165,7 @@ public class ProjectMonitoringService {
             update.setTask(task);
         }
         update.setEmployee(employeeRepository.findById(dto.getEmployeeId()).orElseThrow());
+        securityHelper.validateEmployeeInProjectTeam(workspace, dto.getEmployeeId());
         update.setProgressDate(dto.getProgressDate());
         update.setWorkCompleted(dto.getWorkCompleted());
         update.setWorkPlannedNext(dto.getWorkPlannedNext());

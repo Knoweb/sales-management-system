@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { projectExecutionApi } from '../../../api/projectExecutionApi';
 import type { ProjectTaskDTO } from '../../../api/projectExecutionApi';
 import { Plus, Edit2 } from 'lucide-react';
-import { EmployeeSelector } from '../selectors/EmployeeSelector';
+import { ProjectTeamSelector } from '../selectors/ProjectTeamSelector';
 
 interface Props { workspaceId: string; onRefreshSummary?: () => void;  canEdit?: boolean; }
 
@@ -146,7 +146,7 @@ const TasksTab: React.FC<Props> = ({ workspaceId, onRefreshSummary, canEdit = tr
                             <input type="number" style={inputStyle} value={form.estimatedHours || ''} onChange={(e: any) => setForm({...form, estimatedHours: e.target.value})} />
                             
                             <label>Assignee (Optional)</label>
-                            <EmployeeSelector value={form.assigneeId} onChange={(val: any) => setForm({...form, assigneeId: val})} />
+                            <ProjectTeamSelector workspaceId={workspaceId} value={form.assigneeId} defaultLabel={editingTask?.assigneeName} onChange={(val: any) => setForm({...form, assigneeId: val})} isOptional={true} />
                             
                             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '16px' }}>
                                 <button type="button" onClick={() => setIsModalVisible(false)}>Cancel</button>
